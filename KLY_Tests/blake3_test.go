@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"lukechampine.com/blake3"
-	
 )
 
 func TestBlake3SimplePerformance(t *testing.T) {
