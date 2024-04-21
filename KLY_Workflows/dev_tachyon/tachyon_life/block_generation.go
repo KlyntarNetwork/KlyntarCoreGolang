@@ -1,0 +1,5 @@
+package tachyonlife
+
+func BlockGeneration() {
+
+}
