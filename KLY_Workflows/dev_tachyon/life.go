@@ -1,7 +1,11 @@
 package tachyon
 
 import (
+	"fmt"
+
+	klyGlobals "github.com/KLYN74R/KlyntarCoreGolang/KLY_Globals"
 	tachyon_life "github.com/KLYN74R/KlyntarCoreGolang/KLY_Workflows/dev_tachyon/tachyon_life"
+	"github.com/valyala/fasthttp"
 )
 
 func RunBlockchain() {
@@ -31,6 +35,14 @@ func RunBlockchain() {
 	//✅6.Start to generate blocks
 	go tachyon_life.BlockGeneration()
 
+	// pass plain function to fasthttp
+	fasthttp.ListenAndServe(":8081", fastHTTPHandler)
+
+}
+
+// request handler in fasthttp style, i.e. just plain function.
+func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
+	fmt.Fprintf(ctx, klyGlobals.CONFIGS_PATH+"   => Hi there! RequestURI is %q", ctx.RequestURI())
 }
 
 func PrepareBlockchain() {

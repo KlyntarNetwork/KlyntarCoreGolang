@@ -43,6 +43,8 @@ import (
 
 	klyUtils "github.com/KLYN74R/KlyntarCoreGolang/KLY_Utils"
 
+	klyGlobals "github.com/KLYN74R/KlyntarCoreGolang/KLY_Globals"
+
 	tachyon "github.com/KLYN74R/KlyntarCoreGolang/KLY_Workflows/dev_tachyon"
 )
 
@@ -61,17 +63,6 @@ import (
 ****************************************************************************************************************
  */
 
-//_____________________________________________________DEFINE GLOBAL ACCESS VALUES____________________________________________________
-
-// Pathes to 3 main direcories
-var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string
-
-// Global configs (resolved by <CONFIGS_PATH>, example available in KLY_Workflows/dev_tachyon/templates/configs.json)
-var CONFIGS map[string]interface{}
-
-// Load genesis from JSON file to pre-set the state
-var GENESIS map[string]interface{}
-
 func main() {
 
 	//_________________________________________________PRINT BANNER & GREETING_______________________________________________
@@ -82,7 +73,7 @@ func main() {
 
 	//_____________________________________________________CONFIG_PROCESS____________________________________________________
 
-	configsRawJson, readError := os.ReadFile(CONFIGS_PATH)
+	configsRawJson, readError := os.ReadFile(klyGlobals.CONFIGS_PATH + "/configs.json")
 
 	if readError != nil {
 
@@ -90,7 +81,7 @@ func main() {
 
 	}
 
-	if err := json.Unmarshal(configsRawJson, &CONFIGS); err != nil {
+	if err := json.Unmarshal(configsRawJson, &klyGlobals.CONFIGS); err != nil {
 
 		panic("Error with configs parsing: " + err.Error())
 
@@ -98,7 +89,7 @@ func main() {
 
 	//_____________________________________________________READ GENESIS______________________________________________________
 
-	genesisRawJson, readError := os.ReadFile(GENESIS_PATH)
+	genesisRawJson, readError := os.ReadFile(klyGlobals.GENESIS_PATH + "/genesis.json")
 
 	if readError != nil {
 
@@ -106,7 +97,7 @@ func main() {
 
 	}
 
-	if err := json.Unmarshal(genesisRawJson, &GENESIS); err != nil {
+	if err := json.Unmarshal(genesisRawJson, &klyGlobals.GENESIS); err != nil {
 
 		panic("Error with genesis parsing: " + err.Error())
 
@@ -115,10 +106,10 @@ func main() {
 	//_________________________________________PREPARE DIRECTORIES FOR CHAINDATA_____________________________________________
 
 	// Check if exists
-	if _, err := os.Stat(CHAINDATA_PATH); os.IsNotExist(err) {
+	if _, err := os.Stat(klyGlobals.CHAINDATA_PATH); os.IsNotExist(err) {
 
 		// If no - create
-		if err := os.MkdirAll(CHAINDATA_PATH, os.ModePerm); err != nil {
+		if err := os.MkdirAll(klyGlobals.CHAINDATA_PATH, os.ModePerm); err != nil {
 
 			panic("Error with creating directory for chaindata: " + err.Error())
 
@@ -275,31 +266,31 @@ func PrepareRequiredPath() {
 
 	if os.Getenv("CHANDATA_PATH") == "" {
 
-		CHAINDATA_PATH = "CHAINDATA"
+		klyGlobals.CHAINDATA_PATH = "CHAINDATA"
 
 	} else {
 
-		CHAINDATA_PATH = os.Getenv("CHANDATA_PATH")
+		klyGlobals.CHAINDATA_PATH = os.Getenv("CHANDATA_PATH")
 
 	}
 
 	if os.Getenv("GENESIS_PATH") == "" {
 
-		GENESIS_PATH = "GENESIS"
+		klyGlobals.GENESIS_PATH = "GENESIS"
 
 	} else {
 
-		GENESIS_PATH = os.Getenv("GENESIS_PATH")
+		klyGlobals.GENESIS_PATH = os.Getenv("GENESIS_PATH")
 
 	}
 
 	if os.Getenv("CONFIGS_PATH") == "" {
 
-		CONFIGS_PATH = "CONFIGS"
+		klyGlobals.CONFIGS_PATH = "CONFIGS"
 
 	} else {
 
-		CONFIGS_PATH = os.Getenv("CONFIGS_PATH")
+		klyGlobals.CONFIGS_PATH = os.Getenv("CONFIGS_PATH")
 
 	}
 
