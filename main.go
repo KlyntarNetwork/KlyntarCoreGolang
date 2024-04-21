@@ -37,7 +37,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/user"
+	"runtime"
 	"strings"
+
+	klyUtils "github.com/KLYN74R/KlyntarCoreGolang/KLY_Utils"
 )
 
 /*
@@ -72,27 +76,59 @@ func main() {
 
 	KlyntarBannerPrint()
 
-	//_____________________________________________________CONFIG_PROCESS____________________________________________________
-
 	PrepareRequiredPath()
 
-	rawJson, readError := os.ReadFile(CONFIGS_PATH)
+	//_____________________________________________________CONFIG_PROCESS____________________________________________________
+
+	configsRawJson, readError := os.ReadFile(CONFIGS_PATH)
 
 	if readError != nil {
 
-		panic(readError)
+		panic("Error while reading configs: " + readError.Error())
 
 	}
 
-	if err := json.Unmarshal(rawJson, &CONFIGS); err != nil {
+	if err := json.Unmarshal(configsRawJson, &CONFIGS); err != nil {
 
-		panic(err)
+		panic("Error with configs parsing: " + err.Error())
 
 	}
 
 	//_____________________________________________________READ GENESIS______________________________________________________
 
-	// Example => dat["PUB"].(string)
+	genesisRawJson, readError := os.ReadFile(GENESIS_PATH)
+
+	if readError != nil {
+
+		panic("Error while reading genesis: " + readError.Error())
+
+	}
+
+	if err := json.Unmarshal(genesisRawJson, &GENESIS); err != nil {
+
+		panic("Error with genesis parsing: " + err.Error())
+
+	}
+
+	//_________________________________________PREPARE DIRECTORIES FOR CHAINDATA_____________________________________________
+
+	// Check if exists
+	if _, err := os.Stat(CHAINDATA_PATH); os.IsNotExist(err) {
+
+		// If no - create
+		if err := os.MkdirAll(CHAINDATA_PATH, os.ModePerm); err != nil {
+
+			panic("Error with creating directory for chaindata: " + err.Error())
+
+		}
+
+	}
+
+	currentUser, _ := user.Current()
+
+	statsStringToPrint := fmt.Sprintf("System info \x1b[31mgolang:%s \033[36;1m/\x1b[31m os info:%s # %s # cpu:%d \033[36;1m/\x1b[31m runned as:%s\x1b[0m", runtime.Version(), runtime.GOOS, runtime.GOARCH, runtime.NumCPU(), currentUser.Username)
+
+	klyUtils.LogWithTime(statsStringToPrint, klyUtils.CYAN_COLOR)
 
 }
 
