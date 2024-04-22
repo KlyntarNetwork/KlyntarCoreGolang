@@ -49,3 +49,9 @@ func Blake3(data string) string {
 	return fmt.Sprintf("%x", blake3Hash)
 
 }
+
+func GetUTCTimestampInMilliSeconds() int64 {
+
+	return time.Now().UTC().UnixMilli()
+
+}

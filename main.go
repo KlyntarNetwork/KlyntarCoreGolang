@@ -127,6 +127,8 @@ func main() {
 
 	go SignalHandler()
 
+	fmt.Println("UTC Timestamp:", klyUtils.GetUTCTimestampInMilliSeconds())
+
 	// Funtion that runs the main logic
 	tachyon.RunBlockchain()
 
