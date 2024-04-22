@@ -36,8 +36,10 @@ func RunBlockchain() {
 	go tachyonLife.BlockGeneration()
 
 	// pass plain function to fasthttp
-	fasthttp.ListenAndServe(":8081", fastHTTPHandler)
 
+	port := klyGlobals.CONFIGS["PORT"].(string)
+
+	fasthttp.ListenAndServe(":"+port, fastHTTPHandler)
 }
 
 // request handler in fasthttp style, i.e. just plain function.
