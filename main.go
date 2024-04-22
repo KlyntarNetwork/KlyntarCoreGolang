@@ -37,9 +37,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
 	"os/user"
 	"runtime"
 	"strings"
+	"syscall"
 
 	klyUtils "github.com/KLYN74R/KlyntarCoreGolang/KLY_Utils"
 
@@ -123,6 +125,9 @@ func main() {
 
 	klyUtils.LogWithTime(statsStringToPrint, klyUtils.CYAN_COLOR)
 
+	go SignalHandler()
+
+	// Funtion that runs the main logic
 	tachyon.RunBlockchain()
 
 }
@@ -293,5 +298,22 @@ func PrepareRequiredPath() {
 		klyGlobals.CONFIGS_PATH = os.Getenv("CONFIGS_PATH")
 
 	}
+
+}
+
+// Function to handle Ctrl+C interruptions
+func SignalHandler() {
+
+	// Channl to get notifications from OS
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+
+	// Wait for a signal
+	<-sig
+
+	//...and once get it - graceful terminate all sensitive logic
+	fmt.Println("Signal hook")
+
+	os.Exit(0)
 
 }
