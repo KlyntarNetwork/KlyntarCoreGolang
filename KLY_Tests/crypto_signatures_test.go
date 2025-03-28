@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	bls "github.com/KLYN74R/Web1337Golang/crypto_primitives/bls"
-	ed25519 "github.com/KLYN74R/Web1337Golang/crypto_primitives/ed25519"
-	pqc "github.com/KLYN74R/Web1337Golang/crypto_primitives/pqc"
-	tbls "github.com/KLYN74R/Web1337Golang/crypto_primitives/tbls"
+	bls "github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/bls"
+	ed25519 "github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
+	pqc "github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/pqc"
+	tbls "github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/tbls"
 )
 
 func TestEd25519(t *testing.T) {

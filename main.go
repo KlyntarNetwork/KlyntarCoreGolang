@@ -43,11 +43,11 @@ import (
 	"strings"
 	"syscall"
 
-	klyUtils "github.com/KLYN74R/KlyntarCoreGolang/KLY_Utils"
+	klyUtils "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Utils"
 
-	klyGlobals "github.com/KLYN74R/KlyntarCoreGolang/KLY_Globals"
+	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Globals"
 
-	tachyon "github.com/KLYN74R/KlyntarCoreGolang/KLY_Workflows/dev_tachyon"
+	tachyon "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Workflows/dev_tachyon"
 )
 
 /*

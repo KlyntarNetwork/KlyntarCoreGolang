@@ -3,8 +3,8 @@ package tachyon
 import (
 	"fmt"
 
-	klyGlobals "github.com/KLYN74R/KlyntarCoreGolang/KLY_Globals"
-	tachyonLife "github.com/KLYN74R/KlyntarCoreGolang/KLY_Workflows/dev_tachyon/tachyon_life"
+	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Globals"
+	tachyonLife "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Workflows/dev_tachyon/tachyon_life"
 	"github.com/valyala/fasthttp"
 )
 
@@ -12,10 +12,7 @@ func RunBlockchain() {
 
 	PrepareBlockchain()
 
-	//_________________________ RUN SEVERAL ASYNC THREADS _________________________
-
-	//✅0.Start verification process - process blocks and find new epoch step-by-step
-	go tachyonLife.StartVerificationThread()
+	//_________________________ RUN SEVERAL THREADS _________________________
 
 	//✅1.Thread to find AEFPs and change the epoch for QT
 	go tachyonLife.FindAggregatedEpochFinalizationProofs()

@@ -1,70 +1,35 @@
-#Always
-build
-.vscode
-.idea
-node_modules
-LOGS/
-.log
+# Go binary output
+/bin/
+/obj/
 
+# Go workspace files
+.idea/
+.vscode/
 
-#Debug
-.pnpm-debug.log
+# VSCode settings
+.vscode/settings.json
 
+# Dependency directories
+/vendor/
 
-#Hello legend
-DEVELOPMENT/useful.txt
-
-#Images collection for docs
-images/RELEASES
-images/SYMBIOTES
-images/SITES
-
-
-#Databases
-M
-CHAINDATA
-!GENESIS/README.md
-SNAPSHOTS
-GENESIS
-
-
-#Workflow
-tr.js
-RELEASES
-SERVICES
-DOCS
-DEVELOPMENT
-KIPs
-dist
+# Go build artifacts
 *.exe
-*.pdb
-*.wasm
-*.key
-*.pem
+*.exe~
 *.dll
 *.so
-*.h
+*.dylib
 
-#Configs
-CONFIGS/symbiotes*
-KEYSTORE
-decrypted.json
+# Test coverage
+*.out
+*.test
 
+# IDE files (e.g., JetBrains, Visual Studio)
+*.iml
+*.sublime-project
+*.sublime-workspace
+*.swp
+*~.nfs
 
-
-#The Hell
-KLY_Tests/test_evm*
-KLY_Tests/hostchains/monitors/evm.js
-KLY_Tests/hostchains/contracts/*.js
-KLY_Tests/hostchains/connectors/
-KLY_Tests/hostchains/tokens/
-
-
-#AntiVenom testnet data
-!ANTIVENOM/CONFIGS
-!ANTIVENOM/GENESIS
-ANTIVENOM_*
-
-
-#Custom workflow example dir
-!HELLO_WORLD_DIR/GENESIS
+# OS-specific files
+.DS_Store
+Thumbs.db

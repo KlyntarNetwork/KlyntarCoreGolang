@@ -1,11 +1,11 @@
-module github.com/KLYN74R/KlyntarCoreGolang
+module github.com/KlyntarNetwork/KlyntarCoreGolang
 
 go 1.21.1
 
 require lukechampine.com/blake3 v1.2.2
 
 require (
-	github.com/KLYN74R/Web1337Golang v0.1.5 // indirect
+	github.com/KlyntarNetwork/Web1337Golang v0.1.5 // indirect
 	github.com/LoCCS/bliss v0.0.0-20180223025823-07585ac9b817 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/bits-and-blooms/bitset v1.13.0 // indirect

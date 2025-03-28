@@ -1,5 +1,5 @@
-github.com/KLYN74R/Web1337Golang v0.1.5 h1:UrCvzxhEHA02yKmOmpkk1QkrPIg5Q5vuaQeMRslu4Bs=
-github.com/KLYN74R/Web1337Golang v0.1.5/go.mod h1:HDR9oJVgV9VotlBy3CvsyF3WYCqJ0GNxJRp8PDy1INk=
+github.com/KlyntarNetwork/Web1337Golang v0.1.5 h1:UrCvzxhEHA02yKmOmpkk1QkrPIg5Q5vuaQeMRslu4Bs=
+github.com/KlyntarNetwork/Web1337Golang v0.1.5/go.mod h1:HDR9oJVgV9VotlBy3CvsyF3WYCqJ0GNxJRp8PDy1INk=
 github.com/LoCCS/bliss v0.0.0-20180223025823-07585ac9b817 h1:NDsBS8kyF3QPOIQ6Yk8a1VD+8N56oiNAQPykm0TA2H4=
 github.com/LoCCS/bliss v0.0.0-20180223025823-07585ac9b817/go.mod h1:NcO8qUafnT7MIuK/fQb7DxFVk5hWUqY8BlFqISQTJKQ=
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
