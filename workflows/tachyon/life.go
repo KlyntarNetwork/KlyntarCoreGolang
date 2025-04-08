@@ -14,23 +14,26 @@ func RunBlockchain() {
 
 	//_________________________ RUN SEVERAL THREADS _________________________
 
-	//✅1.Thread to find AEFPs and change the epoch for QT
-	go tachyonLife.FindAggregatedEpochFinalizationProofs()
+	//✅1.Thread to find AEFPs and change the epoch for AT
+	go tachyonLife.EpochRotationThread()
 
 	//✅2.Share our blocks within quorum members and get the finalization proofs
-	go tachyonLife.ShareBlocksAndGetFinalizationProofs()
+	go tachyonLife.BlocksSharingAndProofsGrabingThread()
 
 	//✅3.Thread to propose AEFPs to move to next epoch
-	go tachyonLife.CheckIfItsTimeToStartNewEpoch()
+	go tachyonLife.NewEpochProposerThread()
 
 	//✅4.Thread to track changes of leaders on shards
-	go tachyonLife.ShardsLeadersMonitoring()
+	go tachyonLife.LeadersSequenceeMonitoring()
 
 	//✅5.Function to build the temporary sequence of blocks to verify them
-	go tachyonLife.BuildTemporarySequenceForVerificationThread()
+	go tachyonLife.BlocksOrderingForExecutionThread()
 
 	//✅6.Start to generate blocks
-	go tachyonLife.BlockGeneration()
+	go tachyonLife.BlocksGenerationThread()
+
+	//✅7.Start a separate thread to work with voting for blocks in a sync way (for security)
+	go tachyonLife.VotingThread()
 
 	// pass plain function to fasthttp
 

@@ -1,5 +1,5 @@
 package life
 
-func BlockGeneration() {
+func BlocksGenerationThread() {
 
 }

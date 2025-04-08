@@ -1,3 +1,0 @@
-package life
-
-func ShardsLeadersMonitoring() {}

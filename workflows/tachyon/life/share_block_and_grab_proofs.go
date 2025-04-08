@@ -1,3 +1,3 @@
 package life
 
-func ShareBlocksAndGetFinalizationProofs() {}
+func BlocksSharingAndProofsGrabingThread() {}
