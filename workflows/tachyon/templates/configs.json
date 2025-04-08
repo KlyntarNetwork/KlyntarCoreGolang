@@ -17,9 +17,17 @@
     
         "STORE_BLOCKS_IN_LOCAL_DATABASE":true,
 
-
+        "OPTIONAL_SEQUENCER":"9GQ46rqY238rk2neSwgidap9ww5zbAN4dyqyC7j5ZnBK",
         "POINT_OF_DISTRIBUTION_WS":"ws://localhost:9999",
         "POINT_OF_DISTRIBUTION_HTTP":"http://localhost:7332",
+        
+        "ANYWAY_PUSH_TO_MEMPOOL": true,
+        "MEMPOOL_SECRET_KEY":"secret",
+        "MEMPOOL_NODES":[
+            "http://localhost:7332",
+            "http://localhost:7333",
+            "http://localhost:44444"
+        ],
     
         "EXTRA_DATA_TO_BLOCK":{
             "hello":"world"
@@ -31,6 +39,7 @@
         "TIMEOUT_TO_FIND_TEMP_INFO_ABOUT_LAST_BLOCKS_BY_PREVIOUS_POOLS":10000,
     
         "TXS_MEMPOOL_SIZE":300000,
+        "BLOCK_TO_BLOCK_CACHE_SIZE":100000,
         
         "BOOTSTRAP_NODES":[
             "http://localhost:7332",
@@ -82,6 +91,7 @@
             "API":{
     
                 "FROM_STATE":1,
+                "NODES":1,
                 "POOL_STATS":1,
                 "BLOCK":1,
                 "BLOCK_BY_SID":1,
@@ -93,6 +103,7 @@
                 "SYNC_STATS":1,
                 "CHAIN_INFO":1,
                 "TX_RECEIPT":1,
+                "VERIFICATION_STATS_PER_POOL":1,
                 "DATA_ABOUT_EPOCH_ON_THREAD":1,
                 "GET_CURRENT_SHARD_LEADERS":1,
                 "GET_EPOCH_BY_INDEX":1,
@@ -105,8 +116,6 @@
         "GET_BLOCKS_URL":"http://localhost:7332",
         "GET_AGGREGATED_FINALIZATION_PROOF_URL":"http://localhost:7332",
         "GET_PREVIOUS_EPOCH_AGGREGATED_FINALIZATION_PROOF_URL":"http://localhost:7332",
-    
-        "ANIMATION_DURATION":0,
     
         "PLUGINS":[],
     

@@ -1,3 +1,3 @@
-package tachyonlife
+package life
 
 func CheckIfItsTimeToStartNewEpoch() {}

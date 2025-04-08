@@ -1,11 +1,11 @@
-package tachyon_structures
+package structures
 
 import (
 	"encoding/json"
 
-	klyUtils "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Utils"
+	klyUtils "github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 
-	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Globals"
+	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 )
 
 type Block struct {

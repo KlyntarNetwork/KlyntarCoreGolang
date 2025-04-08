@@ -3,8 +3,8 @@ package tachyon
 import (
 	"fmt"
 
-	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Globals"
-	tachyonLife "github.com/KlyntarNetwork/KlyntarCoreGolang/KLY_Workflows/dev_tachyon/tachyon_life"
+	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	tachyonLife "github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/life"
 	"github.com/valyala/fasthttp"
 )
 

@@ -5,7 +5,7 @@ package globals
 // Pathes to 3 main direcories
 var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string
 
-// Global configs (resolved by <CONFIGS_PATH>, example available in KLY_Workflows/dev_tachyon/templates/configs.json)
+// Global configs (resolved by <CONFIGS_PATH>, example available in workflows/tachyon/templates/configs.json)
 var CONFIGS map[string]interface{}
 
 // Load genesis from JSON file to pre-set the state

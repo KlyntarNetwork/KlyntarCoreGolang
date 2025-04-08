@@ -1,4 +1,4 @@
-package tachyonlife
+package life
 
 func BlockGeneration() {
 
