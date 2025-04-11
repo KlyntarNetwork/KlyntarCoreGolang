@@ -5,7 +5,7 @@ import (
 
 	"time"
 
-	threads "github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/threads"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/threads"
 )
 
 func getUtcTimestamp() int64 {

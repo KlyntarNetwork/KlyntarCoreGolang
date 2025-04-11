@@ -3,8 +3,9 @@ package tachyon
 import (
 	"os"
 	"strconv"
+	"sync"
 
-	threads "github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/threads"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/threads"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -23,9 +24,17 @@ func GetCoreMajorVersion(versionFilePath string) (uint, error) {
 	return uint(majorVersion), nil
 }
 
-//_____________________________________________________DEFINE GLOBAL ACCESS VALUES____________________________________________________
+var CORE_MAJOR_VERSION uint = func() uint {
 
-var CORE_MAJOR_VERSION uint
+	version, err := GetCoreMajorVersion("version.txt")
+
+	if err != nil {
+		panic("Failed to get core version: " + err.Error())
+	}
+
+	return version
+
+}()
 
 // Pathes to 3 main direcories
 var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string
@@ -36,8 +45,15 @@ var CONFIGS map[string]interface{}
 // Load genesis from JSON file to pre-set the state
 var GENESIS map[string]interface{}
 
-var GLOBAL_CACHES = struct{}{}
-
+var GLOBAL_CACHES = struct {
+	MEMPOOL struct {
+		slice []Transaction
+		mutex sync.RWMutex
+	}
+	APPROVEMENT_THREAD_CACHE map[string]interface{}
+}{
+	APPROVEMENT_THREAD_CACHE: make(map[string]interface{}),
+}
 var GENERATION_THREAD threads.GenerationThread
 
 var APPROVEMENT_THREAD threads.ApprovementThread
@@ -47,3 +63,5 @@ var BLOCKCHAIN_DATABASES = struct {
 }{
 	nil, nil, nil, nil,
 }
+
+var VOTING_REQUESTS chan struct{}

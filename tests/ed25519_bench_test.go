@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	ed25519 "github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
+	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 
 const (

@@ -1,4 +1,4 @@
-package structures
+package tachyon
 
 type Transaction struct {
 	V                                uint
