@@ -37,9 +37,9 @@ func RunBlockchain() {
 
 	// pass plain function to fasthttp
 
-	port := klyGlobals.CONFIGS["PORT"].(string)
+	// port := klyGlobals.CONFIGS["PORT"].(string)
 
-	fasthttp.ListenAndServe(":"+port, fastHTTPHandler)
+	fasthttp.ListenAndServe(":8080", fastHTTPHandler)
 }
 
 // request handler in fasthttp style, i.e. just plain function.

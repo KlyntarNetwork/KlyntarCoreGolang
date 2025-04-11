@@ -1,8 +1,6 @@
 package tests
 
 import (
-	"fmt"
-	"runtime"
 	"sync"
 	"testing"
 
@@ -21,44 +19,44 @@ var (
 	signatures []string
 )
 
-func init() {
+// func init() {
 
-	fmt.Printf("GOMAXPROCS = %d\n", runtime.GOMAXPROCS(0))
+// 	fmt.Printf("GOMAXPROCS = %d\n", runtime.GOMAXPROCS(0))
 
-	publicKeys = make([]string, numSignatures)
-	messages = make([]string, numSignatures)
-	signatures = make([]string, numSignatures)
+// 	publicKeys = make([]string, numSignatures)
+// 	messages = make([]string, numSignatures)
+// 	signatures = make([]string, numSignatures)
 
-	mnemonic := "smoke suggest security index situate almost ethics tone wash crystal debris mosquito pony extra husband elder over relax width occur inspire keen sudden average"
-	mnemonicPassword := ""
-	bip44Path := []uint32{44, 7331, 0, 0}
+// 	mnemonic := "smoke suggest security index situate almost ethics tone wash crystal debris mosquito pony extra husband elder over relax width occur inspire keen sudden average"
+// 	mnemonicPassword := ""
+// 	bip44Path := []uint32{44, 7331, 0, 0}
 
-	var wg sync.WaitGroup
-	wg.Add(numGoroutines)
+// 	var wg sync.WaitGroup
+// 	wg.Add(numGoroutines)
 
-	for g := 0; g < numGoroutines; g++ {
-		go func(goroutineIndex int) {
-			defer wg.Done()
+// 	for g := 0; g < numGoroutines; g++ {
+// 		go func(goroutineIndex int) {
+// 			defer wg.Done()
 
-			start := goroutineIndex * signaturesPerGo
-			end := start + signaturesPerGo
+// 			start := goroutineIndex * signaturesPerGo
+// 			end := start + signaturesPerGo
 
-			for i := start; i < end; i++ {
-				keypair := ed25519.GenerateKeyPair(mnemonic, mnemonicPassword, bip44Path)
+// 			for i := start; i < end; i++ {
+// 				keypair := ed25519.GenerateKeyPair(mnemonic, mnemonicPassword, bip44Path)
 
-				message := "Message number #" + string(rune(i))
-				signature := ed25519.GenerateSignature(keypair.Prv, message)
+// 				message := "Message number #" + string(rune(i))
+// 				signature := ed25519.GenerateSignature(keypair.Prv, message)
 
-				publicKeys[i] = keypair.Pub
-				messages[i] = message
-				signatures[i] = signature
-			}
-		}(g)
-	}
+// 				publicKeys[i] = keypair.Pub
+// 				messages[i] = message
+// 				signatures[i] = signature
+// 			}
+// 		}(g)
+// 	}
 
-	wg.Wait()
-	fmt.Println("===============Finished===============")
-}
+// 	wg.Wait()
+// 	fmt.Println("===============Finished===============")
+// }
 
 func BenchmarkEd25519VerifyParallel100x1000(b *testing.B) {
 	b.ResetTimer()

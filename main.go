@@ -34,7 +34,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -60,49 +59,49 @@ func main() {
 
 	//_____________________________________________________CONFIG_PROCESS____________________________________________________
 
-	configsRawJson, readError := os.ReadFile(klyGlobals.CONFIGS_PATH + "/configs.json")
+	// configsRawJson, readError := os.ReadFile(klyGlobals.CONFIGS_PATH + "/configs.json")
 
-	if readError != nil {
+	// if readError != nil {
 
-		panic("Error while reading configs: " + readError.Error())
+	// 	panic("Error while reading configs: " + readError.Error())
 
-	}
+	// }
 
-	if err := json.Unmarshal(configsRawJson, &klyGlobals.CONFIGS); err != nil {
+	// if err := json.Unmarshal(configsRawJson, &klyGlobals.CONFIGS); err != nil {
 
-		panic("Error with configs parsing: " + err.Error())
+	// 	panic("Error with configs parsing: " + err.Error())
 
-	}
+	// }
 
-	//_____________________________________________________READ GENESIS______________________________________________________
+	// //_____________________________________________________READ GENESIS______________________________________________________
 
-	genesisRawJson, readError := os.ReadFile(klyGlobals.GENESIS_PATH + "/genesis.json")
+	// genesisRawJson, readError := os.ReadFile(klyGlobals.GENESIS_PATH + "/genesis.json")
 
-	if readError != nil {
+	// if readError != nil {
 
-		panic("Error while reading genesis: " + readError.Error())
+	// 	panic("Error while reading genesis: " + readError.Error())
 
-	}
+	// }
 
-	if err := json.Unmarshal(genesisRawJson, &klyGlobals.GENESIS); err != nil {
+	// if err := json.Unmarshal(genesisRawJson, &klyGlobals.GENESIS); err != nil {
 
-		panic("Error with genesis parsing: " + err.Error())
+	// 	panic("Error with genesis parsing: " + err.Error())
 
-	}
+	// }
 
-	//_________________________________________PREPARE DIRECTORIES FOR CHAINDATA_____________________________________________
+	// //_________________________________________PREPARE DIRECTORIES FOR CHAINDATA_____________________________________________
 
-	// Check if exists
-	if _, err := os.Stat(klyGlobals.CHAINDATA_PATH); os.IsNotExist(err) {
+	// // Check if exists
+	// if _, err := os.Stat(klyGlobals.CHAINDATA_PATH); os.IsNotExist(err) {
 
-		// If no - create
-		if err := os.MkdirAll(klyGlobals.CHAINDATA_PATH, os.ModePerm); err != nil {
+	// 	// If no - create
+	// 	if err := os.MkdirAll(klyGlobals.CHAINDATA_PATH, os.ModePerm); err != nil {
 
-			panic("Error with creating directory for chaindata: " + err.Error())
+	// 		panic("Error with creating directory for chaindata: " + err.Error())
 
-		}
+	// 	}
 
-	}
+	// }
 
 	currentUser, _ := user.Current()
 

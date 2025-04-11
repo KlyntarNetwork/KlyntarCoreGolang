@@ -15,9 +15,11 @@ require (
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/herumi/bls-eth-go-binary v1.36.4 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
+	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tyler-smith/go-bip32 v1.0.0 // indirect
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
