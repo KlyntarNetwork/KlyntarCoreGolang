@@ -44,8 +44,6 @@ import (
 
 	klyUtils "github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 
-	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
-
 	tachyon "github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
 )
 
@@ -173,31 +171,31 @@ func PrepareRequiredPath() {
 
 	if os.Getenv("CHANDATA_PATH") == "" {
 
-		klyGlobals.CHAINDATA_PATH = "CHAINDATA"
+		tachyon.CHAINDATA_PATH = "CHAINDATA"
 
 	} else {
 
-		klyGlobals.CHAINDATA_PATH = os.Getenv("CHANDATA_PATH")
+		tachyon.CHAINDATA_PATH = os.Getenv("CHANDATA_PATH")
 
 	}
 
 	if os.Getenv("GENESIS_PATH") == "" {
 
-		klyGlobals.GENESIS_PATH = "GENESIS"
+		tachyon.GENESIS_PATH = "GENESIS"
 
 	} else {
 
-		klyGlobals.GENESIS_PATH = os.Getenv("GENESIS_PATH")
+		tachyon.GENESIS_PATH = os.Getenv("GENESIS_PATH")
 
 	}
 
 	if os.Getenv("CONFIGS_PATH") == "" {
 
-		klyGlobals.CONFIGS_PATH = "CONFIGS"
+		tachyon.CONFIGS_PATH = "CONFIGS"
 
 	} else {
 
-		klyGlobals.CONFIGS_PATH = os.Getenv("CONFIGS_PATH")
+		tachyon.CONFIGS_PATH = os.Getenv("CONFIGS_PATH")
 
 	}
 

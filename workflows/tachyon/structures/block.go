@@ -5,34 +5,27 @@ import (
 
 	klyUtils "github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 
-	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	klyGlobals "github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
 )
 
 type Block struct {
-	creator string
-
-	time uint64
-
-	epoch string
-
-	transactions []Transaction
-
-	extraData []string
-
-	index uint32
-
-	prevHash string
-
-	sig string
+	Creator      string        `json:"creator"`
+	Time         uint64        `json:"time"`
+	Epoch        string        `json:"epoch"`
+	Transactions []Transaction `json:"transactions"`
+	ExtraData    []string      `json:"extraData"`
+	Index        uint32        `json:"index"`
+	PrevHash     string        `json:"prevHash"`
+	Sig          string        `json:"sig"`
 }
 
 func (block *Block) getHash() string {
 
-	jsonedTransactions, _ := json.Marshal(block.transactions)
+	jsonedTransactions, _ := json.Marshal(block.Transactions)
 
 	networkID, _ := klyGlobals.GENESIS["NETWORK_ID"].(string)
 
-	dataToHash := block.creator + string(block.time) + string(jsonedTransactions) + networkID + block.epoch + string(block.index) + block.prevHash
+	dataToHash := block.Creator + string(block.Time) + string(jsonedTransactions) + networkID + block.Epoch + string(block.Index) + block.PrevHash
 
 	return klyUtils.Blake3(dataToHash)
 
