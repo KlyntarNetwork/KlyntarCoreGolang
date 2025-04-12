@@ -1,18 +1,18 @@
 package threads
 
 type NetworkParams struct {
-	ValidatorStake        int64 `json:"VALIDATOR_STAKE"`
-	MinimalStakePerEntity int64 `json:"MINIMAL_STAKE_PER_ENTITY"`
-	QuorumSize            int   `json:"QUORUM_SIZE"`
-	EpochTime             int64 `json:"EPOCH_TIME"`
-	LeadershipTimeframe   int64 `json:"LEADERSHIP_TIMEFRAME"`
-	BlockTime             int64 `json:"BLOCK_TIME"`
-	MaxBlockSizeInBytes   int64 `json:"MAX_BLOCK_SIZE_IN_BYTES"`
-	TxsLimitPerBlock      int   `json:"TXS_LIMIT_PER_BLOCK"`
+	ValidatorStake        int64 `json:"validatorStake"`
+	MinimalStakePerEntity int64 `json:"minimalStakePerEntity"`
+	QuorumSize            int   `json:"quorumSize"`
+	EpochTime             int64 `json:"epochTime"`
+	LeadershipTimeframe   int64 `json:"leadershipTimeframe"`
+	BlockTime             int64 `json:"blockTime"`
+	MaxBlockSizeInBytes   int64 `json:"maxBlockSizeInBytes"`
+	TxsLimitPerBlock      int   `json:"txsLimitPerBlock"`
 }
 
 type ApprovementThread struct {
-	CoreMajorVersion  uint
-	NetworkParameters NetworkParams
-	Epoch             EpochHandler
+	CoreMajorVersion  uint          `json:"coreMajorVersion"`
+	NetworkParameters NetworkParams `json:"networkParameters"`
+	Epoch             EpochHandler  `json:"epoch"`
 }
