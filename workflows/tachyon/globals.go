@@ -37,12 +37,15 @@ var CORE_MAJOR_VERSION uint = func() uint {
 }()
 
 // Pathes to 3 main direcories
+
 var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string
 
 // Global configs (resolved by <CONFIGS_PATH>, example available in workflows/tachyon/templates/configs.json)
+
 var CONFIGS map[string]interface{}
 
 // Load genesis from JSON file to pre-set the state
+
 var GENESIS map[string]interface{}
 
 var GLOBAL_CACHES = struct {
@@ -50,10 +53,12 @@ var GLOBAL_CACHES = struct {
 		slice []Transaction
 		mutex sync.RWMutex
 	}
+
 	APPROVEMENT_THREAD_CACHE map[string]interface{}
 }{
 	APPROVEMENT_THREAD_CACHE: make(map[string]interface{}),
 }
+
 var GENERATION_THREAD threads.GenerationThread
 
 var APPROVEMENT_THREAD threads.ApprovementThread

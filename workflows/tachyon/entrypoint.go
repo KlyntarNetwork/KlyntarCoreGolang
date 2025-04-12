@@ -22,16 +22,10 @@ func RunBlockchain() {
 	//✅3.Thread to propose AEFPs to move to next epoch
 	go life.NewEpochProposerThread()
 
-	//✅4.Thread to track changes of leaders on shards
-	go life.LeadersSequenceeMonitoring()
-
-	//✅5.Function to build the temporary sequence of blocks to verify them
-	go life.BlocksOrderingForExecutionThread()
-
-	//✅6.Start to generate blocks
+	//✅4.Start to generate blocks
 	go life.BlocksGenerationThread()
 
-	//✅7.Start a separate thread to work with voting for blocks in a sync way (for security)
+	//✅5.Start a separate thread to work with voting for blocks in a sync way (for security)
 	go life.VotingThread()
 
 	// pass plain function to fasthttp

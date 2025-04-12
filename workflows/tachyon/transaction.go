@@ -1,8 +1,12 @@
 package tachyon
 
 type Transaction struct {
-	V                                uint
-	Fee, Creator, Sig, Type, SigType string
-	Nonce                            int
-	Payload                          map[string]interface{}
+	V       uint                   `json:"v"`
+	Fee     string                 `json:"fee"`
+	Creator string                 `json:"creator"`
+	Sig     string                 `json:"sig"`
+	Type    string                 `json:"type"`
+	SigType string                 `json:"sigType"`
+	Nonce   int                    `json:"nonce"`
+	Payload map[string]interface{} `json:"payload"`
 }
