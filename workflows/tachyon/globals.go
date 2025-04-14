@@ -49,6 +49,10 @@ var MEMPOOL struct {
 
 var APPROVEMENT_THREAD_CACHE = make(map[string]interface{})
 
+var FINALIZATION_PROOFS_CACHE = make(map[string]string)
+
+var TEMP_CACHE = make(map[string]interface{})
+
 var GENERATION_THREAD threads.GenerationThread
 
 var APPROVEMENT_THREAD threads.ApprovementThread
