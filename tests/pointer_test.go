@@ -32,7 +32,7 @@ func TestPointer(t *testing.T) {
 			}
 			globalObj.Store(newObj)
 			fmt.Printf("Writer: Updated to id=%d, hash=%s\n", newObj.id, newObj.hash)
-			time.Sleep(100 * time.Millisecond) // Имитация работы
+			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 
