@@ -36,9 +36,7 @@ var CORE_MAJOR_VERSION uint = func() uint {
 
 }()
 
-// Pathes to 3 main direcories
-
-var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string
+var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string // pathes to 3 main directories
 
 var CONFIGS, GENESIS map[string]interface{}
 
@@ -57,6 +55,6 @@ var GENERATION_THREAD threads.GenerationThread
 
 var APPROVEMENT_THREAD threads.ApprovementThread
 
-var BLOCKS, EPOCH_DATA, APPROVEMENT_THREAD_METADATA, FINALIZATION_VOTING_STATS *leveldb.DB = nil, nil, nil, nil
+var BLOCKS, EPOCH_DATA, APPROVEMENT_THREAD_METADATA, FINALIZATION_VOTING_STATS *leveldb.DB
 
 var VOTING_REQUESTS chan struct{}

@@ -15,5 +15,4 @@ type ApprovementThread struct {
 	CoreMajorVersion  uint          `json:"coreMajorVersion"`
 	NetworkParameters NetworkParams `json:"networkParameters"`
 	Epoch             EpochHandler  `json:"epoch"`
-	CurrentLeader     string        `json:"currentLeader"`
 }
