@@ -34,10 +34,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"os/user"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -51,55 +54,55 @@ func main() {
 
 	//_________________________________________________PRINT BANNER & GREETING_______________________________________________
 
-	KlyntarBannerPrint()
+	klyntarBannerPrint()
 
-	PrepareRequiredPath()
+	prepareRequiredPath()
 
 	//_____________________________________________________CONFIG_PROCESS____________________________________________________
 
-	// configsRawJson, readError := os.ReadFile(klyGlobals.CONFIGS_PATH + "/configs.json")
+	configsRawJson, readError := os.ReadFile(tachyon.CONFIGS_PATH + "/configs.json")
 
-	// if readError != nil {
+	if readError != nil {
 
-	// 	panic("Error while reading configs: " + readError.Error())
+		panic("Error while reading configs: " + readError.Error())
 
-	// }
+	}
 
-	// if err := json.Unmarshal(configsRawJson, &klyGlobals.CONFIGS); err != nil {
+	if err := json.Unmarshal(configsRawJson, &tachyon.CONFIGS); err != nil {
 
-	// 	panic("Error with configs parsing: " + err.Error())
+		panic("Error with configs parsing: " + err.Error())
 
-	// }
+	}
 
-	// //_____________________________________________________READ GENESIS______________________________________________________
+	//_____________________________________________________READ GENESIS______________________________________________________
 
-	// genesisRawJson, readError := os.ReadFile(klyGlobals.GENESIS_PATH + "/genesis.json")
+	genesisRawJson, readError := os.ReadFile(tachyon.GENESIS_PATH + "/genesis.json")
 
-	// if readError != nil {
+	if readError != nil {
 
-	// 	panic("Error while reading genesis: " + readError.Error())
+		panic("Error while reading genesis: " + readError.Error())
 
-	// }
+	}
 
-	// if err := json.Unmarshal(genesisRawJson, &klyGlobals.GENESIS); err != nil {
+	if err := json.Unmarshal(genesisRawJson, &tachyon.GENESIS); err != nil {
 
-	// 	panic("Error with genesis parsing: " + err.Error())
+		panic("Error with genesis parsing: " + err.Error())
 
-	// }
+	}
 
-	// //_________________________________________PREPARE DIRECTORIES FOR CHAINDATA_____________________________________________
+	//_________________________________________PREPARE DIRECTORIES FOR CHAINDATA_____________________________________________
 
-	// // Check if exists
-	// if _, err := os.Stat(klyGlobals.CHAINDATA_PATH); os.IsNotExist(err) {
+	// Check if exists
+	if _, err := os.Stat(tachyon.CHAINDATA_PATH); os.IsNotExist(err) {
 
-	// 	// If no - create
-	// 	if err := os.MkdirAll(klyGlobals.CHAINDATA_PATH, os.ModePerm); err != nil {
+		// If no - create
+		if err := os.MkdirAll(tachyon.CHAINDATA_PATH, os.ModePerm); err != nil {
 
-	// 		panic("Error with creating directory for chaindata: " + err.Error())
+			panic("Error with creating directory for chaindata: " + err.Error())
 
-	// 	}
+		}
 
-	// }
+	}
 
 	currentUser, _ := user.Current()
 
@@ -107,14 +110,14 @@ func main() {
 
 	utils.LogWithTime(statsStringToPrint, utils.CYAN_COLOR)
 
-	go SignalHandler()
+	go signalHandler()
 
 	// Funtion that runs the main logic
 	tachyon.RunBlockchain()
 
 }
 
-func KlyntarBannerPrint() {
+func klyntarBannerPrint() {
 
 	var finalArt string
 
@@ -167,52 +170,51 @@ func KlyntarBannerPrint() {
 }
 
 // Function to resolve the path to 3 main directories - CHAINDATA, GENESIS, CONFIGS
-func PrepareRequiredPath() {
+func prepareRequiredPath() {
 
-	if os.Getenv("CHANDATA_PATH") == "" {
+	baseDir := os.Getenv("SYMBIOTE_DIR")
 
-		tachyon.CHAINDATA_PATH = "CHAINDATA"
+	if baseDir == "" {
 
-	} else {
-
-		tachyon.CHAINDATA_PATH = os.Getenv("CHANDATA_PATH")
+		log.Fatal("SYMBIOTE_DIR environment variable is not set")
 
 	}
 
-	if os.Getenv("GENESIS_PATH") == "" {
+	baseDir = strings.TrimRight(baseDir, "/")
 
-		tachyon.GENESIS_PATH = "GENESIS"
+	if !filepath.IsAbs(baseDir) {
 
-	} else {
-
-		tachyon.GENESIS_PATH = os.Getenv("GENESIS_PATH")
+		log.Fatalf("SYMBIOTE_DIR must be an absolute path, got: %s", baseDir)
 
 	}
 
-	if os.Getenv("CONFIGS_PATH") == "" {
+	tachyon.CHAINDATA_PATH = baseDir + "/CHAINDATA"
 
-		tachyon.CONFIGS_PATH = "CONFIGS"
+	tachyon.GENESIS_PATH = baseDir + "/GENESIS"
 
-	} else {
-
-		tachyon.CONFIGS_PATH = os.Getenv("CONFIGS_PATH")
-
-	}
+	tachyon.CONFIGS_PATH = baseDir + "/CONFIGS"
 
 }
 
 // Function to handle Ctrl+C interruptions
-func SignalHandler() {
+func signalHandler() {
 
-	// Channl to get notifications from OS
+	// Channel to get notifications from OS
 	sig := make(chan os.Signal, 1)
+
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 
 	// Wait for a signal
+
 	<-sig
 
 	//...and once get it - graceful terminate all sensitive logic
-	fmt.Println("Signal hook")
+
+	utils.LogWithTime("\x1b[31;1mKLYNTAR\x1b[36;1m stop has been initiated.Keep waiting...", utils.CYAN_COLOR)
+
+	utils.LogWithTime("Closing server connections...", utils.CYAN_COLOR)
+
+	utils.LogWithTime("Node was gracefully stopped", utils.CYAN_COLOR)
 
 	os.Exit(0)
 
