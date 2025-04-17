@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/threads"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -38,7 +38,8 @@ var CORE_MAJOR_VERSION uint = func() uint {
 
 var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string // pathes to 3 main directories
 
-var CONFIGS, GENESIS map[string]any
+var CONFIGURATION structures.NodeLevelConfig
+var GENESIS structures.Genesis
 
 var MEMPOOL struct {
 	slice []Transaction
@@ -51,9 +52,9 @@ var FINALIZATION_PROOFS_CACHE = make(map[string]map[string]string)
 
 var TEMP_CACHE = make(map[string]any)
 
-var GENERATION_THREAD threads.GenerationThread
+var GENERATION_THREAD structures.GenerationThread
 
-var APPROVEMENT_THREAD threads.ApprovementThread
+var APPROVEMENT_THREAD structures.ApprovementThread
 
 var BLOCKS, EPOCH_DATA, APPROVEMENT_THREAD_METADATA, FINALIZATION_VOTING_STATS *leveldb.DB
 

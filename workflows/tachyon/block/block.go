@@ -1,4 +1,4 @@
-package structures
+package block
 
 import (
 	"encoding/json"
@@ -23,7 +23,7 @@ func (block *Block) getHash() string {
 
 	jsonedTransactions, _ := json.Marshal(block.Transactions)
 
-	networkID, _ := tachyon.GENESIS["NETWORK_ID"].(string)
+	networkID := ""
 
 	dataToHash := block.Creator + string(block.Time) + string(jsonedTransactions) + networkID + block.Epoch + string(block.Index) + block.PrevHash
 

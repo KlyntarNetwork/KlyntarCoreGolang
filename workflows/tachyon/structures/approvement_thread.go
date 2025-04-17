@@ -1,4 +1,4 @@
-package threads
+package structures
 
 type NetworkParams struct {
 	ValidatorStake        int64 `json:"validatorStake"`

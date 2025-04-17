@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/threads"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 
@@ -54,7 +53,7 @@ func VerifyAggregatedEpochFinalizationProof(
 
 func VerifyAggregatedFinalizationProof(
 	proof *structures.AggregatedFinalizationProof,
-	epochHandler *threads.EpochHandler,
+	epochHandler *structures.EpochHandler,
 ) bool {
 
 	epochFullID := epochHandler.Hash + "#" + strconv.FormatUint(uint64(epochHandler.Id), 10)
@@ -84,10 +83,10 @@ func VerifyAggregatedFinalizationProof(
 	return uint(okSignatures) >= majority
 }
 
-func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandler *threads.EpochHandler) {
+func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandler *structures.EpochHandler) {
 }
 
-func GetFirstBlockInEpoch(epochHandler *threads.EpochHandler) {}
+func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) {}
 
 func VerifyAggregatedLeaderRotationProof() {}
 

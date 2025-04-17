@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/threads"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
 )
 
 type ValidatorData struct {
@@ -30,7 +30,7 @@ func GetFromApprovementThreadState(recordID string) any {
 
 }
 
-func SetLeadersSequence(epochHandler *threads.EpochHandler, epochSeed string) error {
+func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string) error {
 
 	// epochHandler.LeaderSequence = []string{} // [pool0, pool1,...poolN]
 
@@ -102,7 +102,7 @@ func SetLeadersSequence(epochHandler *threads.EpochHandler, epochSeed string) er
 	return nil
 }
 
-func GetQuorumMajority(epochHandler *threads.EpochHandler) uint {
+func GetQuorumMajority(epochHandler *structures.EpochHandler) uint {
 
 	quorumSize := len(epochHandler.Quorum)
 

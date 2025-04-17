@@ -1,4 +1,4 @@
-package threads
+package structures
 
 type GenerationThread struct {
 	EpochFullId string   `json:"epochFullId"`

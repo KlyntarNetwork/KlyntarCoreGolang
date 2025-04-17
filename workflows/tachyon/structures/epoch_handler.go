@@ -1,4 +1,4 @@
-package threads
+package structures
 
 type EpochHandler struct {
 	Id                 uint     `json:"id"`
@@ -8,5 +8,5 @@ type EpochHandler struct {
 	Quorum             []string `json:"quorum"`
 	LeaderSequence     []string `json:"leaderSequence"`
 	StartTimestamp     uint64   `json:"startTimestamp"`
-	CurrentLeaderIndex string   `json:"currentLeaderIndex"`
+	CurrentLeaderIndex uint     `json:"currentLeaderIndex"`
 }

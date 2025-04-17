@@ -68,7 +68,7 @@ func main() {
 
 	}
 
-	if err := json.Unmarshal(configsRawJson, &tachyon.CONFIGS); err != nil {
+	if err := json.Unmarshal(configsRawJson, &tachyon.CONFIGURATION); err != nil {
 
 		panic("Error with configs parsing: " + err.Error())
 
@@ -112,7 +112,7 @@ func main() {
 
 	go signalHandler()
 
-	// Funtion that runs the main logic
+	// Function that runs the main logic
 	tachyon.RunBlockchain()
 
 }
