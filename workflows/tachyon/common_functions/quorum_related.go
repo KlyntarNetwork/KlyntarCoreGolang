@@ -1,7 +1,6 @@
 package common_functions
 
 import (
-	"math"
 	"math/big"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
@@ -13,7 +12,7 @@ type ValidatorData struct {
 	TotalStake      *big.Int
 }
 
-func GetFromApprovementThreadState(recordID string) interface{} {
+func GetFromApprovementThreadState(recordID string) any {
 
 	if val, ok := tachyon.APPROVEMENT_THREAD_CACHE[recordID]; ok {
 		return val
@@ -31,7 +30,7 @@ func GetFromApprovementThreadState(recordID string) interface{} {
 
 }
 
-func setLeadersSequence(epochHandler *threads.EpochHandler, epochSeed string) error {
+func SetLeadersSequence(epochHandler *threads.EpochHandler, epochSeed string) error {
 
 	// epochHandler.LeaderSequence = []string{} // [pool0, pool1,...poolN]
 
@@ -103,18 +102,17 @@ func setLeadersSequence(epochHandler *threads.EpochHandler, epochSeed string) er
 	return nil
 }
 
-func getQuorumMajority(epochHandler *threads.EpochHandler) uint {
+func GetQuorumMajority(epochHandler *threads.EpochHandler) uint {
 
 	quorumSize := len(epochHandler.Quorum)
 
-	majority := int(math.Floor(float64(quorumSize)*2/3)) + 1
+	majority := (2 * quorumSize) / 3
+
+	majority += 1
 
 	if majority > quorumSize {
-
 		return uint(quorumSize)
-
 	}
 
 	return uint(majority)
-
 }

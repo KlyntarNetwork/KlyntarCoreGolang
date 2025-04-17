@@ -38,18 +38,18 @@ var CORE_MAJOR_VERSION uint = func() uint {
 
 var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string // pathes to 3 main directories
 
-var CONFIGS, GENESIS map[string]interface{}
+var CONFIGS, GENESIS map[string]any
 
 var MEMPOOL struct {
 	slice []Transaction
 	mutex sync.RWMutex
 }
 
-var APPROVEMENT_THREAD_CACHE = make(map[string]interface{})
+var APPROVEMENT_THREAD_CACHE = make(map[string]any)
 
 var FINALIZATION_PROOFS_CACHE = make(map[string]map[string]string)
 
-var TEMP_CACHE = make(map[string]interface{})
+var TEMP_CACHE = make(map[string]any)
 
 var GENERATION_THREAD threads.GenerationThread
 
