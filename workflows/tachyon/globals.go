@@ -38,6 +38,14 @@ var CORE_MAJOR_VERSION uint = func() uint {
 
 var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string // pathes to 3 main directories
 
+func openDB(dbName string) *leveldb.DB {
+	db, err := leveldb.OpenFile(CHAINDATA_PATH+"/"+dbName, nil)
+	if err != nil {
+		panic("Impossible to open db : " + dbName + " =>" + err.Error())
+	}
+	return db
+}
+
 var CONFIGURATION structures.NodeLevelConfig
 var GENESIS structures.Genesis
 
@@ -46,7 +54,7 @@ var MEMPOOL struct {
 	mutex sync.RWMutex
 }
 
-var APPROVEMENT_THREAD_CACHE = make(map[string]any)
+var APPROVEMENT_THREAD_CACHE = make(map[string]*structures.Pool)
 
 var FINALIZATION_PROOFS_CACHE = make(map[string]map[string]string)
 
@@ -56,6 +64,11 @@ var GENERATION_THREAD structures.GenerationThread
 
 var APPROVEMENT_THREAD structures.ApprovementThread
 
-var BLOCKS, EPOCH_DATA, APPROVEMENT_THREAD_METADATA, FINALIZATION_VOTING_STATS *leveldb.DB
+var (
+	BLOCKS                      = openDB("BLOCKS")
+	EPOCH_DATA                  = openDB("EPOCH_DATA")
+	APPROVEMENT_THREAD_METADATA = openDB("APPROVEMENT_THREAD_METADATA")
+	FINALIZATION_VOTING_STATS   = openDB("FINALIZATION_VOTING_STATS")
+)
 
 var VOTING_REQUESTS chan struct{}

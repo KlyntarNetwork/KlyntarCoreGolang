@@ -88,6 +88,46 @@ func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandle
 
 func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) {}
 
-func VerifyAggregatedLeaderRotationProof() {}
+func VerifyAggregatedLeaderRotationProof(
+	pubKeyOfSomePreviousLeader string,
+	proof *structures.AggregatedLeaderRotationProof,
+	epochHandler *structures.EpochHandler,
+) bool {
+
+	epochFullID := epochHandler.Hash + "#" + strconv.FormatUint(uint64(epochHandler.Id), 10)
+
+	dataThatShouldBeSigned := fmt.Sprintf(
+		"LEADER_ROTATION_PROOF:%s:%s:%d:%s:%s",
+		pubKeyOfSomePreviousLeader,
+		proof.FirstBlockHash,
+		proof.SkipIndex,
+		proof.SkipHash,
+		epochFullID,
+	)
+
+	majority := GetQuorumMajority(epochHandler)
+
+	okSignatures := 0
+	seen := make(map[string]bool)
+	quorumMap := make(map[string]bool)
+
+	for _, pk := range epochHandler.Quorum {
+		quorumMap[strings.ToLower(pk)] = true
+	}
+
+	for pubKey, signature := range proof.Proofs {
+
+		if ed25519.VerifySignature(dataThatShouldBeSigned, pubKey, signature) {
+			loweredPubKey := strings.ToLower(pubKey)
+			if quorumMap[loweredPubKey] && !seen[loweredPubKey] {
+				seen[loweredPubKey] = true
+				okSignatures++
+			}
+		}
+	}
+
+	return uint(okSignatures) >= majority
+
+}
 
 func CheckAlrpChainValidity() {}

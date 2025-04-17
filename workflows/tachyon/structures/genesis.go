@@ -1,5 +1,7 @@
 package structures
 
+import "math/big"
+
 type NetworkCreatorsContact struct {
 	Telegram string `json:"telegram"`
 	Email    string `json:"email"`
@@ -22,14 +24,14 @@ type NetworkParameters struct {
 }
 
 type Staker struct {
-	Kly string `json:"kly"`
-	Uno string `json:"uno"`
+	Kly *big.Int `json:"kly"`
+	Uno *big.Int `json:"uno"`
 }
 
 type Pool struct {
 	Percentage     int               `json:"percentage"`
-	TotalStakedKly string            `json:"totalStakedKly"`
-	TotalStakedUno string            `json:"totalStakedUno"`
+	TotalStakedKly *big.Int          `json:"totalStakedKly"`
+	TotalStakedUno *big.Int          `json:"totalStakedUno"`
 	Stakers        map[string]Staker `json:"stakers"`
 	PoolURL        string            `json:"poolURL"`
 	WssPoolURL     string            `json:"wssPoolURL"`

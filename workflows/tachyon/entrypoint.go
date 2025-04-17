@@ -2,6 +2,8 @@ package tachyon
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/life"
 	"github.com/valyala/fasthttp"
@@ -9,7 +11,7 @@ import (
 
 func RunBlockchain() {
 
-	PrepareBlockchain()
+	prepareBlockchain()
 
 	//_________________________ RUN SEVERAL THREADS _________________________
 
@@ -28,11 +30,14 @@ func RunBlockchain() {
 	//✅5.Start a separate thread to work with voting for blocks in a sync way (for security)
 	go life.VotingThread()
 
-	// pass plain function to fasthttp
+	serverAddr := CONFIGURATION.Interface + ":" + strconv.Itoa(CONFIGURATION.Port)
 
-	// port := klyGlobals.CONFIGS["PORT"].(string)
+	err := fasthttp.ListenAndServe(serverAddr, fastHTTPHandler)
 
-	fasthttp.ListenAndServe(":8080", fastHTTPHandler)
+	if err != nil {
+		log.Fatalf("Error in server: %s", err)
+	}
+
 }
 
 // request handler in fasthttp style, i.e. just plain function.
@@ -40,10 +45,6 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 	fmt.Fprintf(ctx, CONFIGS_PATH+"   => Hi there! RequestURI is %q", ctx.RequestURI())
 }
 
-func PrepareBlockchain() {
-
-}
-
-func CallBootStrapNodes() {
+func prepareBlockchain() {
 
 }
