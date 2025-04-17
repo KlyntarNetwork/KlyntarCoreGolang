@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
-
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
+	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 
 type Block struct {
@@ -14,13 +14,13 @@ type Block struct {
 	Time         uint64                `json:"time"`
 	Epoch        string                `json:"epoch"`
 	Transactions []tachyon.Transaction `json:"transactions"`
-	ExtraData    []string              `json:"extraData"`
+	ExtraData    map[string]any        `json:"extraData"`
 	Index        uint32                `json:"index"`
 	PrevHash     string                `json:"prevHash"`
 	Sig          string                `json:"sig"`
 }
 
-func (block *Block) getHash() string {
+func (block *Block) GetHash() string {
 
 	jsonedTransactions, _ := json.Marshal(block.Transactions)
 
@@ -29,5 +29,17 @@ func (block *Block) getHash() string {
 	dataToHash := block.Creator + strconv.FormatUint(block.Time, 10) + string(jsonedTransactions) + networkID + block.Epoch + strconv.FormatUint(uint64(block.Index), 10) + block.PrevHash
 
 	return utils.Blake3(dataToHash)
+
+}
+
+func (block *Block) SignBlock() {
+
+	block.Sig = ed25519.GenerateSignature(tachyon.CONFIGURATION.PrivateKey, block.GetHash())
+
+}
+
+func (block *Block) VerifySignature() bool {
+
+	return ed25519.VerifySignature(block.GetHash(), block.Creator, block.Sig)
 
 }
