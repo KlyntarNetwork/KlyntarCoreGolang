@@ -40,7 +40,7 @@ func GetFromApprovementThreadState(poolId string) *structures.Pool {
 
 }
 
-func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string) error {
+func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string) {
 
 	epochHandler.LeaderSequence = []string{} // [pool0, pool1,...poolN]
 
@@ -107,7 +107,6 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 
 	}
 
-	return nil
 }
 
 func GetQuorumMajority(epochHandler *structures.EpochHandler) uint {
@@ -125,32 +124,81 @@ func GetQuorumMajority(epochHandler *structures.EpochHandler) uint {
 	return uint(majority)
 }
 
-func GetQuorumUrlsAndPubkeys(epochHandler *structures.EpochHandler) uint {
+func GetQuorumUrlsAndPubkeys(epochHandler *structures.EpochHandler) []structures.QuorumMemberData {
 
-	quorumSize := len(epochHandler.Quorum)
+	var toReturn []structures.QuorumMemberData
 
-	majority := (2 * quorumSize) / 3
+	for _, pubKey := range epochHandler.Quorum {
 
-	majority += 1
+		poolStorage := GetFromApprovementThreadState(pubKey + "(POOL)_STORAGE_POOL")
 
-	if majority > quorumSize {
-		return uint(quorumSize)
+		toReturn = append(toReturn, structures.QuorumMemberData{PubKey: pubKey, Url: poolStorage.PoolURL})
+
 	}
 
-	return uint(majority)
+	return toReturn
+
 }
 
-func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler) uint {
+func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int, newEpochSeed string) []string {
 
-	quorumSize := len(epochHandler.Quorum)
+	if len(epochHandler.PoolsRegistry) <= quorumSize {
 
-	majority := (2 * quorumSize) / 3
+		return epochHandler.PoolsRegistry
 
-	majority += 1
-
-	if majority > quorumSize {
-		return uint(quorumSize)
 	}
 
-	return uint(majority)
+	quorum := []string{}
+
+	hashOfMetadataFromEpoch := utils.Blake3(newEpochSeed)
+
+	validatorsExtendedData := make(map[string]ValidatorData)
+	totalStakeSum := big.NewInt(0)
+
+	for _, validatorPubKey := range epochHandler.PoolsRegistry {
+		validatorData := GetFromApprovementThreadState(fmt.Sprintf("%v(POOL)_STORAGE_POOL", validatorPubKey))
+
+		totalStakeByThisValidator := new(big.Int)
+		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedKly)
+		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedUno)
+
+		validatorsExtendedData[validatorPubKey] = ValidatorData{
+			ValidatorPubKey: validatorPubKey,
+			TotalStake:      totalStakeByThisValidator,
+		}
+
+		totalStakeSum.Add(totalStakeSum, totalStakeByThisValidator)
+	}
+
+	for i := range quorumSize {
+
+		cumulativeSum := big.NewInt(0)
+
+		hashInput := fmt.Sprintf("%v_%v", hashOfMetadataFromEpoch, i)
+		deterministicRandomValue := new(big.Int)
+		deterministicRandomValue.SetString(utils.Blake3(hashInput), 16)
+		deterministicRandomValue.Mod(deterministicRandomValue, totalStakeSum)
+
+		for validatorPubKey, validator := range validatorsExtendedData {
+
+			cumulativeSum.Add(cumulativeSum, validator.TotalStake)
+
+			if deterministicRandomValue.Cmp(cumulativeSum) <= 0 {
+
+				quorum = append(quorum, validatorPubKey)
+
+				totalStakeSum.Sub(totalStakeSum, validator.TotalStake)
+
+				delete(validatorsExtendedData, validatorPubKey)
+
+				break
+
+			}
+
+		}
+
+	}
+
+	return quorum
+
 }

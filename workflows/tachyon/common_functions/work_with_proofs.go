@@ -44,11 +44,8 @@ func VerifyAggregatedEpochFinalizationProof(
 		}
 	}
 
-	if uint(okSignatures) >= majority {
-		return true
-	}
+	return uint(okSignatures) >= majority
 
-	return false
 }
 
 func VerifyAggregatedFinalizationProof(

@@ -2,6 +2,7 @@ package block
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 
@@ -23,9 +24,9 @@ func (block *Block) getHash() string {
 
 	jsonedTransactions, _ := json.Marshal(block.Transactions)
 
-	networkID := ""
+	networkID := tachyon.GENESIS.NetworkID
 
-	dataToHash := block.Creator + string(block.Time) + string(jsonedTransactions) + networkID + block.Epoch + string(block.Index) + block.PrevHash
+	dataToHash := block.Creator + strconv.FormatUint(block.Time, 10) + string(jsonedTransactions) + networkID + block.Epoch + strconv.FormatUint(uint64(block.Index), 10) + block.PrevHash
 
 	return utils.Blake3(dataToHash)
 
