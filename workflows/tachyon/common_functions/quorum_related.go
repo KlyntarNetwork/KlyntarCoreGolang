@@ -4,12 +4,31 @@ import (
 	"math"
 	"math/big"
 
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/threads"
 )
 
 type ValidatorData struct {
 	ValidatorPubKey string
 	TotalStake      *big.Int
+}
+
+func GetFromApprovementThreadState(recordID string) interface{} {
+
+	if val, ok := tachyon.APPROVEMENT_THREAD_CACHE[recordID]; ok {
+		return val
+	}
+
+	data, err := tachyon.APPROVEMENT_THREAD_METADATA.Get([]byte(recordID), nil)
+
+	if err != nil {
+		return nil
+	}
+
+	tachyon.APPROVEMENT_THREAD_CACHE[recordID] = data
+
+	return data
+
 }
 
 func setLeadersSequence(epochHandler *threads.EpochHandler, epochSeed string) error {
