@@ -1,10 +1,10 @@
-package tachyon
+package main
 
 import (
 	"time"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 )
 
 func getUtcTimestamp() int64 {

@@ -47,8 +47,7 @@ import (
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 )
 
 func main() {
@@ -114,7 +113,8 @@ func main() {
 	go signalHandler()
 
 	// Function that runs the main logic
-	tachyon.RunBlockchain()
+
+	RunBlockchain()
 
 }
 

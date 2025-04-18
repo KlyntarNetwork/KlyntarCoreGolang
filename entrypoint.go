@@ -1,11 +1,11 @@
-package tachyon
+package main
 
 import (
 	"log"
 	"strconv"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/life"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/life"
 	"github.com/valyala/fasthttp"
 )
 

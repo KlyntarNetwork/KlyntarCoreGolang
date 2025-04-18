@@ -3,7 +3,7 @@ package routes
 import (
 	"fmt"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/valyala/fasthttp"
 )
 

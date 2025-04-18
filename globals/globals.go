@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/transaction"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/transaction"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
