@@ -23,6 +23,15 @@ type PivotSearchData struct {
 	FirstBlockHash    string
 }
 
+type FirstBlockAssumption struct {
+	IndexOfFirstBlockCreator int                                    `json:"indexOfFirstBlockCreator"`
+	AfpForSecondBlock        structures.AggregatedFinalizationProof `json:"afpForSecondBlock"`
+}
+
+type FirstBlockResult struct {
+	FirstBlockCreator, FirstBlockHash string
+}
+
 var CURRENT_PIVOT *PivotSearchData
 
 func GetBlock(epochIndex uint, blockCreator string, index uint, epochHandler *structures.EpochHandler) *block.Block {
@@ -37,32 +46,6 @@ func GetBlock(epochIndex uint, blockCreator string, index uint, epochHandler *st
 		if err == nil {
 			return blockParsed
 		}
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	url := fmt.Sprintf("%s/block/%s", tachyon.CONFIGURATION.GetBlocksURL, blockID)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-
-	if err == nil {
-
-		resp, err := http.DefaultClient.Do(req)
-
-		if err == nil && resp.StatusCode == http.StatusOK {
-
-			defer resp.Body.Close()
-
-			var block block.Block
-
-			if err := json.NewDecoder(resp.Body).Decode(&block); err == nil {
-
-				return &block
-
-			}
-
-		}
-
 	}
 
 	// Find from other nodes
@@ -280,13 +263,192 @@ func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandle
 	return nil
 }
 
-func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) {
+func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResult {
 
 	pivotData := CURRENT_PIVOT
 
 	if pivotData == nil {
 
+		allKnownNodes := GetQuorumUrlsAndPubkeys(epochHandler)
+
+		var wg sync.WaitGroup
+
+		responses := make(chan *FirstBlockAssumption, len(allKnownNodes))
+
+		for _, node := range allKnownNodes {
+			wg.Add(1)
+
+			go func(nodeUrl string) {
+				defer wg.Done()
+
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
+
+				req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/first_block_assumption/%d", nodeUrl, epochHandler.Id), nil)
+				if err != nil {
+					return
+				}
+
+				resp, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return
+				}
+				defer resp.Body.Close()
+
+				var prop FirstBlockAssumption
+				if err := json.NewDecoder(resp.Body).Decode(&prop); err != nil {
+					return
+				}
+
+				responses <- &prop
+			}(node.Url)
+		}
+
+		wg.Wait()
+		close(responses)
+
+		minimalIndexOfLeader := int(^uint(0) >> 1) // max int
+		var afpForSecondBlock *structures.AggregatedFinalizationProof
+
+		for prop := range responses {
+			if prop == nil {
+				continue
+			}
+
+			if prop.IndexOfFirstBlockCreator < 0 || prop.IndexOfFirstBlockCreator >= len(epochHandler.LeaderSequence) {
+				continue
+			}
+
+			firstBlockCreator := epochHandler.LeaderSequence[prop.IndexOfFirstBlockCreator]
+
+			if VerifyAggregatedFinalizationProof(&prop.AfpForSecondBlock, epochHandler) {
+
+				expectedSecondBlockID := fmt.Sprintf("%d:%s:1", epochHandler.Id, firstBlockCreator)
+
+				if expectedSecondBlockID == prop.AfpForSecondBlock.BlockID &&
+					prop.IndexOfFirstBlockCreator < minimalIndexOfLeader {
+
+					minimalIndexOfLeader = prop.IndexOfFirstBlockCreator
+					afpForSecondBlock = &prop.AfpForSecondBlock
+				}
+			}
+		}
+
+		if afpForSecondBlock != nil {
+
+			position := minimalIndexOfLeader
+			pivotPubKey := epochHandler.LeaderSequence[position]
+
+			firstBlockByPivot := GetBlock(epochHandler.Id, pivotPubKey, uint(0), epochHandler)
+			firstBlockHash := afpForSecondBlock.PrevBlockHash
+
+			if firstBlockByPivot != nil && firstBlockHash == firstBlockByPivot.GetHash() {
+
+				pivotData = &PivotSearchData{
+
+					Position:          position,
+					PivotPubKey:       pivotPubKey,
+					FirstBlockByPivot: firstBlockByPivot,
+					FirstBlockHash:    firstBlockHash,
+				}
+			}
+		}
 	}
+
+	if pivotData != nil {
+
+		// In pivot we have first block created in epoch by some pool
+
+		// Try to move closer to the beginning of the epochHandler.leadersSequence to find the real first block
+
+		// Based on ALRP in pivot block - find the real first block
+
+		blockToEnumerateAlrp := pivotData.FirstBlockByPivot
+
+		if pivotData.Position == 0 {
+
+			defer func() {
+				pivotData = nil
+			}()
+
+			return &FirstBlockResult{
+
+				FirstBlockCreator: pivotData.PivotPubKey,
+				FirstBlockHash:    pivotData.FirstBlockHash,
+			}
+		}
+
+		for position := pivotData.Position - 1; position >= 0; position-- {
+
+			previousPool := epochHandler.LeaderSequence[position]
+
+			raw, ok := blockToEnumerateAlrp.ExtraData["aggregatedLeadersRotationProofs"]
+
+			if !ok {
+				continue
+			}
+
+			jsonBytes, err := json.Marshal(raw)
+			if err != nil {
+				continue
+			}
+
+			var proofs map[string]structures.AggregatedLeaderRotationProof
+
+			if err := json.Unmarshal(jsonBytes, &proofs); err != nil {
+				continue
+			}
+
+			leaderRotationProof, ok := proofs[previousPool]
+			if !ok {
+				continue
+			}
+
+			if position == 0 {
+
+				defer func() {
+					pivotData = nil
+				}()
+
+				if leaderRotationProof.SkipIndex == -1 {
+					return &FirstBlockResult{
+						FirstBlockCreator: pivotData.PivotPubKey,
+						FirstBlockHash:    pivotData.FirstBlockHash,
+					}
+				} else {
+					return &FirstBlockResult{
+						FirstBlockCreator: previousPool,
+						FirstBlockHash:    leaderRotationProof.FirstBlockHash,
+					}
+				}
+
+			} else if leaderRotationProof.SkipIndex != -1 {
+
+				// Found new potential pivot
+
+				firstBlockByNewPivot := GetBlock(epochHandler.Id, previousPool, 0, epochHandler)
+
+				if firstBlockByNewPivot == nil {
+					return nil
+				}
+
+				if firstBlockByNewPivot.GetHash() == leaderRotationProof.FirstBlockHash {
+					pivotData = &PivotSearchData{
+						Position:          position,
+						PivotPubKey:       previousPool,
+						FirstBlockByPivot: firstBlockByNewPivot,
+						FirstBlockHash:    leaderRotationProof.FirstBlockHash,
+					}
+
+					break // break cycle to run the cycle later with new pivot
+				} else {
+					return nil
+				}
+			}
+		}
+	}
+
+	return nil
 
 }
 

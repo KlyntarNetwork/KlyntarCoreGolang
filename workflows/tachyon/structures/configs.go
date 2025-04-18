@@ -18,9 +18,6 @@ type NodeLevelConfig struct {
 	MyHostname                                          string                    `json:"MY_HOSTNAME"`
 	RouteTTL                                            RouteTTLConfig            `json:"ROUTE_TTL"`
 	RouteTriggers                                       RouteTriggersConfig       `json:"ROUTE_TRIGGERS"`
-	GetBlocksURL                                        string                    `json:"GET_BLOCKS_URL"`
-	GetAggregatedFinalizationProofURL                   string                    `json:"GET_AGGREGATED_FINALIZATION_PROOF_URL"`
-	GetPreviousEpochAggregatedFinalizationProofURL      string                    `json:"GET_PREVIOUS_EPOCH_AGGREGATED_FINALIZATION_PROOF_URL"`
 	Plugins                                             []string                  `json:"PLUGINS"`
 	Interface                                           string                    `json:"INTERFACE"`
 	Port                                                int                       `json:"PORT"`
