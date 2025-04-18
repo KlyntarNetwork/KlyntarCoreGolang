@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/block"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
@@ -38,7 +38,7 @@ func GetBlock(epochIndex uint, blockCreator string, index uint, epochHandler *st
 
 	blockID := fmt.Sprintf("%d:%s:%d", epochIndex, blockCreator, index)
 
-	blockAsBytes, err := tachyon.BLOCKS.Get([]byte(blockID), nil)
+	blockAsBytes, err := globals.BLOCKS.Get([]byte(blockID), nil)
 
 	if err == nil {
 		var blockParsed *block.Block
@@ -60,7 +60,7 @@ func GetBlock(epochIndex uint, blockCreator string, index uint, epochHandler *st
 
 	}
 
-	allKnownNodes := append(quorumUrls, tachyon.CONFIGURATION.BootstrapNodes...)
+	allKnownNodes := append(quorumUrls, globals.CONFIGURATION.BootstrapNodes...)
 
 	type result struct {
 		block *block.Block
@@ -71,7 +71,7 @@ func GetBlock(epochIndex uint, blockCreator string, index uint, epochHandler *st
 
 	for _, node := range allKnownNodes {
 
-		if node == tachyon.CONFIGURATION.MyHostname {
+		if node == globals.CONFIGURATION.MyHostname {
 			continue
 		}
 
@@ -192,7 +192,7 @@ func VerifyAggregatedFinalizationProof(
 
 func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandler *structures.EpochHandler) *structures.AggregatedFinalizationProof {
 
-	localAfpAsBytes, err := tachyon.EPOCH_DATA.Get([]byte("AFP:"+blockID), nil)
+	localAfpAsBytes, err := globals.EPOCH_DATA.Get([]byte("AFP:"+blockID), nil)
 
 	if err == nil {
 

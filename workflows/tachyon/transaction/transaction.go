@@ -1,4 +1,4 @@
-package tachyon
+package transaction
 
 type Transaction struct {
 	V       uint           `json:"v"`

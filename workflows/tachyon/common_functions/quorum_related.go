@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
 )
 
@@ -17,11 +17,11 @@ type ValidatorData struct {
 
 func GetFromApprovementThreadState(poolId string) *structures.Pool {
 
-	if val, ok := tachyon.APPROVEMENT_THREAD_CACHE[poolId]; ok {
+	if val, ok := globals.APPROVEMENT_THREAD_CACHE[poolId]; ok {
 		return val
 	}
 
-	data, err := tachyon.APPROVEMENT_THREAD_METADATA.Get([]byte(poolId), nil)
+	data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte(poolId), nil)
 	if err != nil {
 		return nil
 	}
@@ -34,7 +34,7 @@ func GetFromApprovementThreadState(poolId string) *structures.Pool {
 		return nil
 	}
 
-	tachyon.APPROVEMENT_THREAD_CACHE[poolId] = &pool
+	globals.APPROVEMENT_THREAD_CACHE[poolId] = &pool
 
 	return &pool
 

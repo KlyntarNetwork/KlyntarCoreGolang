@@ -1,4 +1,4 @@
-package tachyon
+package globals
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/transaction"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -50,7 +51,7 @@ var CONFIGURATION structures.NodeLevelConfig
 var GENESIS structures.Genesis
 
 var MEMPOOL struct {
-	slice []Transaction
+	slice []transaction.Transaction
 	mutex sync.RWMutex
 }
 

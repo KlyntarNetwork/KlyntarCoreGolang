@@ -48,6 +48,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
 )
 
 func main() {
@@ -60,7 +61,7 @@ func main() {
 
 	//_____________________________________________________CONFIG_PROCESS____________________________________________________
 
-	configsRawJson, readError := os.ReadFile(tachyon.CONFIGS_PATH + "/configs.json")
+	configsRawJson, readError := os.ReadFile(globals.CONFIGS_PATH + "/configs.json")
 
 	if readError != nil {
 
@@ -68,7 +69,7 @@ func main() {
 
 	}
 
-	if err := json.Unmarshal(configsRawJson, &tachyon.CONFIGURATION); err != nil {
+	if err := json.Unmarshal(configsRawJson, &globals.CONFIGURATION); err != nil {
 
 		panic("Error with configs parsing: " + err.Error())
 
@@ -76,7 +77,7 @@ func main() {
 
 	//_____________________________________________________READ GENESIS______________________________________________________
 
-	genesisRawJson, readError := os.ReadFile(tachyon.GENESIS_PATH + "/genesis.json")
+	genesisRawJson, readError := os.ReadFile(globals.GENESIS_PATH + "/genesis.json")
 
 	if readError != nil {
 
@@ -84,7 +85,7 @@ func main() {
 
 	}
 
-	if err := json.Unmarshal(genesisRawJson, &tachyon.GENESIS); err != nil {
+	if err := json.Unmarshal(genesisRawJson, &globals.GENESIS); err != nil {
 
 		panic("Error with genesis parsing: " + err.Error())
 
@@ -93,10 +94,10 @@ func main() {
 	//_________________________________________PREPARE DIRECTORIES FOR CHAINDATA_____________________________________________
 
 	// Check if exists
-	if _, err := os.Stat(tachyon.CHAINDATA_PATH); os.IsNotExist(err) {
+	if _, err := os.Stat(globals.CHAINDATA_PATH); os.IsNotExist(err) {
 
 		// If no - create
-		if err := os.MkdirAll(tachyon.CHAINDATA_PATH, os.ModePerm); err != nil {
+		if err := os.MkdirAll(globals.CHAINDATA_PATH, os.ModePerm); err != nil {
 
 			panic("Error with creating directory for chaindata: " + err.Error())
 
@@ -188,11 +189,11 @@ func prepareRequiredPath() {
 
 	}
 
-	tachyon.CHAINDATA_PATH = baseDir + "/CHAINDATA"
+	globals.CHAINDATA_PATH = baseDir + "/CHAINDATA"
 
-	tachyon.GENESIS_PATH = baseDir + "/GENESIS"
+	globals.GENESIS_PATH = baseDir + "/GENESIS"
 
-	tachyon.CONFIGS_PATH = baseDir + "/CONFIGS"
+	globals.CONFIGS_PATH = baseDir + "/CONFIGS"
 
 }
 

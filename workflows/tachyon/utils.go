@@ -3,6 +3,7 @@ package tachyon
 import (
 	"time"
 
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
 )
 
@@ -12,7 +13,7 @@ func getUtcTimestamp() int64 {
 
 func IsMyCoreVersionOld(thread *structures.ApprovementThread) bool {
 
-	return thread.CoreMajorVersion > CORE_MAJOR_VERSION
+	return thread.CoreMajorVersion > globals.CORE_MAJOR_VERSION
 
 }
 
@@ -29,9 +30,9 @@ type CurrentLeaderData struct {
 
 func GetCurrentLeader() CurrentLeaderData {
 
-	currentLeaderPubKey := APPROVEMENT_THREAD.Epoch.LeaderSequence[APPROVEMENT_THREAD.Epoch.CurrentLeaderIndex]
+	currentLeaderPubKey := globals.APPROVEMENT_THREAD.Epoch.LeaderSequence[globals.APPROVEMENT_THREAD.Epoch.CurrentLeaderIndex]
 
-	if currentLeaderPubKey == CONFIGURATION.PublicKey {
+	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
 
 		return CurrentLeaderData{isMeLeader: true, url: ""}
 
