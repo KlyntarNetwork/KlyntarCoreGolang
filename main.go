@@ -56,7 +56,7 @@ func main() {
 
 	klyntarBannerPrint()
 
-	prepareRequiredPath()
+	prepareRequiredPaths()
 
 	//_____________________________________________________CONFIG_PROCESS____________________________________________________
 
@@ -170,8 +170,8 @@ func klyntarBannerPrint() {
 
 }
 
-// Function to resolve the path to 3 main directories - CHAINDATA, GENESIS, CONFIGS
-func prepareRequiredPath() {
+// Function to resolve the paths to 3 main directories - CHAINDATA, GENESIS, CONFIGS
+func prepareRequiredPaths() {
 
 	baseDir := os.Getenv("SYMBIOTE_DIR")
 
