@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
 )
 
 type ValidatorData struct {

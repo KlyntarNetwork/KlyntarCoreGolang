@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/transaction"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -51,7 +50,7 @@ var CONFIGURATION structures.NodeLevelConfig
 var GENESIS structures.Genesis
 
 var MEMPOOL struct {
-	slice []transaction.Transaction
+	slice []structures.Transaction
 	mutex sync.RWMutex
 }
 

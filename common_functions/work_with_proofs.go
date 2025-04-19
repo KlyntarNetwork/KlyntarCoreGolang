@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/block"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/block"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 

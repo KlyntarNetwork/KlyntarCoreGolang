@@ -4,21 +4,21 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/globals"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/workflows/tachyon/transaction"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 
 type Block struct {
-	Creator      string                    `json:"creator"`
-	Time         uint64                    `json:"time"`
-	Epoch        string                    `json:"epoch"`
-	Transactions []transaction.Transaction `json:"transactions"`
-	ExtraData    map[string]any            `json:"extraData"`
-	Index        uint32                    `json:"index"`
-	PrevHash     string                    `json:"prevHash"`
-	Sig          string                    `json:"sig"`
+	Creator      string                   `json:"creator"`
+	Time         uint64                   `json:"time"`
+	Epoch        string                   `json:"epoch"`
+	Transactions []structures.Transaction `json:"transactions"`
+	ExtraData    map[string]any           `json:"extraData"`
+	Index        uint32                   `json:"index"`
+	PrevHash     string                   `json:"prevHash"`
+	Sig          string                   `json:"sig"`
 }
 
 func (block *Block) GetHash() string {
