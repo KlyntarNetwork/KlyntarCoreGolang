@@ -54,7 +54,7 @@ var MEMPOOL struct {
 	mutex sync.RWMutex
 }
 
-var APPROVEMENT_THREAD_CACHE = make(map[string]*structures.Pool)
+var APPROVEMENT_THREAD_CACHE = make(map[string]*structures.PoolStorage)
 
 var FINALIZATION_PROOFS_CACHE = make(map[string]map[string]string)
 

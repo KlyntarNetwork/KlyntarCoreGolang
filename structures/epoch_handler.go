@@ -6,7 +6,7 @@ type EpochHandler struct {
 	PoolsRegistry      []string `json:"poolsRegistry"`
 	ShardsRegistry     []string `json:"shardsRegistry"`
 	Quorum             []string `json:"quorum"`
-	LeaderSequence     []string `json:"leaderSequence"`
+	LeadersSequence    []string `json:"leadersSequence"`
 	StartTimestamp     uint64   `json:"startTimestamp"`
 	CurrentLeaderIndex uint     `json:"currentLeaderIndex"`
 }

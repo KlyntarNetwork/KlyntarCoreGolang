@@ -315,11 +315,11 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 				continue
 			}
 
-			if prop.IndexOfFirstBlockCreator < 0 || prop.IndexOfFirstBlockCreator >= len(epochHandler.LeaderSequence) {
+			if prop.IndexOfFirstBlockCreator < 0 || prop.IndexOfFirstBlockCreator >= len(epochHandler.LeadersSequence) {
 				continue
 			}
 
-			firstBlockCreator := epochHandler.LeaderSequence[prop.IndexOfFirstBlockCreator]
+			firstBlockCreator := epochHandler.LeadersSequence[prop.IndexOfFirstBlockCreator]
 
 			if VerifyAggregatedFinalizationProof(&prop.AfpForSecondBlock, epochHandler) {
 
@@ -337,7 +337,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 		if afpForSecondBlock != nil {
 
 			position := minimalIndexOfLeader
-			pivotPubKey := epochHandler.LeaderSequence[position]
+			pivotPubKey := epochHandler.LeadersSequence[position]
 
 			firstBlockByPivot := GetBlock(epochHandler.Id, pivotPubKey, uint(0), epochHandler)
 			firstBlockHash := afpForSecondBlock.PrevBlockHash
@@ -380,7 +380,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 
 		for position := pivotData.Position - 1; position >= 0; position-- {
 
-			previousPool := epochHandler.LeaderSequence[position]
+			previousPool := epochHandler.LeadersSequence[position]
 
 			raw, ok := blockToEnumerateAlrp.ExtraData["aggregatedLeadersRotationProofs"]
 
@@ -514,7 +514,7 @@ func CheckAlrpChainValidity(firstBlockInThisEpochByPool *block.Block, epochHandl
 
 		arrayForIteration := make([]string, position)
 
-		copy(arrayForIteration, epochHandler.LeaderSequence[:position])
+		copy(arrayForIteration, epochHandler.LeadersSequence[:position])
 
 		// Reverse slice
 		for i, j := 0, len(arrayForIteration)-1; i < j; i, j = i+1, j-1 {

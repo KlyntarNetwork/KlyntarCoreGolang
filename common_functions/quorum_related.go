@@ -15,7 +15,11 @@ type ValidatorData struct {
 	TotalStake      *big.Int
 }
 
-func GetFromApprovementThreadState(poolId string) *structures.Pool {
+type QuorumMemberData struct {
+	PubKey, Url string
+}
+
+func GetFromApprovementThreadState(poolId string) *structures.PoolStorage {
 
 	if val, ok := globals.APPROVEMENT_THREAD_CACHE[poolId]; ok {
 		return val
@@ -26,7 +30,7 @@ func GetFromApprovementThreadState(poolId string) *structures.Pool {
 		return nil
 	}
 
-	var pool structures.Pool
+	var pool structures.PoolStorage
 
 	err = json.Unmarshal(data, &pool)
 
@@ -42,7 +46,7 @@ func GetFromApprovementThreadState(poolId string) *structures.Pool {
 
 func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string) {
 
-	epochHandler.LeaderSequence = []string{} // [pool0, pool1,...poolN]
+	epochHandler.LeadersSequence = []string{} // [pool0, pool1,...poolN]
 
 	// Hash of metadata from the old epoch
 
@@ -93,7 +97,7 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 			if deterministicRandomValue.Cmp(cumulativeSum) <= 0 {
 
 				// Add the chosen validator to the leaders sequence
-				epochHandler.LeaderSequence = append(epochHandler.LeaderSequence, validatorPubKey)
+				epochHandler.LeadersSequence = append(epochHandler.LeadersSequence, validatorPubKey)
 
 				// Update totalStakeSum and remove the chosen validator from the map
 				totalStakeSum.Sub(totalStakeSum, validator.TotalStake)
@@ -124,15 +128,15 @@ func GetQuorumMajority(epochHandler *structures.EpochHandler) uint {
 	return uint(majority)
 }
 
-func GetQuorumUrlsAndPubkeys(epochHandler *structures.EpochHandler) []structures.QuorumMemberData {
+func GetQuorumUrlsAndPubkeys(epochHandler *structures.EpochHandler) []QuorumMemberData {
 
-	var toReturn []structures.QuorumMemberData
+	var toReturn []QuorumMemberData
 
 	for _, pubKey := range epochHandler.Quorum {
 
 		poolStorage := GetFromApprovementThreadState(pubKey + "(POOL)_STORAGE_POOL")
 
-		toReturn = append(toReturn, structures.QuorumMemberData{PubKey: pubKey, Url: poolStorage.PoolURL})
+		toReturn = append(toReturn, QuorumMemberData{PubKey: pubKey, Url: poolStorage.PoolURL})
 
 	}
 

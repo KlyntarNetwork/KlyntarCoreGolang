@@ -7,6 +7,11 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 )
 
+type CurrentLeaderData struct {
+	isMeLeader bool
+	url        string
+}
+
 func getUtcTimestamp() int64 {
 	return time.Now().UTC().UnixMilli()
 }
@@ -23,14 +28,9 @@ func EpochStillFresh(thread *structures.ApprovementThread) bool {
 
 }
 
-type CurrentLeaderData struct {
-	isMeLeader bool
-	url        string
-}
-
 func GetCurrentLeader() CurrentLeaderData {
 
-	currentLeaderPubKey := globals.APPROVEMENT_THREAD.Epoch.LeaderSequence[globals.APPROVEMENT_THREAD.Epoch.CurrentLeaderIndex]
+	currentLeaderPubKey := globals.APPROVEMENT_THREAD.Epoch.LeadersSequence[globals.APPROVEMENT_THREAD.Epoch.CurrentLeaderIndex]
 
 	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
 

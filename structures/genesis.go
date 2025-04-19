@@ -2,16 +2,6 @@ package structures
 
 import "math/big"
 
-type NetworkCreatorsContact struct {
-	Telegram string `json:"telegram"`
-	Email    string `json:"email"`
-	Tor      string `json:"tor"`
-}
-
-type Hostchain struct {
-	BlockWithGenesisCommit int `json:"blockWithGenesisCommit"`
-}
-
 type NetworkParameters struct {
 	ValidatorStake        int64 `json:"VALIDATOR_STAKE"`
 	MinimalStakePerEntity int64 `json:"MINIMAL_STAKE_PER_ENTITY"`
@@ -28,7 +18,7 @@ type Staker struct {
 	Uno *big.Int `json:"uno"`
 }
 
-type Pool struct {
+type PoolStorage struct {
 	Percentage     int               `json:"percentage"`
 	TotalStakedKly *big.Int          `json:"totalStakedKly"`
 	TotalStakedUno *big.Int          `json:"totalStakedUno"`
@@ -42,10 +32,10 @@ type Genesis struct {
 	Shard                    string                 `json:"SHARD"`
 	CoreMajorVersion         int                    `json:"CORE_MAJOR_VERSION"`
 	FirstEpochStartTimestamp int64                  `json:"FIRST_EPOCH_START_TIMESTAMP"`
-	NetworkCreatorsContact   NetworkCreatorsContact `json:"NETWORK_CREATORS_CONTACT"`
+	NetworkCreatorsContact   map[string]string      `json:"NETWORK_CREATORS_CONTACT"`
 	HiveMind                 []string               `json:"HIVEMIND"`
-	Hostchains               map[string]Hostchain   `json:"HOSTCHAINS"`
+	Hostchains               map[string]string      `json:"HOSTCHAINS"`
 	NetworkWorkflow          string                 `json:"NETWORK_WORKFLOW"`
 	NetworkParameters        NetworkParameters      `json:"NETWORK_PARAMETERS"`
-	Pools                    map[string]Pool        `json:"POOLS"`
+	Pools                    map[string]PoolStorage `json:"POOLS"`
 }

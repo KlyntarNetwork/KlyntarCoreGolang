@@ -29,7 +29,7 @@ type NodeLevelConfig struct {
 }
 
 type MyKlyInfrastructureConfig struct {
-	Redirects map[string]interface{} `json:"redirects"`
+	Redirects map[string]any `json:"redirects"`
 	Contact   struct {
 		Telegram string `json:"telegram"`
 	} `json:"contact"`
