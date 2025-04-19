@@ -1,11 +1,16 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/life"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/valyala/fasthttp"
 )
 
@@ -42,4 +47,78 @@ func RunBlockchain() {
 
 func prepareBlockchain() {
 
+	// Create dir
+	if _, err := os.Stat(globals.CHAINDATA_PATH); os.IsNotExist(err) {
+		if err := os.MkdirAll(globals.CHAINDATA_PATH, 0755); err != nil {
+			return
+		}
+	}
+
+	// Load GT
+	if data, err := globals.BLOCKS.Get([]byte("GT"), nil); err == nil && data != nil {
+		var gt structures.GenerationThread
+		if err := json.Unmarshal(data, &gt); err == nil {
+			globals.GENERATION_THREAD = gt
+		} else {
+
+			fmt.Println("failed to unmarshal GENERATION_THREAD: %w", err)
+
+			return
+
+		}
+	}
+
+	// Load AT
+	if data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("AT"), nil); err == nil && data != nil {
+		var at structures.ApprovementThread
+		if err := json.Unmarshal(data, &at); err == nil {
+			globals.APPROVEMENT_THREAD = at
+		} else {
+
+			fmt.Println("failed to unmarshal APPROVEMENT_THREAD: %w", err)
+
+			return
+
+		}
+	}
+
+	// Init genesis if version is -1
+	if globals.APPROVEMENT_THREAD.CoreMajorVersion == -1 {
+		// setGenesisToState()
+
+		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD)
+		if err != nil {
+			fmt.Println("failed to marshal APPROVEMENT_THREAD: %w", err)
+			return
+		}
+
+		if err := globals.APPROVEMENT_THREAD_METADATA.Put([]byte("AT"), serialized, nil); err != nil {
+			fmt.Println("failed to save APPROVEMENT_THREAD: %w", err)
+			return
+		}
+
+		return
+	}
+
+	// Version check
+	if IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD) {
+
+		utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
+
+		if data, err := os.ReadFile("images/events/update.txt"); err == nil {
+			fmt.Println(string(data))
+		}
+
+		gracefulStop()
+
+	}
+
 }
+
+func gracefulStop() {
+
+	fmt.Println("Shutting down node gracefully...")
+	os.Exit(0)
+}
+
+// func setGenesisToState() {}

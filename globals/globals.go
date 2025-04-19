@@ -9,22 +9,22 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-func GetCoreMajorVersion(versionFilePath string) (uint, error) {
+func GetCoreMajorVersion(versionFilePath string) (int, error) {
 
 	versionData, err := os.ReadFile(versionFilePath)
 	if err != nil {
 		return 0, err
 	}
 
-	majorVersion, err := strconv.ParseUint(string(versionData), 10, 64)
+	majorVersion, err := strconv.ParseInt(string(versionData), 10, 64)
 	if err != nil {
 		return 0, err
 	}
 
-	return uint(majorVersion), nil
+	return int(majorVersion), nil
 }
 
-var CORE_MAJOR_VERSION uint = func() uint {
+var CORE_MAJOR_VERSION int = func() int {
 
 	version, err := GetCoreMajorVersion("version.txt")
 

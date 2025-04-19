@@ -12,7 +12,7 @@ type NetworkParams struct {
 }
 
 type ApprovementThread struct {
-	CoreMajorVersion  uint          `json:"coreMajorVersion"`
+	CoreMajorVersion  int           `json:"coreMajorVersion"`
 	NetworkParameters NetworkParams `json:"networkParameters"`
 	Epoch             EpochHandler  `json:"epoch"`
 }
