@@ -3,6 +3,7 @@ package routes
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
@@ -77,7 +78,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	var proposition structures.EpochFinishProposition
+	var proposition structures.EpochFinishRequest
 
 	if err := json.Unmarshal(ctx.PostBody(), &proposition); err != nil {
 		sendJSON(ctx, map[string]any{"err": "Wrong format"})
@@ -90,20 +91,20 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 	epochIndex := epochHandler.Id
 
-	epochFullID := epochHandler.Hash + "#" + string(epochHandler.Id)
+	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(int(epochHandler.Id))
 
 	localIndexOfLeader := epochHandler.CurrentLeaderIndex
 
 	pubKeyOfCurrentLeader := epochHandler.LeadersSequence[localIndexOfLeader]
 
-	signalRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte("EPOCH_FINISH_RESPONSE:"+string(epochIndex)), nil)
+	signalRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte("EPOCH_FINISH_RESPONSE:"+strconv.Itoa(epochIndex)), nil)
 
 	if err != nil || signalRaw == nil {
 		sendJSON(ctx, map[string]any{"err": "Too early"})
 		return
 	}
 
-	votingMetadataForPool := string(epochIndex) + ":" + pubKeyOfCurrentLeader
+	votingMetadataForPool := strconv.Itoa(epochIndex) + ":" + pubKeyOfCurrentLeader
 
 	votingRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte(votingMetadataForPool), nil)
 
@@ -121,7 +122,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 		_ = json.Unmarshal(votingRaw, &votingData)
 	}
 
-	blockID := string(epochHandler.Id) + ":" + pubKeyOfCurrentLeader + ":0"
+	blockID := strconv.Itoa(epochIndex) + ":" + pubKeyOfCurrentLeader + ":0"
 
 	var hashOfFirstBlock string
 
@@ -143,8 +144,6 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 	}
 
-	response := map[string]any{}
-
 	if proposition.CurrentLeader == localIndexOfLeader {
 
 		if votingData.Index == proposition.LastBlockProposition.Index && votingData.Hash == proposition.LastBlockProposition.Hash {
@@ -157,32 +156,35 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 				epochFullID,
 			)
 
-			sig := ed25519.GenerateSignature(globals.CONFIGURATION.PrivateKey, dataToSign)
-
-			response = map[string]any{
-				"status": "OK",
-				"sig":    sig,
+			response := structures.EpochFinishResponseOk{
+				Status: "OK",
+				Sig:    ed25519.GenerateSignature(globals.CONFIGURATION.PrivateKey, dataToSign),
 			}
+
+			sendJSON(ctx, response)
 
 		} else if votingData.Index > proposition.LastBlockProposition.Index {
 
-			response = map[string]any{
-				"status":               "UPGRADE",
-				"currentLeader":        localIndexOfLeader,
-				"lastBlockProposition": votingData,
+			response := structures.EpochFinishResponseUpgrade{
+				Status:               "UPGRADE",
+				CurrentLeader:        localIndexOfLeader,
+				LastBlockProposition: votingData,
 			}
+
+			sendJSON(ctx, response)
 
 		}
 
 	} else if proposition.CurrentLeader < localIndexOfLeader {
 
-		response = map[string]any{
-			"status":               "UPGRADE",
-			"currentLeader":        localIndexOfLeader,
-			"lastBlockProposition": votingData,
+		response := structures.EpochFinishResponseUpgrade{
+			Status:               "UPGRADE",
+			CurrentLeader:        localIndexOfLeader,
+			LastBlockProposition: votingData,
 		}
+
+		sendJSON(ctx, response)
 
 	}
 
-	sendJSON(ctx, response)
 }

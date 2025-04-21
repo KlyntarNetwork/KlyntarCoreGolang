@@ -34,7 +34,7 @@ type FirstBlockResult struct {
 
 var CURRENT_PIVOT *PivotSearchData
 
-func GetBlock(epochIndex uint, blockCreator string, index uint, epochHandler *structures.EpochHandler) *block.Block {
+func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *structures.EpochHandler) *block.Block {
 
 	blockID := fmt.Sprintf("%d:%s:%d", epochIndex, blockCreator, index)
 

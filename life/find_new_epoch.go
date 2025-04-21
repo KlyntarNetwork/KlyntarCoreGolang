@@ -8,6 +8,6 @@ type FirstBlockDataWithAefp struct {
 	Aefp structures.AggregatedEpochFinalizationProof
 }
 
-var aefpAndFirstBlockData FirstBlockDataWithAefp
+var AEFP_AND_FIRST_BLOCK_DATA FirstBlockDataWithAefp
 
 func EpochRotationThread() {}

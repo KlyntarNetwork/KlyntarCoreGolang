@@ -72,3 +72,5 @@ var (
 )
 
 var VOTING_REQUESTS chan struct{}
+
+var SHOULD_GENERATE_BLOCKS, SHOULD_ROTATE_EPOCH bool

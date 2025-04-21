@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/lxzan/gws"
 )
 
@@ -73,9 +75,18 @@ func CreateWebsocketServer() {
 		}()
 	})
 
-	address := "0.0.0.0:6666"
+	wsInterface := globals.CONFIGURATION.WebSocketInterface
+
+	wsPort := globals.CONFIGURATION.WebSocketPort
+
+	address := wsInterface + ":" + strconv.Itoa(wsPort)
+
 	log.Printf("WebSocket server listening on %s\n", address)
+
 	if err := http.ListenAndServe(address, nil); err != nil {
+
 		log.Fatalf("WebSocket server failed: %v", err)
+
 	}
+
 }

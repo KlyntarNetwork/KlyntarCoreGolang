@@ -12,6 +12,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/life"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/valyala/fasthttp"
 )
@@ -44,6 +45,8 @@ func RunBlockchain() {
 	if err != nil {
 		log.Fatalf("Error in server: %s", err)
 	}
+
+	websocket.CreateWebsocketServer()
 
 }
 
