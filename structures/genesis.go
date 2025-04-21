@@ -25,13 +25,14 @@ type PoolStorage struct {
 	Stakers        map[string]Staker `json:"stakers"`
 	PoolURL        string            `json:"poolURL"`
 	WssPoolURL     string            `json:"wssPoolURL"`
+	Activated      bool              `json:"activated"`
 }
 
 type Genesis struct {
 	NetworkID                string                 `json:"NETWORK_ID"`
 	Shard                    string                 `json:"SHARD"`
 	CoreMajorVersion         int                    `json:"CORE_MAJOR_VERSION"`
-	FirstEpochStartTimestamp int64                  `json:"FIRST_EPOCH_START_TIMESTAMP"`
+	FirstEpochStartTimestamp uint64                 `json:"FIRST_EPOCH_START_TIMESTAMP"`
 	NetworkCreatorsContact   map[string]string      `json:"NETWORK_CREATORS_CONTACT"`
 	HiveMind                 []string               `json:"HIVEMIND"`
 	Hostchains               map[string]string      `json:"HOSTCHAINS"`

@@ -7,10 +7,12 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/life"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/valyala/fasthttp"
 )
 
@@ -84,7 +86,8 @@ func prepareBlockchain() {
 
 	// Init genesis if version is -1
 	if globals.APPROVEMENT_THREAD.CoreMajorVersion == -1 {
-		// setGenesisToState()
+
+		setGenesisToState()
 
 		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD)
 		if err != nil {
@@ -121,4 +124,67 @@ func gracefulStop() {
 	os.Exit(0)
 }
 
-// func setGenesisToState() {}
+func setGenesisToState() error {
+
+	batch := new(leveldb.Batch)
+
+	epochTimestamp := globals.GENESIS.FirstEpochStartTimestamp
+
+	poolsRegistryForEpochHandler := []string{}
+
+	shardsRegistry := []string{globals.GENESIS.Shard}
+
+	// __________________________________ Load info about pools __________________________________
+
+	for poolPubKey, poolStorage := range globals.GENESIS.Pools {
+
+		poolStorage.Activated = true
+
+		serialized, err := json.Marshal(poolStorage)
+
+		if err != nil {
+			return err
+		}
+
+		batch.Put([]byte(poolPubKey+"(POOL)_STORAGE_POOL"), serialized)
+
+		poolsRegistryForEpochHandler = append(poolsRegistryForEpochHandler, poolPubKey)
+
+	}
+
+	globals.APPROVEMENT_THREAD.CoreMajorVersion = globals.GENESIS.CoreMajorVersion
+
+	globals.APPROVEMENT_THREAD.NetworkParameters = globals.GENESIS.NetworkParameters
+
+	// Write batch
+	if err := globals.APPROVEMENT_THREAD_METADATA.Write(batch, nil); err != nil {
+		return err
+	}
+
+	hashInput := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" + globals.GENESIS.NetworkID
+
+	initEpochHash := utils.Blake3(hashInput)
+
+	// Create new epoch handler
+	epoch := structures.EpochHandler{
+		Id:                 0,
+		Hash:               initEpochHash,
+		PoolsRegistry:      poolsRegistryForEpochHandler,
+		ShardsRegistry:     shardsRegistry,
+		StartTimestamp:     epochTimestamp,
+		Quorum:             []string{}, // will be assigned
+		LeadersSequence:    []string{}, // will be assigned
+		CurrentLeaderIndex: 0,
+	}
+
+	// Assign quorum
+	epoch.Quorum = common_functions.GetCurrentEpochQuorum(&epoch, globals.APPROVEMENT_THREAD.NetworkParameters.QuorumSize, initEpochHash)
+
+	// Assign sequence of leaders
+	common_functions.SetLeadersSequence(&epoch, initEpochHash)
+
+	globals.APPROVEMENT_THREAD.Epoch = epoch
+
+	return nil
+
+}
