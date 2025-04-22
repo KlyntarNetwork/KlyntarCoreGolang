@@ -1,7 +1,10 @@
 package life
 
 import (
+	"context"
 	"encoding/json"
+	"io"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -25,6 +28,42 @@ func ExecuteDelayedTransaction(originalTx []byte, parsedTx system_contracts.Dela
 	if funcHandler, ok := system_contracts.DELAYED_TRANSACTIONS_MAP[parsedTx.Type]; ok {
 
 		funcHandler(originalTx)
+
+	}
+
+}
+
+func fetchAefp(ctx context.Context, url string, quorum []string, majority int, epochFullID string, resultCh chan<- *structures.AggregatedEpochFinalizationProof) {
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	var aefp *structures.AggregatedEpochFinalizationProof
+
+	err = json.Unmarshal(body, aefp)
+
+	if err == nil {
+
+		if common_functions.VerifyAggregatedEpochFinalizationProof(aefp, quorum, majority, epochFullID) {
+
+			select {
+
+			case resultCh <- aefp:
+			case <-ctx.Done():
+
+			}
+
+		}
 
 	}
 
@@ -74,6 +113,31 @@ func EpochRotationThread() {
 
 						// Ask quorum for AEFP
 
+						resultCh := make(chan *structures.AggregatedEpochFinalizationProof, 1)
+
+						ctx, cancel := context.WithCancel(context.Background())
+
+						defer cancel() // safety net
+
+						for _, quorumMember := range quorumMembers {
+
+							go fetchAefp(ctx, quorumMember.Url, epochHandler.Quorum, majority, epochFullID, resultCh)
+
+						}
+
+						select {
+
+						case value := <-resultCh:
+
+							AEFP_AND_FIRST_BLOCK_DATA.Aefp = value
+							cancel()
+
+						case <-time.After(10 * time.Second):
+
+							cancel()
+
+						}
+
 					}
 
 				}
@@ -101,6 +165,14 @@ func EpochRotationThread() {
 				firstBlock := common_functions.GetBlock(epochHandler.Id, AEFP_AND_FIRST_BLOCK_DATA.FirstBlockCreator, 0, &epochHandler)
 
 				if firstBlock != nil && firstBlock.GetHash() == AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash {
+
+					delayedTransactionsToExecute := [][]byte{}
+
+					latestBatchIndexRaw, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("LATEST_BATCH_INDEX"), nil)
+
+					if delayedTransactionsBatchRaw, ok := firstBlock.ExtraData["delayedTxsBatch"]; ok {
+
+					}
 
 				}
 

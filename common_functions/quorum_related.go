@@ -113,7 +113,7 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 
 }
 
-func GetQuorumMajority(epochHandler *structures.EpochHandler) uint {
+func GetQuorumMajority(epochHandler *structures.EpochHandler) int {
 
 	quorumSize := len(epochHandler.Quorum)
 
@@ -122,10 +122,10 @@ func GetQuorumMajority(epochHandler *structures.EpochHandler) uint {
 	majority += 1
 
 	if majority > quorumSize {
-		return uint(quorumSize)
+		return quorumSize
 	}
 
-	return uint(majority)
+	return majority
 }
 
 func GetQuorumUrlsAndPubkeys(epochHandler *structures.EpochHandler) []QuorumMemberData {

@@ -9,7 +9,7 @@ BIN_NAME="klyntar"
 
 echo -e "\e[43mFetching dependencies ...\e[49m"
 
-go get ./...
+go mod download
 
 echo -e "\e[42mCore building process started\e[49m"
 
@@ -19,7 +19,7 @@ echo -e "\e[42mCore building process started\e[49m"
 
 # Build the core
 
-go build -o "$BIN_NAME" ./main.go
+go build -o "$BIN_NAME" .
 
 # Check if OK
 

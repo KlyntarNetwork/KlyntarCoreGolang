@@ -122,7 +122,7 @@ func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *str
 func VerifyAggregatedEpochFinalizationProof(
 	proofStruct *structures.AggregatedEpochFinalizationProof,
 	quorum []string,
-	majority uint,
+	majority int,
 	epochFullID string,
 ) bool {
 
@@ -154,7 +154,7 @@ func VerifyAggregatedEpochFinalizationProof(
 		}
 	}
 
-	return uint(okSignatures) >= majority
+	return okSignatures >= majority
 
 }
 
@@ -163,7 +163,7 @@ func VerifyAggregatedFinalizationProof(
 	epochHandler *structures.EpochHandler,
 ) bool {
 
-	epochFullID := epochHandler.Hash + "#" + strconv.FormatUint(uint64(epochHandler.Id), 10)
+	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 	dataThatShouldBeSigned := proof.PrevBlockHash + proof.BlockID + proof.BlockHash + epochFullID
 
 	majority := GetQuorumMajority(epochHandler)
@@ -187,7 +187,7 @@ func VerifyAggregatedFinalizationProof(
 		}
 	}
 
-	return uint(okSignatures) >= majority
+	return okSignatures >= majority
 }
 
 func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandler *structures.EpochHandler) *structures.AggregatedFinalizationProof {
@@ -307,7 +307,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 		wg.Wait()
 		close(responses)
 
-		minimalIndexOfLeader := int(^uint(0) >> 1) // max int
+		minimalIndexOfLeader := 100_000_000
 		var afpForSecondBlock *structures.AggregatedFinalizationProof
 
 		for prop := range responses {
@@ -458,7 +458,7 @@ func VerifyAggregatedLeaderRotationProof(
 	epochHandler *structures.EpochHandler,
 ) bool {
 
-	epochFullID := epochHandler.Hash + "#" + strconv.FormatUint(uint64(epochHandler.Id), 10)
+	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
 	dataThatShouldBeSigned := fmt.Sprintf(
 		"LEADER_ROTATION_PROOF:%s:%s:%d:%s:%s",
@@ -490,7 +490,7 @@ func VerifyAggregatedLeaderRotationProof(
 		}
 	}
 
-	return uint(okSignatures) >= majority
+	return okSignatures >= majority
 
 }
 

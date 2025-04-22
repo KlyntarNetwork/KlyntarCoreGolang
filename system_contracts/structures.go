@@ -8,6 +8,12 @@ type DelayedTransaction struct {
 	Type string
 }
 
+type DelayedTransactionsBatch struct {
+	EpochIndex          int                  `json:"epochIndex"`
+	DelayedTransactions []DelayedTransaction `json:"delayedTransactions"`
+	Proofs              map[string]string    `json:"proofs"`
+}
+
 type CreateStakingPoolTx struct {
 	Type       string `json:"type"`
 	Creator    string `json:"creator"`
