@@ -5,8 +5,7 @@ import (
 )
 
 type DelayedTransaction struct {
-	Type    string
-	Payload any
+	Type string
 }
 
 type CreateStakingPoolTx struct {

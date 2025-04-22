@@ -107,7 +107,7 @@ func prepareBlockchain() {
 	}
 
 	// Version check
-	if IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD) {
+	if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD) {
 
 		utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
 
