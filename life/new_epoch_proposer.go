@@ -257,7 +257,7 @@ func NewEpochProposerThread() {
 
 			}
 
-			if len(QUORUM_AGREEMENTS) >= int(majority) {
+			if len(QUORUM_AGREEMENTS) >= majority {
 
 				aggregatedEpochFinalizationProof := structures.AggregatedEpochFinalizationProof{
 					LastLeader:                   uint(epochFinishProposition.CurrentLeader),

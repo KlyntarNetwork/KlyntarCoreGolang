@@ -133,7 +133,7 @@ func setGenesisToState() error {
 
 	epochTimestamp := globals.GENESIS.FirstEpochStartTimestamp
 
-	poolsRegistryForEpochHandler := []string{}
+	poolsRegistryForEpochHandler := make(map[string]struct{})
 
 	shardsRegistry := []string{globals.GENESIS.Shard}
 
@@ -151,7 +151,7 @@ func setGenesisToState() error {
 
 		batch.Put([]byte(poolPubKey+"(POOL)_STORAGE_POOL"), serialized)
 
-		poolsRegistryForEpochHandler = append(poolsRegistryForEpochHandler, poolPubKey)
+		poolsRegistryForEpochHandler[poolPubKey] = struct{}{}
 
 	}
 
