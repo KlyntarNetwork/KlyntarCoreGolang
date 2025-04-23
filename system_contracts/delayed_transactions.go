@@ -1,16 +1,16 @@
 package system_contracts
 
-func CreateStakingPool(rawTx []byte) {}
+func CreateStakingPool(rawTx map[string]string) {}
 
-func UpdateStakingPool(rawTx []byte) {}
+func UpdateStakingPool(rawTx map[string]string) {}
 
-func Stake(rawTx []byte) {}
+func Stake(rawTx map[string]string) {}
 
-func Unstake(rawTx []byte) {}
+func Unstake(rawTx map[string]string) {}
 
-func ChangeUnobtaniumAmount(rawTx []byte) {}
+func ChangeUnobtaniumAmount(rawTx map[string]string) {}
 
-var DELAYED_TRANSACTIONS_MAP = map[string]func([]byte){
+var DELAYED_TRANSACTIONS_MAP = map[string]func(map[string]string){
 	"createStakingPool":      CreateStakingPool,
 	"updateStakingPool":      UpdateStakingPool,
 	"stake":                  Stake,

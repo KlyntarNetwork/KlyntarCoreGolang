@@ -56,10 +56,6 @@ var MEMPOOL struct {
 
 var APPROVEMENT_THREAD_CACHE = make(map[string]*structures.PoolStorage)
 
-var FINALIZATION_PROOFS_CACHE = make(map[string]map[string]string)
-
-var TEMP_CACHE = make(map[string]any)
-
 var GENERATION_THREAD structures.GenerationThread
 
 var APPROVEMENT_THREAD structures.ApprovementThread

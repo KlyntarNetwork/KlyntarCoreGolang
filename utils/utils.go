@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 	"time"
@@ -90,4 +91,14 @@ func GetCurrentLeader() CurrentLeaderData {
 	}
 
 	return CurrentLeaderData{isMeLeader: false, url: ""}
+}
+
+func IntToBytes(n int64) []byte {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(n))
+	return buf
+}
+
+func BytesToInt(b []byte) int64 {
+	return int64(binary.BigEndian.Uint64(b))
 }
