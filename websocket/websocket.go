@@ -17,6 +17,11 @@ const (
 
 type Handler struct{}
 
+type Incoming struct {
+	Type string `json:"type"`
+	Data any    `json:"data"`
+}
+
 func (h *Handler) OnOpen(conn *gws.Conn) {}
 
 func (h *Handler) OnClose(conn *gws.Conn, err error) {}
@@ -25,34 +30,25 @@ func (h *Handler) OnPing(conn *gws.Conn, payload []byte) {}
 
 func (h *Handler) OnPong(conn *gws.Conn, payload []byte) {}
 
-func (h *Handler) OnMessage(conn *gws.Conn, message *gws.Message) {
+func (h *Handler) OnMessage(connection *gws.Conn, message *gws.Message) {
 
 	defer message.Close()
 
-	type Incoming struct {
-		Type string `json:"type"`
-		Data any    `json:"data"`
-	}
-
 	var incoming Incoming
 	if err := json.Unmarshal(message.Bytes(), &incoming); err != nil {
-		conn.WriteMessage(gws.OpcodeText, []byte(`{"error":"invalid_json"}`))
+		connection.WriteMessage(gws.OpcodeText, []byte(`{"error":"invalid_json"}`))
 		return
 	}
 
 	switch incoming.Type {
-	case "ping":
-		conn.WriteMessage(gws.OpcodeText, []byte(`{"type":"pong"}`))
-	case "echo":
-		response, _ := json.Marshal(map[string]any{
-			"type": "echo",
-			"data": incoming.Data,
-		})
-		conn.WriteMessage(gws.OpcodeText, response)
-	case "broadcast":
-		log.Println("Broadcast message:", incoming.Data)
+
+	case "get_finalization_proof":
+		GetFinalizationProof(incoming.Data, connection)
+	case "get_leader_rotation_proof":
+		GetLeaderRotationProof(incoming.Data, connection)
 	default:
-		conn.WriteMessage(gws.OpcodeText, []byte(`{"error":"unknown_type"}`))
+		connection.WriteMessage(gws.OpcodeText, []byte(`{"error":"unknown_type"}`))
+
 	}
 }
 
@@ -65,14 +61,23 @@ func CreateWebsocketServer() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
 		conn, err := upgrader.Upgrade(w, r)
+
 		if err != nil {
+
 			log.Println("Upgrade error:", err)
+
 			return
+
 		}
+
 		go func() {
+
 			conn.ReadLoop()
+
 		}()
+
 	})
 
 	wsInterface := globals.CONFIGURATION.WebSocketInterface
