@@ -15,19 +15,90 @@ import (
 
 func GetFinalizationProof(data any, connection *gws.Conn) {
 
-	// if parsedVal, ok := data.(WsFinalizationProofRequest); ok {
+	if parsedRequest, ok := data.(WsFinalizationProofRequest); ok {
 
-	// 	epochHandler := globals.APPROVEMENT_THREAD.Epoch
+		epochHandler := globals.APPROVEMENT_THREAD.Epoch
 
-	// 	epochIndex := epochHandler.Id
+		epochIndex := epochHandler.Id
 
-	// 	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochIndex)
+		epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochIndex)
 
-	// 	currentLeaderIndex := epochHandler.CurrentLeaderIndex
+		typeCheckIsOk := &parsedRequest.Block != nil && &parsedRequest.PreviousBlockAfp != nil
 
-	// 	// conn.WriteMessage(gws.OpcodeText, []byte(`{"type":"pong"}`))
+		itsLeader := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex] == parsedRequest.Block.Creator
 
-	// }
+		if typeCheckIsOk && itsLeader {
+
+			localVotingDataForPool := structures.PoolVotingStat{
+				Index: -1,
+				Hash:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+				Afp:   structures.AggregatedFinalizationProof{},
+			}
+
+			localVotingDataRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte(strconv.Itoa(epochIndex)+":"+parsedRequest.Block.Creator), nil)
+
+			if err == nil {
+
+				json.Unmarshal(localVotingDataRaw, &localVotingDataForPool)
+
+			}
+
+			proposedBlockHash := parsedRequest.Block.GetHash()
+
+			itsSameSegment := localVotingDataForPool.Index < int(parsedRequest.Block.Index) || localVotingDataForPool.Index == int(parsedRequest.Block.Index) && proposedBlockHash == localVotingDataForPool.Hash && parsedRequest.Block.Epoch == epochFullID
+
+			if itsSameSegment {
+
+				proposedBlockId := strconv.Itoa(epochIndex) + ":" + parsedRequest.Block.Creator + strconv.Itoa(int(parsedRequest.Block.Index))
+
+				futureVotingDataToStore := structures.PoolVotingStat{}
+
+				if parsedRequest.Block.VerifySignature() {
+
+					if localVotingDataForPool.Index == int(parsedRequest.Block.Index) {
+
+						futureVotingDataToStore = localVotingDataForPool
+
+					} else {
+
+						futureVotingDataToStore = structures.PoolVotingStat{
+
+							Index: int(parsedRequest.Block.Index - 1),
+
+							Hash: parsedRequest.PreviousBlockAfp.BlockHash,
+
+							Afp: parsedRequest.PreviousBlockAfp,
+						}
+
+					}
+
+					previousBlockID := ""
+
+					if parsedRequest.Block.Index == 0 {
+
+						aefpIsOk := false
+
+						if epochIndex == 0 {
+
+							aefpIsOk = true
+
+						} else {
+
+						}
+
+					} else {
+
+					}
+
+				}
+
+			}
+
+		}
+
+		// conn.WriteMessage(gws.OpcodeText, []byte(`{"type":"pong"}`))
+
+	}
 
 }
 
@@ -199,5 +270,9 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 		}
 
 	}
+
+}
+
+func GetBlocksRange(data any, connection *gws.Conn) {
 
 }
