@@ -6,11 +6,10 @@ import (
 )
 
 type WsLeaderRotationProofRequest struct {
-	Route                     string                                 `json:"route"`
-	AfpForFirstBlock          structures.AggregatedFinalizationProof `json:"afpForFirstBlock"`
-	PoolPubkey                string                                 `json:"poolPubkey"`
-	HisIndexInLeadersSequence int                                    `json:"hisIndexInLeadersSequence"`
-	SkipData                  structures.PoolVotingStat              `json:"skipData"`
+	Route               string                                 `json:"route"`
+	AfpForFirstBlock    structures.AggregatedFinalizationProof `json:"afpForFirstBlock"`
+	IndexOfPoolToRotate int                                    `json:"hisIndexInLeadersSequence"`
+	SkipData            structures.PoolVotingStat              `json:"skipData"`
 }
 
 type WsLeaderRotationProofResponseOk struct {
