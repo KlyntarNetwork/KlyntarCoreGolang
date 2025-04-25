@@ -13,6 +13,15 @@ import (
 	"github.com/lxzan/gws"
 )
 
+func IndexOf(slice []string, target string) int {
+	for i, s := range slice {
+		if s == target {
+			return i
+		}
+	}
+	return -1
+}
+
 func GetFinalizationProof(data any, connection *gws.Conn) {
 
 	if parsedRequest, ok := data.(WsFinalizationProofRequest); ok {
@@ -45,9 +54,9 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 			proposedBlockHash := parsedRequest.Block.GetHash()
 
-			itsSameSegment := localVotingDataForPool.Index < int(parsedRequest.Block.Index) || localVotingDataForPool.Index == int(parsedRequest.Block.Index) && proposedBlockHash == localVotingDataForPool.Hash && parsedRequest.Block.Epoch == epochFullID
+			itsSameChainSegment := localVotingDataForPool.Index < int(parsedRequest.Block.Index) || localVotingDataForPool.Index == int(parsedRequest.Block.Index) && proposedBlockHash == localVotingDataForPool.Hash && parsedRequest.Block.Epoch == epochFullID
 
-			if itsSameSegment {
+			if itsSameChainSegment {
 
 				proposedBlockId := strconv.Itoa(epochIndex) + ":" + parsedRequest.Block.Creator + strconv.Itoa(int(parsedRequest.Block.Index))
 
@@ -84,7 +93,44 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 						} else {
 
+							var legacyEpochHandler *structures.EpochHandler
+
+							prevEpochIndex := epochHandler.Id - 1
+
+							legacyEpochHandlerRaw, err := globals.EPOCH_DATA.Get([]byte("EPOCH_HANDLER:"+strconv.Itoa(prevEpochIndex)), nil)
+
+							if err == nil {
+
+								errParse := json.Unmarshal(legacyEpochHandlerRaw, legacyEpochHandler)
+
+								aefpFromBlock, typeAssertOk := parsedRequest.Block.ExtraData["aefpForPreviousEpoch"].(structures.AggregatedEpochFinalizationProof)
+
+								if typeAssertOk && errParse == nil {
+
+									legacyEpochFullID := legacyEpochHandler.Hash + "#" + strconv.Itoa(legacyEpochHandler.Id)
+
+									legacyMajority := common_functions.GetQuorumMajority(legacyEpochHandler)
+
+									aefpIsOk = epochHandler.Id == 0 || common_functions.VerifyAggregatedEpochFinalizationProof(
+
+										&aefpFromBlock,
+
+										legacyEpochHandler.Quorum,
+
+										legacyMajority,
+
+										legacyEpochFullID,
+									)
+
+								}
+
+							}
+
 						}
+
+						//_________________________________________2_________________________________________
+
+						// TODO: Verify the ALRP chain validity here
 
 					} else {
 
@@ -104,7 +150,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
-	if parsedRequest, ok := data.(WsLeaderRotationProofRequest); ok {
+	if parsedRequest, typeAssertOk := data.(WsLeaderRotationProofRequest); typeAssertOk {
 
 		epochHandler := globals.APPROVEMENT_THREAD.Epoch
 
