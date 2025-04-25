@@ -11,6 +11,10 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+type ErrMsg struct {
+	Err string `json:"err"`
+}
+
 func sendJSON(ctx *fasthttp.RequestCtx, payload any) {
 	ctx.SetContentType("application/json")
 	ctx.SetStatusCode(fasthttp.StatusOK)
@@ -80,7 +84,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 	var proposition structures.EpochFinishRequest
 
 	if err := json.Unmarshal(ctx.PostBody(), &proposition); err != nil {
-		sendJSON(ctx, map[string]any{"err": "Wrong format"})
+		sendJSON(ctx, ErrMsg{Err: "Wrong format"})
 		return
 	}
 
@@ -99,7 +103,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 	signalRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte("EPOCH_FINISH_RESPONSE:"+strconv.Itoa(epochIndex)), nil)
 
 	if err != nil || signalRaw == nil {
-		sendJSON(ctx, map[string]any{"err": "Too early"})
+		sendJSON(ctx, ErrMsg{Err: "Too early"})
 		return
 	}
 
@@ -137,7 +141,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 	if hashOfFirstBlock == "" {
 
-		sendJSON(ctx, map[string]any{"err": "Can't verify hash"})
+		sendJSON(ctx, ErrMsg{Err: "Can't verify hash"})
 
 		return
 

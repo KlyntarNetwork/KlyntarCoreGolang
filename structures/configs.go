@@ -4,7 +4,6 @@ type NodeLevelConfig struct {
 	PublicKey                                           string                    `json:"PUBLIC_KEY"`
 	PrivateKey                                          string                    `json:"PRIVATE_KEY"`
 	MyKlyInfrastructure                                 MyKlyInfrastructureConfig `json:"MY_KLY_INFRASTRUCTURE"`
-	FastifyOptions                                      FastifyOptionsConfig      `json:"FASTIFY_OPTIONS"`
 	StoreBlocksInLocalDatabase                          bool                      `json:"STORE_BLOCKS_IN_LOCAL_DATABASE"`
 	PointOfDistributionWS                               string                    `json:"POINT_OF_DISTRIBUTION_WS"`
 	PointOfDistributionHTTP                             string                    `json:"POINT_OF_DISTRIBUTION_HTTP"`
@@ -29,14 +28,8 @@ type NodeLevelConfig struct {
 }
 
 type MyKlyInfrastructureConfig struct {
-	Redirects map[string]any `json:"redirects"`
-	Contact   struct {
-		Telegram string `json:"telegram"`
-	} `json:"contact"`
-}
-
-type FastifyOptionsConfig struct {
-	Origin string `json:"origin"`
+	Redirects map[string]string `json:"redirects"`
+	Contact   map[string]string `json:"contact"`
 }
 
 type RouteTTLConfig struct {
