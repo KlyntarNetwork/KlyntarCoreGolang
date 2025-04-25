@@ -365,7 +365,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 		if pivotData.Position == 0 {
 
 			defer func() {
-				pivotData = nil
+				CURRENT_PIVOT = nil
 			}()
 
 			return &FirstBlockResult{
@@ -404,7 +404,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 			if position == 0 {
 
 				defer func() {
-					pivotData = nil
+					CURRENT_PIVOT = nil
 				}()
 
 				if leaderRotationProof.SkipIndex == -1 {
@@ -430,16 +430,21 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 				}
 
 				if firstBlockByNewPivot.GetHash() == leaderRotationProof.FirstBlockHash {
-					pivotData = &PivotSearchData{
-						Position:          position,
-						PivotPubKey:       previousPool,
-						FirstBlockByPivot: firstBlockByNewPivot,
-						FirstBlockHash:    leaderRotationProof.FirstBlockHash,
-					}
+
+					pivotData.Position = position
+
+					pivotData.PivotPubKey = previousPool
+
+					pivotData.FirstBlockByPivot = firstBlockByNewPivot
+
+					pivotData.FirstBlockHash = leaderRotationProof.FirstBlockHash
 
 					break // break cycle to run the cycle later with new pivot
+
 				} else {
+
 					return nil
+
 				}
 			}
 		}
