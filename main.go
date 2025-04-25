@@ -200,23 +200,12 @@ func prepareRequiredPaths() {
 // Function to handle Ctrl+C interruptions
 func signalHandler() {
 
-	// Channel to get notifications from OS
 	sig := make(chan os.Signal, 1)
 
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 
-	// Wait for a signal
-
 	<-sig
 
-	//...and once get it - graceful terminate all sensitive logic
-
-	utils.LogWithTime("\x1b[31;1mKLYNTAR\x1b[36;1m stop has been initiated.Keep waiting...", utils.CYAN_COLOR)
-
-	utils.LogWithTime("Closing server connections...", utils.CYAN_COLOR)
-
-	utils.LogWithTime("Node was gracefully stopped", utils.CYAN_COLOR)
-
-	os.Exit(0)
+	utils.GracefulShutdown()
 
 }

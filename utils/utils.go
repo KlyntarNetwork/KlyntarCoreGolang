@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
@@ -24,6 +25,24 @@ const (
 	CYAN_COLOR        = "\033[36;1m"
 	WHITE_COLOR       = "\033[37;1m"
 )
+
+var shutdownOnce sync.Once
+
+func GracefulShutdown() {
+
+	shutdownOnce.Do(func() {
+
+		LogWithTime("\x1b[31;1mKLYNTAR\x1b[36;1m stop has been initiated.Keep waiting...", CYAN_COLOR)
+
+		LogWithTime("Closing server connections...", CYAN_COLOR)
+
+		LogWithTime("Node was gracefully stopped", CYAN_COLOR)
+
+		os.Exit(0)
+
+	})
+
+}
 
 func LogWithTime(msg, msgColor string) {
 

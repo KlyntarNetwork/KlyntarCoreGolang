@@ -115,16 +115,10 @@ func prepareBlockchain() {
 			fmt.Println(string(data))
 		}
 
-		gracefulStop()
+		utils.GracefulShutdown()
 
 	}
 
-}
-
-func gracefulStop() {
-
-	fmt.Println("Shutting down node gracefully...")
-	os.Exit(0)
 }
 
 func setGenesisToState() error {

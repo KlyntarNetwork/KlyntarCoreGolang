@@ -344,7 +344,7 @@ func EpochRotationThread() {
 
 						utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
 
-						// TODO: Graceful stop
+						utils.GracefulShutdown()
 
 					}
 
