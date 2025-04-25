@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
@@ -85,7 +84,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	// Todo: add mutex/atomic here for epochHandler (globals.APPROVEMENT_THREAD)
+	// TODO: add mutex/atomic here for epochHandler (globals.APPROVEMENT_THREAD)
 
 	epochHandler := globals.APPROVEMENT_THREAD.Epoch
 
@@ -148,13 +147,12 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 		if votingData.Index == proposition.LastBlockProposition.Index && votingData.Hash == proposition.LastBlockProposition.Hash {
 
-			dataToSign := fmt.Sprintf("EPOCH_DONE:%d:%d:%s:%s:%s",
-				proposition.CurrentLeader,
-				proposition.LastBlockProposition.Index,
-				proposition.LastBlockProposition.Hash,
-				hashOfFirstBlock,
-				epochFullID,
-			)
+			dataToSign := "EPOCH_DONE:" +
+				strconv.Itoa(proposition.CurrentLeader) + ":" +
+				strconv.Itoa(proposition.LastBlockProposition.Index) + ":" +
+				proposition.LastBlockProposition.Hash + ":" +
+				hashOfFirstBlock + ":" +
+				epochFullID
 
 			response := structures.EpochFinishResponseOk{
 				Status: "OK",

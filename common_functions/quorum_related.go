@@ -2,8 +2,8 @@ package common_functions
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
@@ -63,7 +63,7 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 
 	for validatorPubKey, _ := range epochHandler.PoolsRegistry {
 
-		validatorData := GetFromApprovementThreadState(fmt.Sprintf("%v(POOL)_STORAGE_POOL", validatorPubKey))
+		validatorData := GetFromApprovementThreadState(validatorPubKey + "(POOL)_STORAGE_POOL")
 
 		// Calculate total stake
 
@@ -85,7 +85,7 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 		cumulativeSum := big.NewInt(0)
 
 		// Generate deterministic random value using the hash of metadata
-		hashInput := fmt.Sprintf("%v_%v", hashOfMetadataFromOldEpoch, i)
+		hashInput := hashOfMetadataFromOldEpoch + "_" + strconv.Itoa(i)
 		deterministicRandomValue := new(big.Int)
 		deterministicRandomValue.SetString(utils.Blake3(hashInput), 16)
 		deterministicRandomValue.Mod(deterministicRandomValue, totalStakeSum)
@@ -170,7 +170,7 @@ func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int
 	totalStakeSum := big.NewInt(0)
 
 	for validatorPubKey, _ := range epochHandler.PoolsRegistry {
-		validatorData := GetFromApprovementThreadState(fmt.Sprintf("%v(POOL)_STORAGE_POOL", validatorPubKey))
+		validatorData := GetFromApprovementThreadState(validatorPubKey + "(POOL)_STORAGE_POOL")
 
 		totalStakeByThisValidator := new(big.Int)
 		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedKly)
@@ -188,7 +188,7 @@ func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int
 
 		cumulativeSum := big.NewInt(0)
 
-		hashInput := fmt.Sprintf("%v_%v", hashOfMetadataFromEpoch, i)
+		hashInput := hashOfMetadataFromEpoch + "_" + strconv.Itoa(i)
 		deterministicRandomValue := new(big.Int)
 		deterministicRandomValue.SetString(utils.Blake3(hashInput), 16)
 		deterministicRandomValue.Mod(deterministicRandomValue, totalStakeSum)

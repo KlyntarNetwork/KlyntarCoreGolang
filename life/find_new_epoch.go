@@ -3,7 +3,6 @@ package life
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -210,7 +209,9 @@ func EpochRotationThread() {
 
 								jsonedDelayedTxs, _ := json.Marshal(delayedTransactionsBatch.DelayedTransactions)
 
-								dataThatShouldBeSigned := fmt.Sprintf("SIG_DELAYED_OPERATIONS:%d:%v", epochHandler.Id, string(jsonedDelayedTxs))
+								dataThatShouldBeSigned := "SIG_DELAYED_OPERATIONS:" +
+									strconv.Itoa(epochHandler.Id) + ":" +
+									string(jsonedDelayedTxs)
 
 								okSignatures := 0
 								unique := make(map[string]bool)
@@ -295,9 +296,7 @@ func EpochRotationThread() {
 
 					}
 
-					logStr := fmt.Sprintf("Dealyed txs were executed for epoch on AT: %s", epochFullID)
-
-					utils.LogWithTime(logStr, utils.GREEN_COLOR)
+					utils.LogWithTime("Dealyed txs were executed for epoch on AT: "+epochFullID, utils.GREEN_COLOR)
 
 					//_______________________ Update the values for new epoch _______________________
 
@@ -334,9 +333,7 @@ func EpochRotationThread() {
 
 					clear(globals.APPROVEMENT_THREAD_CACHE)
 
-					logStr2 := fmt.Sprintf("Epoch on approvement thread was updated => %s", nextEpochHash+"#"+strconv.Itoa(nextEpochId))
-
-					utils.LogWithTime(logStr2, utils.GREEN_COLOR)
+					utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)
 
 					//_______________________Check the version required for the next epoch________________________
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"slices"
@@ -174,13 +173,11 @@ func NewEpochProposerThread() {
 
 					case "OK":
 
-						dataToSign := fmt.Sprintf("EPOCH_DONE:%d:%d:%s:%s:%s",
-							epochFinishProposition.CurrentLeader,
-							epochFinishProposition.LastBlockProposition.Index,
-							epochFinishProposition.LastBlockProposition.Hash,
-							epochFinishProposition.AfpForFirstBlock.BlockHash,
-							epochFullID,
-						)
+						dataToSign := strconv.Itoa(epochFinishProposition.CurrentLeader) + ":" +
+							strconv.Itoa(epochFinishProposition.LastBlockProposition.Index) + ":" +
+							epochFinishProposition.LastBlockProposition.Hash + ":" +
+							epochFinishProposition.AfpForFirstBlock.BlockHash + ":" +
+							epochFullID
 
 						var resultAsStruct structures.EpochFinishResponseOk
 
@@ -203,7 +200,9 @@ func NewEpochProposerThread() {
 
 						if common_functions.VerifyAggregatedFinalizationProof(&resultAsStruct.LastBlockProposition.Afp, &atEpochHandler) {
 
-							blockID := fmt.Sprintf("%d:%s:%d", epochIndex, leadersSequence[resultAsStruct.CurrentLeader], resultAsStruct.LastBlockProposition.Index)
+							blockID := strconv.Itoa(epochIndex) + ":" +
+								leadersSequence[resultAsStruct.CurrentLeader] + ":" +
+								strconv.Itoa(resultAsStruct.LastBlockProposition.Index)
 
 							sameBlockID := blockID == resultAsStruct.LastBlockProposition.Afp.BlockID
 
@@ -271,7 +270,7 @@ func NewEpochProposerThread() {
 
 					valueAsBytes, _ := json.Marshal(aggregatedEpochFinalizationProof)
 
-					globals.EPOCH_DATA.Put([]byte(fmt.Sprintf("AEFP:%d", epochIndex)), valueAsBytes, nil)
+					globals.EPOCH_DATA.Put([]byte("AEFP:"+strconv.Itoa(epochIndex)), valueAsBytes, nil)
 
 				}
 

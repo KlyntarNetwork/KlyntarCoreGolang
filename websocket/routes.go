@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -303,7 +302,7 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 				// Try to return with AFP for the first block
 
-				firstBlockID := fmt.Sprintf("%d:%s:0", epochHandler.Id, poolToRotate)
+				firstBlockID := strconv.Itoa(epochHandler.Id) + ":" + poolToRotate + ":0"
 
 				afpForFirstBlockBytes, err := globals.EPOCH_DATA.Get([]byte("AFP:"+firstBlockID), nil)
 
@@ -370,11 +369,11 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 					if parsedRequest.SkipData.Index == -1 {
 
-						dataToSignForLeaderRotation = fmt.Sprintf(
-							"LEADER_ROTATION_PROOF:%s:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef:-1:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef:%s",
-							poolToRotate,
-							epochFullID,
-						)
+						dataToSignForLeaderRotation := "LEADER_ROTATION_PROOF:" + poolToRotate
+
+						dataToSignForLeaderRotation += ":0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef:-1"
+
+						dataToSignForLeaderRotation += ":0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef:" + epochFullID
 
 						firstBlockAfpIsOk = true
 
@@ -388,14 +387,15 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 							firstBlockHash := parsedRequest.AfpForFirstBlock.BlockHash
 
-							dataToSignForLeaderRotation = fmt.Sprintf(
-								"LEADER_ROTATION_PROOF:%s:%s:%d:%s:%s",
-								poolToRotate,
-								firstBlockHash,
-								propSkipData.Index,
-								propSkipData.Hash,
-								epochFullID,
-							)
+							dataToSignForLeaderRotation := "LEADER_ROTATION_PROOF:" + poolToRotate
+
+							dataToSignForLeaderRotation += ":" + firstBlockHash
+
+							dataToSignForLeaderRotation += ":" + strconv.Itoa(propSkipData.Index)
+
+							dataToSignForLeaderRotation += ":" + propSkipData.Hash
+
+							dataToSignForLeaderRotation += ":" + epochFullID
 
 							firstBlockAfpIsOk = true
 

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"sync"
@@ -68,7 +69,7 @@ func Blake3(data string) string {
 
 	blake3Hash := blake3.Sum256([]byte(data))
 
-	return fmt.Sprintf("%x", blake3Hash)
+	return hex.EncodeToString(blake3Hash[:])
 
 }
 

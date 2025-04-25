@@ -3,7 +3,6 @@ package common_functions
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -36,7 +35,7 @@ var CURRENT_PIVOT *PivotSearchData
 
 func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *structures.EpochHandler) *block.Block {
 
-	blockID := fmt.Sprintf("%d:%s:%d", epochIndex, blockCreator, index)
+	blockID := strconv.Itoa(epochIndex) + ":" + blockCreator + ":" + strconv.Itoa(int(index))
 
 	blockAsBytes, err := globals.BLOCKS.Get([]byte(blockID), nil)
 
@@ -83,7 +82,7 @@ func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *str
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
-			url := fmt.Sprintf("%s/block/%s", endpoint, blockID)
+			url := endpoint + "/block/" + blockID
 			req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 			if err != nil {
 				return
@@ -126,14 +125,12 @@ func VerifyAggregatedEpochFinalizationProof(
 	epochFullID string,
 ) bool {
 
-	dataThatShouldBeSigned := fmt.Sprintf(
-		"EPOCH_DONE:%d:%d:%s:%s:%s",
-		proofStruct.LastLeader,
-		proofStruct.LastIndex,
-		proofStruct.LastHash,
-		proofStruct.HashOfFirstBlockByLastLeader,
-		epochFullID,
-	)
+	dataThatShouldBeSigned := "EPOCH_DONE:" +
+		strconv.Itoa(int(proofStruct.LastLeader)) + ":" +
+		strconv.Itoa(int(proofStruct.LastIndex)) + ":" +
+		proofStruct.LastHash + ":" +
+		proofStruct.HashOfFirstBlockByLastLeader + ":" +
+		epochFullID
 
 	okSignatures := 0
 	seen := make(map[string]bool)
@@ -284,7 +281,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 				defer cancel()
 
-				req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/first_block_assumption/%d", nodeUrl, epochHandler.Id), nil)
+				req, err := http.NewRequestWithContext(ctx, "GET", nodeUrl+"/first_block_assumption/"+strconv.Itoa(epochHandler.Id), nil)
 				if err != nil {
 					return
 				}
@@ -323,7 +320,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 
 			if VerifyAggregatedFinalizationProof(&prop.AfpForSecondBlock, epochHandler) {
 
-				expectedSecondBlockID := fmt.Sprintf("%d:%s:1", epochHandler.Id, firstBlockCreator)
+				expectedSecondBlockID := strconv.Itoa(epochHandler.Id) + ":" + firstBlockCreator + ":1"
 
 				if expectedSecondBlockID == prop.AfpForSecondBlock.BlockID &&
 					prop.IndexOfFirstBlockCreator < minimalIndexOfLeader {
@@ -460,14 +457,12 @@ func VerifyAggregatedLeaderRotationProof(
 
 	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
-	dataThatShouldBeSigned := fmt.Sprintf(
-		"LEADER_ROTATION_PROOF:%s:%s:%d:%s:%s",
-		pubKeyOfSomePreviousLeader,
-		proof.FirstBlockHash,
-		proof.SkipIndex,
-		proof.SkipHash,
-		epochFullID,
-	)
+	dataThatShouldBeSigned := "LEADER_ROTATION_PROOF:" +
+		pubKeyOfSomePreviousLeader + ":" +
+		proof.FirstBlockHash + ":" +
+		strconv.Itoa(proof.SkipIndex) + ":" +
+		proof.SkipHash + ":" +
+		epochFullID
 
 	majority := GetQuorumMajority(epochHandler)
 
