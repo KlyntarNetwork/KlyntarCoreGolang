@@ -32,11 +32,9 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 		epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochIndex)
 
-		typeCheckIsOk := &parsedRequest.Block != nil && &parsedRequest.PreviousBlockAfp != nil
-
 		itsLeader := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex] == parsedRequest.Block.Creator
 
-		if typeCheckIsOk && itsLeader {
+		if itsLeader {
 
 			localVotingDataForPool := structures.PoolVotingStat{
 				Index: -1,
@@ -95,7 +93,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 						} else {
 
-							var legacyEpochHandler *structures.EpochHandler
+							var legacyEpochHandler structures.EpochHandler
 
 							prevEpochIndex := epochHandler.Id - 1
 
@@ -103,7 +101,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 							if err == nil {
 
-								errParse := json.Unmarshal(legacyEpochHandlerRaw, legacyEpochHandler)
+								errParse := json.Unmarshal(legacyEpochHandlerRaw, &legacyEpochHandler)
 
 								aefpFromBlock, typeAssertOk := parsedRequest.Block.ExtraData["aefpForPreviousEpoch"].(structures.AggregatedEpochFinalizationProof)
 
@@ -111,7 +109,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 									legacyEpochFullID := legacyEpochHandler.Hash + "#" + strconv.Itoa(legacyEpochHandler.Id)
 
-									legacyMajority := common_functions.GetQuorumMajority(legacyEpochHandler)
+									legacyMajority := common_functions.GetQuorumMajority(&legacyEpochHandler)
 
 									aefpIsOk = epochHandler.Id == 0 || common_functions.VerifyAggregatedEpochFinalizationProof(
 
@@ -380,7 +378,7 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 						firstBlockAfpIsOk = true
 
-					} else if parsedRequest.SkipData.Index >= 0 && &parsedRequest.AfpForFirstBlock != nil {
+					} else if parsedRequest.SkipData.Index >= 0 {
 
 						blockIdOfFirstBlock := strconv.Itoa(epochIndex) + ":" + poolToRotate + ":0"
 
