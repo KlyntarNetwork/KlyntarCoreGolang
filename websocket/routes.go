@@ -60,7 +60,11 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 				proposedBlockId := strconv.Itoa(epochIndex) + ":" + parsedRequest.Block.Creator + strconv.Itoa(int(parsedRequest.Block.Index))
 
-				futureVotingDataToStore := structures.PoolVotingStat{}
+				previousBlockIndex := int(parsedRequest.Block.Index - 1)
+
+				var futureVotingDataToStore structures.PoolVotingStat
+
+				positionOfBlockCreatorInLeadersSequence := IndexOf(epochHandler.LeadersSequence, parsedRequest.Block.Creator)
 
 				if parsedRequest.Block.VerifySignature() {
 
@@ -72,7 +76,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 						futureVotingDataToStore = structures.PoolVotingStat{
 
-							Index: int(parsedRequest.Block.Index - 1),
+							Index: previousBlockIndex,
 
 							Hash: parsedRequest.PreviousBlockAfp.BlockHash,
 
@@ -80,8 +84,6 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 						}
 
 					}
-
-					previousBlockID := ""
 
 					if parsedRequest.Block.Index == 0 {
 
@@ -132,7 +134,130 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 						// TODO: Verify the ALRP chain validity here
 
+						alrpChainIsOk := common_functions.CheckAlrpChainValidity(
+
+							&parsedRequest.Block, &epochHandler, positionOfBlockCreatorInLeadersSequence,
+						)
+
+						if !aefpIsOk || !alrpChainIsOk {
+
+							// Prevent proof generation
+
+							return
+
+						}
+
 					} else {
+
+						// This branch related to case when block index is > 0 (so it's not the first block by pool)
+
+						previousBlockId := strconv.Itoa(epochIndex) + ":" + parsedRequest.Block.Creator + ":" + strconv.Itoa(previousBlockIndex)
+
+						// Check if AFP inside related to previous block AFP
+
+						if previousBlockId == parsedRequest.PreviousBlockAfp.BlockID && common_functions.VerifyAggregatedFinalizationProof(&parsedRequest.PreviousBlockAfp, &epochHandler) {
+
+							// In case it's request for the third block, we'll receive AFP for the second block which includes .prevBlockHash field
+							// This will be the assumption of hash of the first block in epoch
+
+							if parsedRequest.Block.Index == 2 {
+
+								keyBytes := []byte("FIRST_BLOCK_ASSUMPTION:" + strconv.Itoa(epochIndex))
+
+								_, err := globals.EPOCH_DATA.Get(keyBytes, nil)
+
+								if err != nil {
+
+									assumption := common_functions.FirstBlockAssumption{
+
+										IndexOfFirstBlockCreator: positionOfBlockCreatorInLeadersSequence,
+
+										AfpForSecondBlock: parsedRequest.PreviousBlockAfp,
+									}
+
+									valBytes, _ := json.Marshal(assumption)
+
+									globals.EPOCH_DATA.Put(keyBytes, valBytes, nil)
+
+								}
+
+							}
+
+						} else {
+
+							return
+
+						}
+
+					}
+
+					// Store the block and return finalization proof
+
+					blockBytes, err := json.Marshal(parsedRequest.Block)
+
+					if err == nil {
+
+						// 1. Store the block
+
+						err = globals.BLOCKS.Put([]byte(proposedBlockId), blockBytes, nil)
+
+						if err == nil {
+
+							afpBytes, err := json.Marshal(parsedRequest.PreviousBlockAfp)
+
+							if err == nil {
+
+								// 2. Store the AFP for previous block
+
+								errStore := globals.EPOCH_DATA.Put([]byte("AFP:"+proposedBlockId), afpBytes, nil)
+
+								votingStatBytes, errParse := json.Marshal(futureVotingDataToStore)
+
+								if errStore == nil && errParse == nil {
+
+									// 3. Store the voting stats
+
+									err := globals.FINALIZATION_VOTING_STATS.Put([]byte(strconv.Itoa(epochIndex)+":"+parsedRequest.Block.Creator), votingStatBytes, nil)
+
+									if err == nil {
+
+										// Only after we stored the these 3 components = generate signature (finalization proof)
+
+										dataToSign, prevBlockHash := "", ""
+
+										if parsedRequest.Block.Index == 0 {
+
+											prevBlockHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+										} else {
+
+											prevBlockHash = parsedRequest.PreviousBlockAfp.BlockHash
+
+										}
+
+										dataToSign += prevBlockHash + proposedBlockId + proposedBlockHash + epochFullID
+
+										response := WsFinalizationProofResponse{
+											Voter:             globals.CONFIGURATION.PublicKey,
+											FinalizationProof: ed25519.GenerateSignature(globals.CONFIGURATION.PrivateKey, dataToSign),
+											VotedForHash:      proposedBlockHash,
+										}
+
+										jsonResponse, err := json.Marshal(response)
+
+										if err == nil {
+
+											connection.WriteMessage(gws.OpcodeText, jsonResponse)
+
+										}
+
+									}
+
+								}
+
+							}
+
+						}
 
 					}
 
@@ -141,8 +266,6 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 			}
 
 		}
-
-		// conn.WriteMessage(gws.OpcodeText, []byte(`{"type":"pong"}`))
 
 	}
 
