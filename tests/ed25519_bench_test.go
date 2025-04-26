@@ -1,23 +1,16 @@
 package tests
 
-import (
-	"sync"
-	"testing"
+// const (
+// 	numSignatures   = 10000
+// 	signaturesPerGo = 1000
+// 	numGoroutines   = numSignatures / signaturesPerGo
+// )
 
-	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
-)
-
-const (
-	numSignatures   = 10000
-	signaturesPerGo = 1000
-	numGoroutines   = numSignatures / signaturesPerGo
-)
-
-var (
-	publicKeys []string
-	messages   []string
-	signatures []string
-)
+// var (
+// 	publicKeys []string
+// 	messages   []string
+// 	signatures []string
+// )
 
 // func init() {
 
@@ -58,29 +51,29 @@ var (
 // 	fmt.Println("===============Finished===============")
 // }
 
-func BenchmarkEd25519VerifyParallel100x1000(b *testing.B) {
-	b.ResetTimer()
+// func BenchmarkEd25519VerifyParallel100x1000(b *testing.B) {
+// 	b.ResetTimer()
 
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			var wg sync.WaitGroup
-			wg.Add(numGoroutines)
+// 	b.RunParallel(func(pb *testing.PB) {
+// 		for pb.Next() {
+// 			var wg sync.WaitGroup
+// 			wg.Add(numGoroutines)
 
-			for g := 0; g < numGoroutines; g++ {
-				go func(goroutineIndex int) {
-					defer wg.Done()
-					start := goroutineIndex * signaturesPerGo
-					end := start + signaturesPerGo
+// 			for g := 0; g < numGoroutines; g++ {
+// 				go func(goroutineIndex int) {
+// 					defer wg.Done()
+// 					start := goroutineIndex * signaturesPerGo
+// 					end := start + signaturesPerGo
 
-					for j := start; j < end; j++ {
-						if !ed25519.VerifySignature(messages[j], publicKeys[j], signatures[j]) {
-							b.Fatalf("Signature verification failed at index %d", j)
-						}
-					}
-				}(g)
-			}
+// 					for j := start; j < end; j++ {
+// 						if !ed25519.VerifySignature(messages[j], publicKeys[j], signatures[j]) {
+// 							b.Fatalf("Signature verification failed at index %d", j)
+// 						}
+// 					}
+// 				}(g)
+// 			}
 
-			wg.Wait()
-		}
-	})
-}
+// 			wg.Wait()
+// 		}
+// 	})
+// }

@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -23,20 +24,27 @@ func init() {
 // Benchmark: Read with RWMutex
 func BenchmarkRWMutexRead(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
+		var count int
 		for pb.Next() {
 			rwMu.RLock()
 			_ = rwData.Value
 			rwMu.RUnlock()
+			count++
 		}
+		fmt.Printf("Goroutine made %d operations\n", count)
 	})
+
 }
 
 // Benchmark: Read with atomic.Pointer
 func BenchmarkAtomicPointerRead(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
+		var count int
 		for pb.Next() {
 			d := atomicPtr.Load()
 			_ = d.Value
+			count++
 		}
+		fmt.Printf("Goroutine made %d operations\n", count)
 	})
 }
