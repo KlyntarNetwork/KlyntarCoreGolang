@@ -24,6 +24,8 @@ func sendJSON(ctx *fasthttp.RequestCtx, payload any) {
 
 func GetFirstBlockAssumption(ctx *fasthttp.RequestCtx) {
 
+	ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+
 	epochIndexVal := ctx.UserValue("epochIndex")
 	epochIndex, ok := epochIndexVal.(string)
 
@@ -50,6 +52,8 @@ func GetFirstBlockAssumption(ctx *fasthttp.RequestCtx) {
 
 func GetAggregatedEpochFinalizationProof(ctx *fasthttp.RequestCtx) {
 
+	ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+
 	epochIndexVal := ctx.UserValue("epochIndex")
 	epochIndex, ok := epochIndexVal.(string)
 
@@ -75,6 +79,8 @@ func GetAggregatedEpochFinalizationProof(ctx *fasthttp.RequestCtx) {
 }
 
 func EpochProposition(ctx *fasthttp.RequestCtx) {
+
+	ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
 
 	if string(ctx.Method()) != fasthttp.MethodPost {
 		ctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)

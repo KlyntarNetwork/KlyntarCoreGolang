@@ -26,9 +26,9 @@ func BenchmarkRWMutexRead(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var count int
 		for pb.Next() {
-			rwMu.RLock()
+			rwMu.Lock()
 			_ = rwData.Value
-			rwMu.RUnlock()
+			rwMu.Unlock()
 			count++
 		}
 		fmt.Printf("Goroutine made %d operations\n", count)

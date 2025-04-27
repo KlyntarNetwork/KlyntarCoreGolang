@@ -50,8 +50,8 @@ var CONFIGURATION structures.NodeLevelConfig
 var GENESIS structures.Genesis
 
 var MEMPOOL struct {
-	slice []structures.Transaction
-	mutex sync.RWMutex
+	Slice []structures.Transaction
+	Mutex sync.Mutex
 }
 
 var APPROVEMENT_THREAD_CACHE = make(map[string]*structures.PoolStorage)
@@ -66,7 +66,5 @@ var (
 	APPROVEMENT_THREAD_METADATA = openDB("APPROVEMENT_THREAD_METADATA")
 	FINALIZATION_VOTING_STATS   = openDB("FINALIZATION_VOTING_STATS")
 )
-
-var VOTING_REQUESTS chan struct{}
 
 var SHOULD_GENERATE_BLOCKS, SHOULD_ROTATE_EPOCH bool

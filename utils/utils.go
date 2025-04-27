@@ -80,8 +80,8 @@ func GetUTCTimestampInMilliSeconds() int64 {
 }
 
 type CurrentLeaderData struct {
-	isMeLeader bool
-	url        string
+	IsMeLeader bool
+	Url        string
 }
 
 func getUtcTimestamp() int64 {
@@ -106,11 +106,11 @@ func GetCurrentLeader() CurrentLeaderData {
 
 	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
 
-		return CurrentLeaderData{isMeLeader: true, url: ""}
+		return CurrentLeaderData{IsMeLeader: true, Url: ""}
 
 	}
 
-	return CurrentLeaderData{isMeLeader: false, url: ""}
+	return CurrentLeaderData{IsMeLeader: false, Url: ""}
 }
 
 func IntToBytes(n int64) []byte {
