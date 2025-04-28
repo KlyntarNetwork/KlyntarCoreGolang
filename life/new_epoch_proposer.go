@@ -14,6 +14,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 
@@ -31,7 +32,7 @@ type ResponseStatus struct {
 
 func NewEpochProposerThread() {
 
-	if globals.SHOULD_ROTATE_EPOCH {
+	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD) {
 
 		atEpochHandler := globals.APPROVEMENT_THREAD.Epoch
 

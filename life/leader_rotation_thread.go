@@ -1,0 +1,5 @@
+package life
+
+func LeaderRotationThread() {
+
+}

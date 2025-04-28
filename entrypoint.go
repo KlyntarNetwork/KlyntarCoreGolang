@@ -36,7 +36,7 @@ func RunBlockchain() {
 	go life.BlocksGenerationThread()
 
 	//✅5.Start a separate thread to work with voting for blocks in a sync way (for security)
-	go life.VotingThread()
+	go life.LeaderRotationThread()
 
 	serverAddr := globals.CONFIGURATION.Interface + ":" + strconv.Itoa(globals.CONFIGURATION.Port)
 
