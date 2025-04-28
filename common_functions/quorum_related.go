@@ -21,7 +21,7 @@ type QuorumMemberData struct {
 
 func GetFromApprovementThreadState(poolId string) *structures.PoolStorage {
 
-	if val, ok := globals.APPROVEMENT_THREAD.Cache[poolId]; ok {
+	if val, ok := globals.APPROVEMENT_THREAD.Thread.Cache[poolId]; ok {
 		return val
 	}
 
@@ -39,7 +39,7 @@ func GetFromApprovementThreadState(poolId string) *structures.PoolStorage {
 		return nil
 	}
 
-	globals.APPROVEMENT_THREAD.Cache[poolId] = &pool
+	globals.APPROVEMENT_THREAD.Thread.Cache[poolId] = &pool
 
 	return &pool
 

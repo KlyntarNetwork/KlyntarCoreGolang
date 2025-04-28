@@ -32,9 +32,17 @@ type ResponseStatus struct {
 
 func NewEpochProposerThread() {
 
-	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD) {
+	globals.APPROVEMENT_THREAD.RWMutex.RLock()
 
-		atEpochHandler := globals.APPROVEMENT_THREAD.EpochHandler
+	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD.Thread) {
+
+		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+
+		globals.APPROVEMENT_THREAD.RWMutex.Lock()
+
+		defer globals.APPROVEMENT_THREAD.RWMutex.Unlock()
+
+		atEpochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
 
 		epochIndex := atEpochHandler.Id
 
@@ -280,6 +288,8 @@ func NewEpochProposerThread() {
 		}
 
 	} else {
+
+		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
 
 		time.AfterFunc(3*time.Second, func() {
 			NewEpochProposerThread()

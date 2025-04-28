@@ -25,7 +25,11 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 	if parsedRequest, ok := data.(WsFinalizationProofRequest); ok {
 
-		epochHandler := globals.APPROVEMENT_THREAD.EpochHandler
+		globals.APPROVEMENT_THREAD.RWMutex.RLock()
+
+		defer globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+
+		epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
 
 		epochIndex := epochHandler.Id
 
@@ -272,7 +276,11 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 	if parsedRequest, typeAssertOk := data.(WsLeaderRotationProofRequest); typeAssertOk {
 
-		epochHandler := globals.APPROVEMENT_THREAD.EpochHandler
+		globals.APPROVEMENT_THREAD.RWMutex.RLock()
+
+		defer globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+
+		epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
 
 		epochIndex := epochHandler.Id
 

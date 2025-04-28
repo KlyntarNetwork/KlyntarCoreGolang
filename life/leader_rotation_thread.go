@@ -2,6 +2,7 @@ package life
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
@@ -24,30 +25,46 @@ func timeIsOutForCurrentLeader(approvementThread *structures.ApprovementThread) 
 
 func LeaderRotationThread() {
 
-	// TODO: Set .RLock() for RWMutex here
+	globals.APPROVEMENT_THREAD.RWMutex.RLock()
 
-	approvementThread := globals.APPROVEMENT_THREAD
+	approvementThread := globals.APPROVEMENT_THREAD.Thread
 
 	epochHandler := approvementThread.EpochHandler
 
 	haveNextCandidate := epochHandler.CurrentLeaderIndex+1 < len(epochHandler.LeadersSequence)
 
+	storedEpochIndex := epochHandler.Id
+
 	if haveNextCandidate && timeIsOutForCurrentLeader(&approvementThread) {
 
-		// Now, update the leader on approvement thread
-		// TODO: Set .RUnlock() for RWMutex here
-		// TODO: Set .Lock() for RWMutex here
+		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
 
-		approvementThread.EpochHandler.CurrentLeaderIndex++
+		globals.APPROVEMENT_THREAD.RWMutex.Lock()
 
-		// Store the updated AT
+		approvementThread = globals.APPROVEMENT_THREAD.Thread
 
-		jsonedAT, _ := json.Marshal(approvementThread)
+		epochHandler = approvementThread.EpochHandler
 
-		globals.APPROVEMENT_THREAD_METADATA.Put([]byte("AT"), jsonedAT, nil)
+		if storedEpochIndex == epochHandler.Id {
 
-		// TODO: Release .Unlock() for RWMutex here
+			approvementThread.EpochHandler.CurrentLeaderIndex++
+
+			// Store the updated AT
+
+			jsonedAT, _ := json.Marshal(approvementThread)
+
+			globals.APPROVEMENT_THREAD_METADATA.Put([]byte("AT"), jsonedAT, nil)
+
+		}
+
+		globals.APPROVEMENT_THREAD.RWMutex.Unlock()
 
 	}
+
+	// The workflow of this function is infinite
+
+	time.AfterFunc(time.Second, func() {
+		LeaderRotationThread()
+	})
 
 }

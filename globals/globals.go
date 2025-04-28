@@ -62,7 +62,10 @@ var WEBSOCKET_CONNECTIONS struct {
 
 var GENERATION_THREAD structures.GenerationThread
 
-var APPROVEMENT_THREAD structures.ApprovementThread
+var APPROVEMENT_THREAD struct {
+	RWMutex sync.RWMutex
+	Thread  structures.ApprovementThread
+}
 
 var (
 	BLOCKS                      = openDB("BLOCKS")

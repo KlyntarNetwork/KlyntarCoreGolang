@@ -77,7 +77,7 @@ func prepareBlockchain() {
 	if data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("AT"), nil); err == nil && data != nil {
 		var at structures.ApprovementThread
 		if err := json.Unmarshal(data, &at); err == nil {
-			globals.APPROVEMENT_THREAD = at
+			globals.APPROVEMENT_THREAD.Thread = at
 		} else {
 
 			fmt.Println("failed to unmarshal APPROVEMENT_THREAD: %w", err)
@@ -88,11 +88,11 @@ func prepareBlockchain() {
 	}
 
 	// Init genesis if version is -1
-	if globals.APPROVEMENT_THREAD.CoreMajorVersion == -1 {
+	if globals.APPROVEMENT_THREAD.Thread.CoreMajorVersion == -1 {
 
 		setGenesisToState()
 
-		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD)
+		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD.Thread)
 		if err != nil {
 			fmt.Println("failed to marshal APPROVEMENT_THREAD: %w", err)
 			return
@@ -107,7 +107,7 @@ func prepareBlockchain() {
 	}
 
 	// Version check
-	if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD) {
+	if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD.Thread) {
 
 		utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
 
@@ -149,9 +149,9 @@ func setGenesisToState() error {
 
 	}
 
-	globals.APPROVEMENT_THREAD.CoreMajorVersion = globals.GENESIS.CoreMajorVersion
+	globals.APPROVEMENT_THREAD.Thread.CoreMajorVersion = globals.GENESIS.CoreMajorVersion
 
-	globals.APPROVEMENT_THREAD.NetworkParameters = globals.GENESIS.NetworkParameters
+	globals.APPROVEMENT_THREAD.Thread.NetworkParameters = globals.GENESIS.NetworkParameters
 
 	// Write batch
 	if err := globals.APPROVEMENT_THREAD_METADATA.Write(batch, nil); err != nil {
@@ -175,12 +175,12 @@ func setGenesisToState() error {
 	}
 
 	// Assign quorum
-	epoch.Quorum = common_functions.GetCurrentEpochQuorum(&epoch, globals.APPROVEMENT_THREAD.NetworkParameters.QuorumSize, initEpochHash)
+	epoch.Quorum = common_functions.GetCurrentEpochQuorum(&epoch, globals.APPROVEMENT_THREAD.Thread.NetworkParameters.QuorumSize, initEpochHash)
 
 	// Assign sequence of leaders
 	common_functions.SetLeadersSequence(&epoch, initEpochHash)
 
-	globals.APPROVEMENT_THREAD.EpochHandler = epoch
+	globals.APPROVEMENT_THREAD.Thread.EpochHandler = epoch
 
 	return nil
 
