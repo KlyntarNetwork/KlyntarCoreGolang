@@ -82,7 +82,7 @@ func EpochRotationThread() {
 
 	if utils.EpochStillFresh(&globals.APPROVEMENT_THREAD) {
 
-		epochHandler := globals.APPROVEMENT_THREAD.Epoch
+		epochHandler := globals.APPROVEMENT_THREAD.EpochHandler
 
 		epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
@@ -323,7 +323,7 @@ func EpochRotationThread() {
 
 					atomicBatch.Put([]byte("LATEST_BATCH_INDEX:"), []byte(strconv.Itoa(int(latestBatchIndex))))
 
-					globals.APPROVEMENT_THREAD.Epoch = nextEpochHandler
+					globals.APPROVEMENT_THREAD.EpochHandler = nextEpochHandler
 
 					jsonedAT, _ := json.Marshal(globals.APPROVEMENT_THREAD)
 
@@ -332,6 +332,8 @@ func EpochRotationThread() {
 					// Clean cache
 
 					clear(globals.APPROVEMENT_THREAD.Cache)
+
+					globals.APPROVEMENT_THREAD_METADATA.Write(atomicBatch, nil)
 
 					utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)
 

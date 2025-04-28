@@ -96,7 +96,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 	// TODO: add mutex/atomic here for epochHandler (globals.APPROVEMENT_THREAD)
 
-	epochHandler := globals.APPROVEMENT_THREAD.Epoch
+	epochHandler := globals.APPROVEMENT_THREAD.EpochHandler
 
 	epochIndex := epochHandler.Id
 

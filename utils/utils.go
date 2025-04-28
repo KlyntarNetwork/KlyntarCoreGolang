@@ -96,13 +96,13 @@ func IsMyCoreVersionOld(thread *structures.ApprovementThread) bool {
 
 func EpochStillFresh(thread *structures.ApprovementThread) bool {
 
-	return (thread.Epoch.StartTimestamp + uint64(thread.NetworkParameters.EpochTime)) > uint64(getUtcTimestamp())
+	return (thread.EpochHandler.StartTimestamp + uint64(thread.NetworkParameters.EpochTime)) > uint64(getUtcTimestamp())
 
 }
 
 func GetCurrentLeader() CurrentLeaderData {
 
-	currentLeaderPubKey := globals.APPROVEMENT_THREAD.Epoch.LeadersSequence[globals.APPROVEMENT_THREAD.Epoch.CurrentLeaderIndex]
+	currentLeaderPubKey := globals.APPROVEMENT_THREAD.EpochHandler.LeadersSequence[globals.APPROVEMENT_THREAD.EpochHandler.CurrentLeaderIndex]
 
 	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
 

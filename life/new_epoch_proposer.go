@@ -34,7 +34,7 @@ func NewEpochProposerThread() {
 
 	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD) {
 
-		atEpochHandler := globals.APPROVEMENT_THREAD.Epoch
+		atEpochHandler := globals.APPROVEMENT_THREAD.EpochHandler
 
 		epochIndex := atEpochHandler.Id
 

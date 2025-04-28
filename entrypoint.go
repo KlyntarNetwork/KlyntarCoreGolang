@@ -180,7 +180,7 @@ func setGenesisToState() error {
 	// Assign sequence of leaders
 	common_functions.SetLeadersSequence(&epoch, initEpochHash)
 
-	globals.APPROVEMENT_THREAD.Epoch = epoch
+	globals.APPROVEMENT_THREAD.EpochHandler = epoch
 
 	return nil
 

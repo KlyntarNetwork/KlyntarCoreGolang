@@ -25,7 +25,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 	if parsedRequest, ok := data.(WsFinalizationProofRequest); ok {
 
-		epochHandler := globals.APPROVEMENT_THREAD.Epoch
+		epochHandler := globals.APPROVEMENT_THREAD.EpochHandler
 
 		epochIndex := epochHandler.Id
 
@@ -272,7 +272,7 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 	if parsedRequest, typeAssertOk := data.(WsLeaderRotationProofRequest); typeAssertOk {
 
-		epochHandler := globals.APPROVEMENT_THREAD.Epoch
+		epochHandler := globals.APPROVEMENT_THREAD.EpochHandler
 
 		epochIndex := epochHandler.Id
 
