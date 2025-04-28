@@ -36,13 +36,13 @@ func CreateStakingPool(delayedTransaction map[string]string) bool {
 
 		storageKey := creator + "(POOL)_STORAGE_POOL"
 
-		if _, exists := globals.APPROVEMENT_THREAD_CACHE[storageKey]; exists {
+		if _, exists := globals.APPROVEMENT_THREAD.Cache[storageKey]; exists {
 
 			return false
 
 		}
 
-		globals.APPROVEMENT_THREAD_CACHE[storageKey] = &structures.PoolStorage{
+		globals.APPROVEMENT_THREAD.Cache[storageKey] = &structures.PoolStorage{
 			Activated:      true,
 			Percentage:     percentage,
 			TotalStakedKly: big.NewInt(0),
@@ -96,7 +96,7 @@ func UpdateStakingPool(delayedTransaction map[string]string) bool {
 			delete(globals.APPROVEMENT_THREAD.Epoch.PoolsRegistry, creator)
 		}
 
-		globals.APPROVEMENT_THREAD_CACHE[creator+"(POOL)_STORAGE_POOL"] = poolStorage
+		globals.APPROVEMENT_THREAD.Cache[creator+"(POOL)_STORAGE_POOL"] = poolStorage
 
 		return true
 

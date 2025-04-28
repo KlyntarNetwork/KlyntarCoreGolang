@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+	"github.com/lxzan/gws"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -54,7 +55,10 @@ var MEMPOOL struct {
 	Mutex sync.Mutex
 }
 
-var APPROVEMENT_THREAD_CACHE = make(map[string]*structures.PoolStorage)
+var WEBSOCKET_CONNECTIONS struct {
+	RWMutex     sync.RWMutex
+	Connections map[string]*gws.Conn
+}
 
 var GENERATION_THREAD structures.GenerationThread
 

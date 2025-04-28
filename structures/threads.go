@@ -1,9 +1,10 @@
 package structures
 
 type ApprovementThread struct {
-	CoreMajorVersion  int               `json:"coreMajorVersion"`
-	NetworkParameters NetworkParameters `json:"networkParameters"`
-	Epoch             EpochHandler      `json:"epoch"`
+	CoreMajorVersion  int                     `json:"coreMajorVersion"`
+	NetworkParameters NetworkParameters       `json:"networkParameters"`
+	Epoch             EpochHandler            `json:"epoch"`
+	Cache             map[string]*PoolStorage `json:"-"`
 }
 
 type GenerationThread struct {

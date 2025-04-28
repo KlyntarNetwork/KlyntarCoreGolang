@@ -288,7 +288,7 @@ func EpochRotationThread() {
 
 					}
 
-					for key, value := range globals.APPROVEMENT_THREAD_CACHE {
+					for key, value := range globals.APPROVEMENT_THREAD.Cache {
 
 						valBytes, _ := json.Marshal(value)
 
@@ -331,7 +331,7 @@ func EpochRotationThread() {
 
 					// Clean cache
 
-					clear(globals.APPROVEMENT_THREAD_CACHE)
+					clear(globals.APPROVEMENT_THREAD.Cache)
 
 					utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)
 
