@@ -13,6 +13,8 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 )
 
+var LEADER_ROTATION_PROOFS map[string](chan Agreement)
+
 func BlocksGenerationThread() {
 
 	generateBlocksPortion()

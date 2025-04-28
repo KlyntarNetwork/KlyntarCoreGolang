@@ -18,13 +18,9 @@ import (
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 
-var CURRENT_LEADER_INDEX = 0
+var CURRENT_LEADER_INDEX = 0 // we need this value "globally" as a cache
 
 var QUORUM_AGREEMENTS map[string]string
-
-type Agreement struct {
-	PubKey, Sig string
-}
 
 type ResponseStatus struct {
 	Status string

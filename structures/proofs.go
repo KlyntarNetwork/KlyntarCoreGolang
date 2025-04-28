@@ -21,3 +21,11 @@ type AggregatedLeaderRotationProof struct {
 	SkipHash       string            `json:"skipHash"`
 	Proofs         map[string]string `json:"proofs"`
 }
+
+type AlrpSkeleton struct {
+	AfpForFirstBlock AggregatedFinalizationProof
+	SkipIndex        int
+	SkipHash         string
+	SkipAfp          AggregatedFinalizationProof
+	Proofs           map[string]string
+}
