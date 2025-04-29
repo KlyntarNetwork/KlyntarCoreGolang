@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
-	"github.com/lxzan/gws"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -53,11 +52,6 @@ var GENESIS structures.Genesis
 var MEMPOOL struct {
 	Slice []structures.Transaction
 	Mutex sync.Mutex
-}
-
-var WEBSOCKET_CONNECTIONS struct {
-	RWMutex     sync.RWMutex
-	Connections map[string]*gws.Conn
 }
 
 var GENERATION_THREAD structures.GenerationThread
