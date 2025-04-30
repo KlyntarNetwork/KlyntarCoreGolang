@@ -10,6 +10,7 @@ import (
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+	"github.com/lxzan/gws"
 	"lukechampine.com/blake3"
 )
 
@@ -28,6 +29,10 @@ const (
 )
 
 var shutdownOnce sync.Once
+
+func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*gws.Conn) {
+
+}
 
 func GracefulShutdown() {
 

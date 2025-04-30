@@ -2,10 +2,10 @@ package life
 
 import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
-	"github.com/lxzan/gws"
+	"github.com/gorilla/websocket"
 )
 
-var WEBSOCKET_CONNECTIONS map[string]*gws.Conn
+var WEBSOCKET_CONNECTIONS map[string]*websocket.Conn
 
 var FINALIZATION_PROOFS_CACHE map[string]string
 

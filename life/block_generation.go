@@ -11,12 +11,12 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
-	"github.com/lxzan/gws"
+	"github.com/gorilla/websocket"
 )
 
 var LEADER_ROTATION_PROOFS map[string](chan Agreement)
 
-var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*gws.Conn
+var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn
 
 func BlocksGenerationThread() {
 
