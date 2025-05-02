@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
-	"github.com/lxzan/gws"
+	"github.com/gorilla/websocket"
 	"lukechampine.com/blake3"
 )
 
@@ -30,8 +31,75 @@ const (
 
 var shutdownOnce sync.Once
 
-func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*gws.Conn) {
+func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*websocket.Conn, msgHandler func([]byte)) {
 
+	for _, validatorID := range quorum {
+
+		// Skip if connection already exists
+		if _, exists := wsConnMap[validatorID]; exists {
+			continue
+		}
+
+		// Fetch data from LevelDB
+		raw, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte(validatorID), nil)
+
+		if err != nil {
+			continue
+		}
+
+		// Parse JSON into PoolStorage
+		var pool structures.PoolStorage
+
+		if err := json.Unmarshal(raw, &pool); err != nil {
+			continue
+		}
+
+		// Check if the validator is active and has a WebSocket URL
+		if !pool.Activated || pool.WssPoolURL == "" {
+			continue
+		}
+
+		// Dial the WebSocket
+		conn, _, err := websocket.DefaultDialer.Dial(pool.WssPoolURL, nil)
+
+		if err != nil {
+			continue
+		}
+
+		// Store the connection
+		wsConnMap[validatorID] = conn
+
+		// Monitor connection in background
+		go func(id string, c *websocket.Conn) {
+			defer c.Close()
+			for {
+				_, msg, err := c.ReadMessage()
+				if err != nil {
+					delete(wsConnMap, id)
+					return
+				}
+
+				msgHandler(msg)
+			}
+		}(validatorID, conn)
+	}
+
+}
+
+func CleanupWebsocketConnections(quorum []string, wsConnMap map[string]*websocket.Conn) {
+	// Build a set of current quorum IDs for fast lookup
+	active := make(map[string]struct{})
+	for _, id := range quorum {
+		active[id] = struct{}{}
+	}
+
+	for id, conn := range wsConnMap {
+		if _, ok := active[id]; !ok {
+			// Validator is no longer in quorum — close and remove
+			conn.Close()
+			delete(wsConnMap, id)
+		}
+	}
 }
 
 func GracefulShutdown() {
