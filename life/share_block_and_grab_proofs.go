@@ -18,4 +18,6 @@ var PROOFS_GRABBER struct {
 	AfpForPrevious structures.AggregatedFinalizationProof
 }
 
+func processIncomingFinalizationProof(msg []byte) {}
+
 func BlocksSharingAndProofsGrabingThread() {}

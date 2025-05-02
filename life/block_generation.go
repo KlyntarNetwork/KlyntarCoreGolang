@@ -172,6 +172,8 @@ func getAggregatedLeaderRotationProof() *structures.AggregatedLeaderRotationProo
 
 }
 
+func processIncomingLeaderRotationProof(msg []byte) {}
+
 func generateBlocksPortion() {
 
 }
