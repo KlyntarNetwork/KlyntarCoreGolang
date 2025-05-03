@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -87,6 +88,7 @@ func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*w
 }
 
 func CleanupWebsocketConnections(quorum []string, wsConnMap map[string]*websocket.Conn) {
+
 	// Build a set of current quorum IDs for fast lookup
 	active := make(map[string]struct{})
 	for _, id := range quorum {
@@ -98,6 +100,119 @@ func CleanupWebsocketConnections(quorum []string, wsConnMap map[string]*websocke
 			// Validator is no longer in quorum — close and remove
 			conn.Close()
 			delete(wsConnMap, id)
+		}
+	}
+}
+
+type QuorumWaiter struct {
+	responseCh chan string
+	done       chan struct{}
+	answered   map[string]bool
+	timer      *time.Timer
+	mu         sync.Mutex
+	buf        []string
+}
+
+func NewQuorumWaiter(maxQuorumSize int) *QuorumWaiter {
+	return &QuorumWaiter{
+		responseCh: make(chan string, maxQuorumSize),
+		done:       make(chan struct{}),
+		answered:   make(map[string]bool, maxQuorumSize),
+		timer:      time.NewTimer(0),
+		buf:        make([]string, 0, maxQuorumSize),
+	}
+}
+
+func (qw *QuorumWaiter) sendMessages(targets []string, msg []byte, wsConnMap map[string]*websocket.Conn) {
+
+	for _, id := range targets {
+		conn, ok := wsConnMap[id]
+		if !ok {
+			continue
+		}
+
+		go func(id string, c *websocket.Conn) {
+			if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
+				return
+			}
+
+			_ = c.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+
+			_, _, err := c.ReadMessage()
+			if err == nil {
+				select {
+				case qw.responseCh <- id:
+				case <-qw.done:
+				}
+			}
+		}(id, conn)
+	}
+}
+
+func (qw *QuorumWaiter) SendAndWait(
+	ctx context.Context,
+	message []byte,
+	quorum []string,
+	wsConnMap map[string]*websocket.Conn,
+	majority int,
+) bool {
+
+	// Reset internal state
+	qw.mu.Lock()
+
+	for k := range qw.answered {
+		delete(qw.answered, k)
+	}
+	qw.buf = qw.buf[:0]
+	qw.mu.Unlock()
+
+	// Reset timer and done channel
+	if !qw.timer.Stop() {
+		select {
+		case <-qw.timer.C:
+		default:
+		}
+	}
+	qw.timer.Reset(100 * time.Millisecond)
+	qw.done = make(chan struct{}) // reset done channel
+
+	// Fast send
+	qw.sendMessages(quorum, message, wsConnMap)
+
+	for {
+		select {
+		case id := <-qw.responseCh:
+			qw.mu.Lock()
+			if !qw.answered[id] {
+				qw.answered[id] = true
+			}
+			count := len(qw.answered)
+			qw.mu.Unlock()
+
+			if count >= majority {
+				close(qw.done)
+				return true
+			}
+
+		case <-qw.timer.C:
+			// Retry missing
+			qw.mu.Lock()
+			qw.buf = qw.buf[:0]
+			for _, id := range quorum {
+				if !qw.answered[id] {
+					qw.buf = append(qw.buf, id)
+				}
+			}
+			qw.mu.Unlock()
+
+			if len(qw.buf) == 0 {
+				return false
+			}
+			qw.timer.Reset(100 * time.Millisecond)
+			qw.sendMessages(qw.buf, message, wsConnMap)
+
+		case <-ctx.Done():
+			return false
 		}
 	}
 }
