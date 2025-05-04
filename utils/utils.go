@@ -105,26 +105,32 @@ func CleanupWebsocketConnections(quorum []string, wsConnMap map[string]*websocke
 }
 
 type QuorumWaiter struct {
-	responseCh chan string
+	responseCh chan quorumResponse
 	done       chan struct{}
 	answered   map[string]bool
+	responses  map[string][]byte
 	timer      *time.Timer
 	mu         sync.Mutex
 	buf        []string
 }
 
+type quorumResponse struct {
+	id  string
+	msg []byte
+}
+
 func NewQuorumWaiter(maxQuorumSize int) *QuorumWaiter {
 	return &QuorumWaiter{
-		responseCh: make(chan string, maxQuorumSize),
+		responseCh: make(chan quorumResponse, maxQuorumSize),
 		done:       make(chan struct{}),
 		answered:   make(map[string]bool, maxQuorumSize),
+		responses:  make(map[string][]byte, maxQuorumSize),
 		timer:      time.NewTimer(0),
 		buf:        make([]string, 0, maxQuorumSize),
 	}
 }
 
 func (qw *QuorumWaiter) sendMessages(targets []string, msg []byte, wsConnMap map[string]*websocket.Conn) {
-
 	for _, id := range targets {
 		conn, ok := wsConnMap[id]
 		if !ok {
@@ -136,12 +142,11 @@ func (qw *QuorumWaiter) sendMessages(targets []string, msg []byte, wsConnMap map
 				return
 			}
 
-			_ = c.SetReadDeadline(time.Now().Add(1000 * time.Millisecond))
-
-			_, _, err := c.ReadMessage()
+			_ = c.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+			_, raw, err := c.ReadMessage()
 			if err == nil {
 				select {
-				case qw.responseCh <- id:
+				case qw.responseCh <- quorumResponse{id: id, msg: raw}:
 				case <-qw.done:
 				}
 			}
@@ -155,47 +160,54 @@ func (qw *QuorumWaiter) SendAndWait(
 	quorum []string,
 	wsConnMap map[string]*websocket.Conn,
 	majority int,
-) bool {
+) (map[string][]byte, bool) {
 
-	// Reset internal state
+	// Reset state
 	qw.mu.Lock()
-
 	for k := range qw.answered {
 		delete(qw.answered, k)
+	}
+	for k := range qw.responses {
+		delete(qw.responses, k)
 	}
 	qw.buf = qw.buf[:0]
 	qw.mu.Unlock()
 
-	// Reset timer and done channel
 	if !qw.timer.Stop() {
 		select {
 		case <-qw.timer.C:
 		default:
 		}
 	}
-	qw.timer.Reset(1000 * time.Millisecond)
-	qw.done = make(chan struct{}) // reset done channel
+	qw.timer.Reset(100 * time.Millisecond)
+	qw.done = make(chan struct{})
 
-	// Fast send
 	qw.sendMessages(quorum, message, wsConnMap)
 
 	for {
 		select {
-		case id := <-qw.responseCh:
+		case r := <-qw.responseCh:
 			qw.mu.Lock()
-			if !qw.answered[id] {
-				qw.answered[id] = true
+			if !qw.answered[r.id] {
+				qw.answered[r.id] = true
+				qw.responses[r.id] = r.msg
 			}
 			count := len(qw.answered)
 			qw.mu.Unlock()
 
 			if count >= majority {
 				close(qw.done)
-				return true
+				// Return copy of responses
+				qw.mu.Lock()
+				out := make(map[string][]byte, len(qw.responses))
+				for k, v := range qw.responses {
+					out[k] = v
+				}
+				qw.mu.Unlock()
+				return out, true
 			}
 
 		case <-qw.timer.C:
-			// Retry missing
 			qw.mu.Lock()
 			qw.buf = qw.buf[:0]
 			for _, id := range quorum {
@@ -206,13 +218,13 @@ func (qw *QuorumWaiter) SendAndWait(
 			qw.mu.Unlock()
 
 			if len(qw.buf) == 0 {
-				return false
+				return nil, false
 			}
-			qw.timer.Reset(1000 * time.Millisecond)
+			qw.timer.Reset(100 * time.Millisecond)
 			qw.sendMessages(qw.buf, message, wsConnMap)
 
 		case <-ctx.Done():
-			return false
+			return nil, false
 		}
 	}
 }
