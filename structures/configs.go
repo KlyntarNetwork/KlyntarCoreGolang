@@ -25,6 +25,9 @@ type NodeLevelConfig struct {
 	PayloadSize                                         int                       `json:"PAYLOAD_SIZE"`
 	MaxPayloadSize                                      int                       `json:"MAX_PAYLOAD_SIZE"`
 	TLS                                                 TLSConfig                 `json:"TLS"`
+	AnywayPushToMempool                                 bool                      `json:"ANYWAY_PUSH_TO_MEMPOOL"`
+	MempoolSecretKey                                    string                    `json:"MEMPOOL_SECRET_KEY"`
+	MempoolNodes                                        []string                  `json:"MEMPOOL_NODES"`
 }
 
 type MyKlyInfrastructureConfig struct {
