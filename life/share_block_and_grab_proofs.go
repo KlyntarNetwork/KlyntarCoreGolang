@@ -7,6 +7,7 @@ import (
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/gorilla/websocket"
 )
 
@@ -28,6 +29,13 @@ var PROOFS_GRABBER = ProofsGrabber{
 }
 
 func processIncomingFinalizationProof(msg []byte) {}
+
+func runFinalizationProofsGrabbing() {
+
+	// Call SendAndWait here
+	// Once received 2/3 votes for block - continue
+
+}
 
 func BlocksSharingAndProofsGrabingThread() {
 
@@ -82,6 +90,16 @@ func BlocksSharingAndProofsGrabingThread() {
 
 		}
 
+		// Also, open connections with quorum here. Create QuorumWaiter etc.
+
+		utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS)
+
 	}
+
+	// Continue here
+
+	runFinalizationProofsGrabbing()
+
+	go BlocksSharingAndProofsGrabingThread()
 
 }

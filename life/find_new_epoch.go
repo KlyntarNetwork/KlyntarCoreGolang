@@ -361,9 +361,7 @@ func EpochRotationThread() {
 
 		}
 
-		time.AfterFunc(0, func() {
-			EpochRotationThread()
-		})
+		go EpochRotationThread()
 
 	} else {
 

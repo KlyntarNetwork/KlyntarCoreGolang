@@ -32,7 +32,7 @@ const (
 
 var shutdownOnce sync.Once
 
-func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*websocket.Conn, msgHandler func([]byte)) {
+func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*websocket.Conn) {
 
 	for _, validatorID := range quorum {
 
@@ -70,19 +70,6 @@ func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*w
 		// Store the connection
 		wsConnMap[validatorID] = conn
 
-		// Monitor connection in background
-		go func(id string, c *websocket.Conn) {
-			defer c.Close()
-			for {
-				_, msg, err := c.ReadMessage()
-				if err != nil {
-					delete(wsConnMap, id)
-					return
-				}
-
-				msgHandler(msg)
-			}
-		}(validatorID, conn)
 	}
 
 }
