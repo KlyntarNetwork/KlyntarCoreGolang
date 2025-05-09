@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/block"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
@@ -12,21 +14,23 @@ import (
 )
 
 type ProofsGrabber struct {
-	EpochId        int
-	AcceptedIndex  int
-	AcceptedHash   string
-	AfpForPrevious structures.AggregatedFinalizationProof
+	EpochId             int
+	AcceptedIndex       int
+	AcceptedHash        string
+	AfpForPrevious      structures.AggregatedFinalizationProof
+	HuntingForBlockId   string
+	HuntingForBlockHash string
 }
 
 var WEBSOCKET_CONNECTIONS map[string]*websocket.Conn
 
 var FINALIZATION_PROOFS_CACHE map[string]string
 
-var RESPONSES chan Agreement
-
 var PROOFS_GRABBER = ProofsGrabber{
 	EpochId: -1,
 }
+
+var BLOCK_TO_SHARE block.Block
 
 func processIncomingFinalizationProof(msg []byte) {}
 
@@ -34,6 +38,59 @@ func runFinalizationProofsGrabbing() {
 
 	// Call SendAndWait here
 	// Once received 2/3 votes for block - continue
+
+	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+
+	blockIndexToHunt := strconv.Itoa(PROOFS_GRABBER.AcceptedIndex + 1)
+
+	blockIdForHunting := strconv.Itoa(epochHandler.Id) + ":" + globals.CONFIGURATION.PublicKey + ":" + blockIndexToHunt
+
+	majority := common_functions.GetQuorumMajority(&epochHandler)
+
+	if &BLOCK_TO_SHARE == nil {
+
+		// Get from db and assign. If no such block - return
+
+	}
+
+	blockHash := BLOCK_TO_SHARE.GetHash()
+
+	PROOFS_GRABBER.HuntingForBlockId = blockIdForHunting
+
+	PROOFS_GRABBER.HuntingForBlockHash = blockHash
+
+	if len(FINALIZATION_PROOFS_CACHE) < majority {
+
+		// Initiate request
+
+	}
+
+	if len(FINALIZATION_PROOFS_CACHE) >= majority {
+
+		aggregatedFinalizationProof := structures.AggregatedFinalizationProof{
+
+			PrevBlockHash: PROOFS_GRABBER.AcceptedHash,
+
+			BlockID: blockIdForHunting,
+
+			BlockHash: blockHash,
+
+			Proofs: FINALIZATION_PROOFS_CACHE,
+		}
+
+		keyBytes := []byte("AFP:" + blockIdForHunting)
+
+		valueBytes, _ := json.Marshal(aggregatedFinalizationProof)
+
+		// Store locally
+		globals.EPOCH_DATA.Put(keyBytes, valueBytes, nil)
+
+		// Delete finalization proofs that we don't need more
+		FINALIZATION_PROOFS_CACHE = map[string]string{}
+
+		// Repeat procedure for the next block and store the progress
+
+	}
 
 }
 
