@@ -11,10 +11,11 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/system_contracts"
 	"github.com/gorilla/websocket"
 )
 
-var LEADER_ROTATION_PROOFS map[string](chan Agreement)
+var LEADER_ROTATION_PROOFS map[string]map[string]string
 
 var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn
 
@@ -173,6 +174,28 @@ func getAggregatedLeaderRotationProof() *structures.AggregatedLeaderRotationProo
 }
 
 func processIncomingLeaderRotationProof(msg []byte) {
+
+}
+
+func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) system_contracts.DelayedTransactionsBatch {
+
+	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+
+	prevEpochIndex := epochHandler.Id - 2
+
+	if indexOfLeader != 0 {
+
+		return system_contracts.DelayedTransactionsBatch{
+			EpochIndex:          prevEpochIndex,
+			DelayedTransactions: []map[string]string{},
+			Proofs:              map[string]string{},
+		}
+
+	}
+
+	// var delayedTransactions []map[string]string
+
+	return system_contracts.DelayedTransactionsBatch{}
 
 }
 
