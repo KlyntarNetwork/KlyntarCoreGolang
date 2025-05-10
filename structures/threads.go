@@ -13,5 +13,5 @@ type GenerationThread struct {
 	PrevHash    string   `json:"prevHash"`
 	NextIndex   int      `json:"nextIndex"`
 	Quorum      []string `json:"quorum"`
-	Majority    uint     `json:"majority"`
+	Majority    int      `json:"majority"`
 }

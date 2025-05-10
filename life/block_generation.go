@@ -201,4 +201,69 @@ func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) system_contracts.De
 
 func generateBlocksPortion() {
 
+	globals.APPROVEMENT_THREAD.RWMutex.RLock()
+
+	defer globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+
+	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+
+	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
+
+	epochIndex := epochHandler.Id
+
+	currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
+
+	/*
+			let proofsGrabber = GLOBAL_CACHES.TEMP_CACHE.get(epochIndex+':PROOFS_GRABBER')
+
+		    if(proofsGrabber && WORKING_THREADS.GENERATION_THREAD.epochFullId === epochFullID && WORKING_THREADS.GENERATION_THREAD.nextIndex > proofsGrabber.acceptedIndex+1) return
+
+	*/
+
+	// Safe "if" branch to prevent unnecessary blocks generation
+
+	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
+
+		var aefpForPreviousEpoch *structures.AggregatedEpochFinalizationProof = nil
+
+		// Check if <epochFullID> is the same in APPROVEMENT_THREAD and in GENERATION_THREAD
+
+		if globals.GENERATION_THREAD.EpochFullId != epochFullID {
+
+			// If new epoch - add the aggregated proof of previous epoch finalization
+
+			if epochIndex != 0 {
+
+				aefpForPreviousEpoch = getAggregatedEpochFinalizationProof(&epochHandler)
+
+				if aefpForPreviousEpoch == nil {
+
+					return
+
+				}
+
+			}
+
+			// Update the index & hash of epoch
+
+			globals.GENERATION_THREAD.EpochFullId = epochFullID
+
+			globals.GENERATION_THREAD.EpochIndex = epochIndex
+
+			// Recount new values
+
+			copy(globals.GENERATION_THREAD.Quorum, epochHandler.Quorum)
+
+			globals.GENERATION_THREAD.Majority = common_functions.GetQuorumMajority(&epochHandler)
+
+			// And nullish the index & hash in generation thread for new epoch
+
+			globals.GENERATION_THREAD.PrevHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+			globals.GENERATION_THREAD.NextIndex = 0
+
+		}
+
+	}
+
 }
