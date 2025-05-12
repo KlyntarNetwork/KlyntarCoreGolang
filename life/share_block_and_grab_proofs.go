@@ -32,8 +32,6 @@ var PROOFS_GRABBER = ProofsGrabber{
 
 var BLOCK_TO_SHARE *block.Block
 
-func processIncomingFinalizationProof(msg []byte) {}
-
 func runFinalizationProofsGrabbing() {
 
 	// Call SendAndWait here
@@ -49,7 +47,7 @@ func runFinalizationProofsGrabbing() {
 
 	if BLOCK_TO_SHARE == nil {
 
-		// Get from db and assign. If no such block - return
+		// TODO: Get from db and assign. If no such block - return
 
 	}
 
@@ -61,7 +59,7 @@ func runFinalizationProofsGrabbing() {
 
 	if len(FINALIZATION_PROOFS_CACHE) < majority {
 
-		// Initiate request
+		// TODO: Initiate requests
 
 	}
 
@@ -88,7 +86,7 @@ func runFinalizationProofsGrabbing() {
 		// Delete finalization proofs that we don't need more
 		FINALIZATION_PROOFS_CACHE = map[string]string{}
 
-		// Repeat procedure for the next block and store the progress
+		// TODO: Repeat procedure for the next block and store the progress
 
 	}
 

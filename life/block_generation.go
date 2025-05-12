@@ -12,12 +12,65 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/system_contracts"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/gorilla/websocket"
 )
 
-var LEADER_ROTATION_PROOFS map[string]map[string]string
+type DoubleMap = map[string]map[string]string
+
+var LEADER_ROTATION_PROOFS DoubleMap
 
 var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn
+
+type RotationProofCollector struct {
+	wsConnMap map[string]*websocket.Conn
+	quorum    []string
+	majority  int
+	timeout   time.Duration
+}
+
+// To grab proofs for multiple previous leaders in a parallel way
+func (c *RotationProofCollector) AlrpForLeadersCollector(ctx context.Context, leaderIDs []string, messageBuilder func(leaderID string) []byte) DoubleMap {
+
+	var wg sync.WaitGroup
+	mu := sync.Mutex{}
+
+	result := make(map[string]map[string]string)
+
+	for _, leaderID := range leaderIDs {
+		wg.Add(1)
+
+		go func(leaderID string) {
+			defer wg.Done()
+
+			waiter := utils.NewQuorumWaiter(len(c.quorum))
+
+			// Create a timeout for a call
+			leaderCtx, cancel := context.WithTimeout(ctx, c.timeout)
+			defer cancel()
+
+			message := messageBuilder(leaderID)
+
+			responses, ok := waiter.SendAndWait(leaderCtx, message, c.quorum, c.wsConnMap, c.majority)
+			if !ok {
+				return
+			}
+
+			// Build final result
+			mapping := make(map[string]string, len(responses))
+			for validatorID, raw := range responses {
+				mapping[validatorID] = string(raw)
+			}
+
+			mu.Lock()
+			result[leaderID] = mapping
+			mu.Unlock()
+		}(leaderID)
+	}
+
+	wg.Wait()
+	return result
+}
 
 func BlocksGenerationThread() {
 
@@ -170,10 +223,6 @@ func getAggregatedEpochFinalizationProof(epochHandler *structures.EpochHandler) 
 func getAggregatedLeaderRotationProof() *structures.AggregatedLeaderRotationProof {
 
 	return nil
-
-}
-
-func processIncomingLeaderRotationProof(msg []byte) {
 
 }
 
