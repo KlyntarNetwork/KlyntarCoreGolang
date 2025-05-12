@@ -1,8 +1,10 @@
 package life
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -12,6 +14,8 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/gorilla/websocket"
+
+	websocket_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
 )
 
 type ProofsGrabber struct {
@@ -34,6 +38,8 @@ var PROOFS_GRABBER = ProofsGrabber{
 var BLOCK_TO_SHARE *block.Block = &block.Block{
 	Index: -1,
 }
+
+var QUORUM_WAITER_FOR_FP *utils.QuorumWaiter
 
 func runFinalizationProofsGrabbing() {
 
@@ -76,7 +82,42 @@ func runFinalizationProofsGrabbing() {
 
 	if len(FINALIZATION_PROOFS_CACHE) < majority {
 
-		// TODO: Initiate requests
+		// 1. Build message - then parse to JSON
+		message := websocket_structures.WsFinalizationProofRequest{
+
+			Block:            *BLOCK_TO_SHARE,
+			PreviousBlockAfp: PROOFS_GRABBER.AfpForPrevious,
+		}
+
+		if messageJsoned, err := json.Marshal(message); err != nil {
+
+			// 2. Create max delay
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			majority := common_functions.GetQuorumMajority(&epochHandler)
+
+			responses, ok := QUORUM_WAITER_FOR_FP.SendAndWait(ctx, messageJsoned, epochHandler.Quorum, WEBSOCKET_CONNECTIONS, majority)
+
+			if !ok {
+				log.Println("Did not receive enough responses from quorum")
+				return
+			}
+
+			for _, raw := range responses {
+
+				var parsedResponse websocket_structures.WsFinalizationProofResponse
+
+				if err := json.Unmarshal(raw, &parsedResponse); err != nil {
+					continue
+				}
+
+				// parsedResponses[validatorID] = parsedResponse
+				// TODO: Parse requests
+			}
+
+		}
 
 	}
 
@@ -203,6 +244,9 @@ func BlocksSharingAndProofsGrabingThread() {
 		// Also, open connections with quorum here. Create QuorumWaiter etc.
 
 		utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS)
+
+		// Create new QuorumWaiter
+		QUORUM_WAITER_FOR_FP = utils.NewQuorumWaiter(len(epochHandler.Quorum))
 
 	}
 
