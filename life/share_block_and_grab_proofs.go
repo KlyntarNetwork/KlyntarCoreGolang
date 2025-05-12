@@ -83,6 +83,7 @@ func runFinalizationProofsGrabbing() {
 	if len(FINALIZATION_PROOFS_CACHE) < majority {
 
 		// 1. Build message - then parse to JSON
+
 		message := websocket_structures.WsFinalizationProofRequest{
 
 			Block:            *BLOCK_TO_SHARE,

@@ -129,7 +129,7 @@ func (qw *QuorumWaiter) sendMessages(targets []string, msg []byte, wsConnMap map
 				return
 			}
 
-			_ = c.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+			_ = c.SetReadDeadline(time.Now().Add(time.Second))
 			_, raw, err := c.ReadMessage()
 			if err == nil {
 				select {
@@ -166,7 +166,7 @@ func (qw *QuorumWaiter) SendAndWait(
 		default:
 		}
 	}
-	qw.timer.Reset(100 * time.Millisecond)
+	qw.timer.Reset(time.Second)
 	qw.done = make(chan struct{})
 
 	qw.sendMessages(quorum, message, wsConnMap)
@@ -207,7 +207,7 @@ func (qw *QuorumWaiter) SendAndWait(
 			if len(qw.buf) == 0 {
 				return nil, false
 			}
-			qw.timer.Reset(100 * time.Millisecond)
+			qw.timer.Reset(time.Second)
 			qw.sendMessages(qw.buf, message, wsConnMap)
 
 		case <-ctx.Done():
