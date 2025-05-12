@@ -30,7 +30,7 @@ var PROOFS_GRABBER = ProofsGrabber{
 	EpochId: -1,
 }
 
-var BLOCK_TO_SHARE block.Block
+var BLOCK_TO_SHARE *block.Block
 
 func processIncomingFinalizationProof(msg []byte) {}
 
@@ -47,7 +47,7 @@ func runFinalizationProofsGrabbing() {
 
 	majority := common_functions.GetQuorumMajority(&epochHandler)
 
-	if &BLOCK_TO_SHARE == nil {
+	if BLOCK_TO_SHARE == nil {
 
 		// Get from db and assign. If no such block - return
 

@@ -248,15 +248,7 @@ func generateBlocksPortion() {
 
 			globals.GENERATION_THREAD.EpochFullId = epochFullID
 
-			globals.GENERATION_THREAD.EpochIndex = epochIndex
-
-			// Recount new values
-
-			copy(globals.GENERATION_THREAD.Quorum, epochHandler.Quorum)
-
-			globals.GENERATION_THREAD.Majority = common_functions.GetQuorumMajority(&epochHandler)
-
-			// And nullish the index & hash in generation thread for new epoch
+			// Nullish the index & hash in generation thread for new epoch
 
 			globals.GENERATION_THREAD.PrevHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
