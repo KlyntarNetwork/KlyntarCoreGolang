@@ -2,6 +2,7 @@ package life
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -30,7 +31,9 @@ var PROOFS_GRABBER = ProofsGrabber{
 	EpochId: -1,
 }
 
-var BLOCK_TO_SHARE *block.Block
+var BLOCK_TO_SHARE *block.Block = &block.Block{
+	Index: -1,
+}
 
 func runFinalizationProofsGrabbing() {
 
@@ -43,11 +46,25 @@ func runFinalizationProofsGrabbing() {
 
 	blockIdForHunting := strconv.Itoa(epochHandler.Id) + ":" + globals.CONFIGURATION.PublicKey + ":" + blockIndexToHunt
 
+	blockIdThatInPointer := strconv.Itoa(epochHandler.Id) + ":" + globals.CONFIGURATION.PublicKey + ":" + strconv.Itoa(BLOCK_TO_SHARE.Index)
+
 	majority := common_functions.GetQuorumMajority(&epochHandler)
 
-	if BLOCK_TO_SHARE == nil {
+	if blockIdForHunting != blockIdThatInPointer {
 
-		// TODO: Get from db and assign. If no such block - return
+		blockDataRaw, errDB := globals.BLOCKS.Get([]byte(blockIdForHunting), nil)
+
+		if errDB != nil {
+
+			parseErr := json.Unmarshal(blockDataRaw, BLOCK_TO_SHARE)
+
+			if parseErr != nil {
+				return
+			}
+
+		} else {
+			return
+		}
 
 	}
 
@@ -80,13 +97,51 @@ func runFinalizationProofsGrabbing() {
 
 		valueBytes, _ := json.Marshal(aggregatedFinalizationProof)
 
-		// Store locally
+		// Store AFP locally
 		globals.EPOCH_DATA.Put(keyBytes, valueBytes, nil)
 
-		// Delete finalization proofs that we don't need more
-		FINALIZATION_PROOFS_CACHE = map[string]string{}
+		// Repeat procedure for the next block and store the progress
 
-		// TODO: Repeat procedure for the next block and store the progress
+		proofGrabberKeyBytes := []byte(strconv.Itoa(epochHandler.Id) + ":PROOFS_GRABBER")
+
+		proofGrabberValueBytes, marshalErr := json.Marshal(PROOFS_GRABBER)
+
+		if marshalErr == nil {
+
+			proofsGrabberStoreErr := globals.FINALIZATION_VOTING_STATS.Put(proofGrabberKeyBytes, proofGrabberValueBytes, nil)
+
+			if proofsGrabberStoreErr == nil {
+
+				PROOFS_GRABBER.AfpForPrevious = aggregatedFinalizationProof
+
+				PROOFS_GRABBER.AcceptedIndex++
+
+				PROOFS_GRABBER.AcceptedHash = PROOFS_GRABBER.HuntingForBlockHash
+
+				msg := fmt.Sprintf(
+					"%sApproved height for epoch %s%d %sis %s%d %s(%.3f%% agreements)",
+					utils.WHITE_COLOR,
+					utils.CYAN_COLOR,
+					epochHandler.Id,
+					utils.RED_COLOR,
+					utils.GREEN_COLOR,
+					PROOFS_GRABBER.AcceptedIndex-1,
+					utils.YELLOW_COLOR,
+					float64(len(FINALIZATION_PROOFS_CACHE))/float64(len(epochHandler.Quorum))*100,
+				)
+
+				utils.LogWithTime(msg, utils.WHITE_COLOR)
+
+				// Delete finalization proofs that we don't need more
+				FINALIZATION_PROOFS_CACHE = map[string]string{}
+
+			} else {
+				return
+			}
+
+		} else {
+			return
+		}
 
 	}
 

@@ -35,7 +35,7 @@ func (c *RotationProofCollector) AlrpForLeadersCollector(ctx context.Context, le
 	var wg sync.WaitGroup
 	mu := sync.Mutex{}
 
-	result := make(map[string]map[string]string)
+	result := make(DoubleMap)
 
 	for _, leaderID := range leaderIDs {
 		wg.Add(1)

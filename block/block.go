@@ -16,7 +16,7 @@ type Block struct {
 	Epoch        string                   `json:"epoch"`
 	Transactions []structures.Transaction `json:"transactions"`
 	ExtraData    map[string]any           `json:"extraData"`
-	Index        uint32                   `json:"index"`
+	Index        int                      `json:"index"`
 	PrevHash     string                   `json:"prevHash"`
 	Sig          string                   `json:"sig"`
 }
