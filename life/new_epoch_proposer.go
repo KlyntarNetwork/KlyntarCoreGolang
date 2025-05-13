@@ -20,6 +20,10 @@ import (
 
 var CURRENT_LEADER_INDEX = 0 // we need this value "globally" as a cache
 
+type Agreement struct {
+	PubKey, Sig string
+}
+
 var QUORUM_AGREEMENTS map[string]string
 
 type ResponseStatus struct {

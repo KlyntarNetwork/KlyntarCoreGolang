@@ -22,6 +22,8 @@ var LEADER_ROTATION_PROOFS DoubleMap
 
 var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn
 
+var QUORUM_WAITER *utils.QuorumWaiter
+
 type RotationProofCollector struct {
 	wsConnMap map[string]*websocket.Conn
 	quorum    []string
@@ -86,9 +88,6 @@ func getTransactionsFromMempool() []structures.Transaction {
 
 	globals.MEMPOOL.Mutex.Lock()
 	defer globals.MEMPOOL.Mutex.Unlock()
-
-	globals.APPROVEMENT_THREAD.RWMutex.RLock()
-	defer globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
 
 	limit := globals.APPROVEMENT_THREAD.Thread.NetworkParameters.TxLimitPerBlock
 

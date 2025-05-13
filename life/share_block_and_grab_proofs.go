@@ -39,7 +39,7 @@ var BLOCK_TO_SHARE *block.Block = &block.Block{
 	Index: -1,
 }
 
-var QUORUM_WAITER_FOR_FP *utils.QuorumWaiter
+var QUORUM_WAITER_FOR_FINALIZATION_PROOFS *utils.QuorumWaiter
 
 func runFinalizationProofsGrabbing() {
 
@@ -99,7 +99,7 @@ func runFinalizationProofsGrabbing() {
 
 			majority := common_functions.GetQuorumMajority(&epochHandler)
 
-			responses, ok := QUORUM_WAITER_FOR_FP.SendAndWait(ctx, messageJsoned, epochHandler.Quorum, WEBSOCKET_CONNECTIONS, majority)
+			responses, ok := QUORUM_WAITER_FOR_FINALIZATION_PROOFS.SendAndWait(ctx, messageJsoned, epochHandler.Quorum, WEBSOCKET_CONNECTIONS, majority)
 
 			if !ok {
 				log.Println("Did not receive enough responses from quorum")
@@ -247,7 +247,7 @@ func BlocksSharingAndProofsGrabingThread() {
 		utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS)
 
 		// Create new QuorumWaiter
-		QUORUM_WAITER_FOR_FP = utils.NewQuorumWaiter(len(epochHandler.Quorum))
+		QUORUM_WAITER_FOR_FINALIZATION_PROOFS = utils.NewQuorumWaiter(len(epochHandler.Quorum))
 
 	}
 

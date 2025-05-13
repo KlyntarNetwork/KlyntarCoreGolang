@@ -59,6 +59,8 @@ func LeaderRotationThread() {
 
 		globals.APPROVEMENT_THREAD.RWMutex.Unlock()
 
+	} else {
+		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
 	}
 
 	// The workflow of this function is infinite
