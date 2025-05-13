@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
+	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 	"github.com/gorilla/websocket"
 
 	websocket_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
@@ -41,12 +41,23 @@ var BLOCK_TO_SHARE *block.Block = &block.Block{
 
 var QUORUM_WAITER_FOR_FINALIZATION_PROOFS *utils.QuorumWaiter
 
+func containsInSlice(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
 func runFinalizationProofsGrabbing() {
 
 	// Call SendAndWait here
 	// Once received 2/3 votes for block - continue
 
 	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+
+	epochFullId := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
 	blockIndexToHunt := strconv.Itoa(PROOFS_GRABBER.AcceptedIndex + 1)
 
@@ -82,7 +93,7 @@ func runFinalizationProofsGrabbing() {
 
 	if len(FINALIZATION_PROOFS_CACHE) < majority {
 
-		// 1. Build message - then parse to JSON
+		// Build message - then parse to JSON
 
 		message := websocket_structures.WsFinalizationProofRequest{
 
@@ -92,7 +103,7 @@ func runFinalizationProofsGrabbing() {
 
 		if messageJsoned, err := json.Marshal(message); err != nil {
 
-			// 2. Create max delay
+			// Create max delay
 
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
@@ -102,20 +113,35 @@ func runFinalizationProofsGrabbing() {
 			responses, ok := QUORUM_WAITER_FOR_FINALIZATION_PROOFS.SendAndWait(ctx, messageJsoned, epochHandler.Quorum, WEBSOCKET_CONNECTIONS, majority)
 
 			if !ok {
-				log.Println("Did not receive enough responses from quorum")
 				return
 			}
 
 			for _, raw := range responses {
 
-				var parsedResponse websocket_structures.WsFinalizationProofResponse
+				var parsedFinalizationProof websocket_structures.WsFinalizationProofResponse
 
-				if err := json.Unmarshal(raw, &parsedResponse); err != nil {
+				if err := json.Unmarshal(raw, &parsedFinalizationProof); err != nil {
 					continue
 				}
 
-				// parsedResponses[validatorID] = parsedResponse
-				// TODO: Parse requests
+				// Now verify proof and parse requests
+
+				if parsedFinalizationProof.VotedForHash == PROOFS_GRABBER.HuntingForBlockHash {
+
+					// Verify the finalization proof
+
+					dataThatShouldBeSigned := PROOFS_GRABBER.AcceptedHash + PROOFS_GRABBER.HuntingForBlockId + PROOFS_GRABBER.HuntingForBlockHash + epochFullId
+
+					finalizationProofIsOk := containsInSlice(epochHandler.Quorum, parsedFinalizationProof.Voter) && ed25519.VerifySignature(dataThatShouldBeSigned, parsedFinalizationProof.Voter, parsedFinalizationProof.FinalizationProof)
+
+					if finalizationProofIsOk {
+
+						FINALIZATION_PROOFS_CACHE[parsedFinalizationProof.Voter] = parsedFinalizationProof.FinalizationProof
+
+					}
+
+				}
+
 			}
 
 		}
@@ -140,6 +166,7 @@ func runFinalizationProofsGrabbing() {
 		valueBytes, _ := json.Marshal(aggregatedFinalizationProof)
 
 		// Store AFP locally
+
 		globals.EPOCH_DATA.Put(keyBytes, valueBytes, nil)
 
 		// Repeat procedure for the next block and store the progress
@@ -175,6 +202,7 @@ func runFinalizationProofsGrabbing() {
 				utils.LogWithTime(msg, utils.WHITE_COLOR)
 
 				// Delete finalization proofs that we don't need more
+
 				FINALIZATION_PROOFS_CACHE = map[string]string{}
 
 			} else {
