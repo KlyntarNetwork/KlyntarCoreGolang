@@ -12,7 +12,7 @@ import (
 
 type Block struct {
 	Creator      string                   `json:"creator"`
-	Time         uint64                   `json:"time"`
+	Time         int64                    `json:"time"`
 	Epoch        string                   `json:"epoch"`
 	Transactions []structures.Transaction `json:"transactions"`
 	ExtraData    map[string]any           `json:"extraData"`
@@ -21,13 +21,26 @@ type Block struct {
 	Sig          string                   `json:"sig"`
 }
 
+func NewBlock(transactions []structures.Transaction, extraData map[string]any, epochFullID string) *Block {
+	return &Block{
+		Creator:      globals.CONFIGURATION.PublicKey,
+		Time:         utils.GetUTCTimestampInMilliSeconds(),
+		Epoch:        epochFullID,
+		Transactions: transactions,
+		ExtraData:    extraData,
+		Index:        globals.GENERATION_THREAD.NextIndex,
+		PrevHash:     globals.GENERATION_THREAD.PrevHash,
+		Sig:          "",
+	}
+}
+
 func (block *Block) GetHash() string {
 
 	jsonedTransactions, _ := json.Marshal(block.Transactions)
 
 	networkID := globals.GENESIS.NetworkID
 
-	dataToHash := block.Creator + strconv.FormatUint(block.Time, 10) + string(jsonedTransactions) + networkID + block.Epoch + strconv.FormatUint(uint64(block.Index), 10) + block.PrevHash
+	dataToHash := block.Creator + strconv.FormatInt(block.Time, 10) + string(jsonedTransactions) + networkID + block.Epoch + strconv.FormatUint(uint64(block.Index), 10) + block.PrevHash
 
 	return utils.Blake3(dataToHash)
 

@@ -9,12 +9,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/block"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/system_contracts"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/gorilla/websocket"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type DoubleMap = map[string]map[string]string
@@ -363,6 +365,12 @@ func generateBlocksPortion() {
 			}
 
 		}
+
+		extraData["rest"] = globals.CONFIGURATION.ExtraDataToBlock
+
+		blockDbAtomicBatch := new(leveldb.Batch)
+
+		blockCandidate := block.NewBlock(getTransactionsFromMempool(), extraData, epochFullID)
 
 	}
 

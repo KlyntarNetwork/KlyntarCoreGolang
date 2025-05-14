@@ -271,10 +271,6 @@ type CurrentLeaderData struct {
 	Url        string
 }
 
-func getUtcTimestamp() int64 {
-	return time.Now().UTC().UnixMilli()
-}
-
 func IsMyCoreVersionOld(thread *structures.ApprovementThread) bool {
 
 	return thread.CoreMajorVersion > globals.CORE_MAJOR_VERSION
@@ -283,7 +279,7 @@ func IsMyCoreVersionOld(thread *structures.ApprovementThread) bool {
 
 func EpochStillFresh(thread *structures.ApprovementThread) bool {
 
-	return (thread.EpochHandler.StartTimestamp + uint64(thread.NetworkParameters.EpochTime)) > uint64(getUtcTimestamp())
+	return (thread.EpochHandler.StartTimestamp + uint64(thread.NetworkParameters.EpochTime)) > uint64(GetUTCTimestampInMilliSeconds())
 
 }
 
