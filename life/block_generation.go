@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -18,9 +19,9 @@ import (
 
 type DoubleMap = map[string]map[string]string
 
-var LEADER_ROTATION_PROOFS DoubleMap
+var LEADER_ROTATION_PROOFS DoubleMap // leaderPubkey => map(quorumMemberPubkey=>leaderRotationProofSigna)
 
-var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn
+var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn // quorumMember => websocket handler
 
 var QUORUM_WAITER *utils.QuorumWaiter
 
@@ -29,6 +30,16 @@ type RotationProofCollector struct {
 	quorum    []string
 	majority  int
 	timeout   time.Duration
+}
+
+func BlocksGenerationThread() {
+
+	generateBlocksPortion()
+
+	time.AfterFunc(time.Duration(globals.APPROVEMENT_THREAD.Thread.NetworkParameters.BlockTime), func() {
+		BlocksGenerationThread()
+	})
+
 }
 
 // To grab proofs for multiple previous leaders in a parallel way
@@ -72,16 +83,6 @@ func (c *RotationProofCollector) AlrpForLeadersCollector(ctx context.Context, le
 
 	wg.Wait()
 	return result
-}
-
-func BlocksGenerationThread() {
-
-	generateBlocksPortion()
-
-	time.AfterFunc(time.Duration(globals.APPROVEMENT_THREAD.Thread.NetworkParameters.BlockTime), func() {
-		BlocksGenerationThread()
-	})
-
 }
 
 func getTransactionsFromMempool() []structures.Transaction {
@@ -262,6 +263,8 @@ func generateBlocksPortion() {
 	currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
 
 	/*
+		TODO:
+
 			let proofsGrabber = GLOBAL_CACHES.TEMP_CACHE.get(epochIndex+':PROOFS_GRABBER')
 
 		    if(proofsGrabber && WORKING_THREADS.GENERATION_THREAD.epochFullId === epochFullID && WORKING_THREADS.GENERATION_THREAD.nextIndex > proofsGrabber.acceptedIndex+1) return
@@ -301,6 +304,63 @@ func generateBlocksPortion() {
 			globals.GENERATION_THREAD.PrevHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 			globals.GENERATION_THREAD.NextIndex = 0
+
+		}
+
+		extraData := make(map[string]any)
+
+		if globals.GENERATION_THREAD.NextIndex == 0 {
+
+			if epochIndex > 0 {
+
+				if aefpForPreviousEpoch != nil {
+
+					extraData["aefpForPreviousEpoch"] = aefpForPreviousEpoch
+
+				} else {
+
+					return
+
+				}
+
+			}
+
+			// Build the template to insert to the extraData of block. Structure is {pool0:ALRP,...,poolN:ALRP}
+
+			myIndexInLeadersSequence := slices.Index(epochHandler.LeadersSequence, globals.CONFIGURATION.PublicKey)
+
+			// Get all previous pools - from zero to <my_position>
+
+			pubKeysOfAllThePreviousPools := slices.Clone(epochHandler.LeadersSequence[:myIndexInLeadersSequence])
+
+			// Reverse the slice
+			for i, j := 0, len(pubKeysOfAllThePreviousPools)-1; i < j; i, j = i+1, j-1 {
+				pubKeysOfAllThePreviousPools[i], pubKeysOfAllThePreviousPools[j] = pubKeysOfAllThePreviousPools[j], pubKeysOfAllThePreviousPools[i]
+			}
+
+			indexOfPreviousLeaderToMe := myIndexInLeadersSequence - 1
+
+			previousToMeLeaderPubKey := epochHandler.LeadersSequence[indexOfPreviousLeaderToMe]
+
+			extraData["delayedTxsBatch"] = getBatchOfApprovedDelayedTxsByQuorum(epochHandler.CurrentLeaderIndex)
+
+			//_____________________ Fill the extraData.aggregatedLeadersRotationProofs _____________________
+
+			extraData["aggregatedLeadersRotationProofs"] = make(map[string]structures.AggregatedLeaderRotationProof)
+
+			/*
+
+			   Here we need to fill the object with aggregated leader rotation proofs (ALRPs) for all the previous pools till the pool which was rotated on not-zero height
+
+			   If we can't find all the required ALRPs - skip this iteration to try again later
+
+			*/
+
+			// Add the ALRP for the previous pools in leaders sequence
+
+			for _, leaderPubKey := range pubKeysOfAllThePreviousPools {
+
+			}
 
 		}
 

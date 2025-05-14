@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -27,9 +28,9 @@ type ProofsGrabber struct {
 	HuntingForBlockHash string
 }
 
-var WEBSOCKET_CONNECTIONS map[string]*websocket.Conn
+var WEBSOCKET_CONNECTIONS map[string]*websocket.Conn // quorumMember => websocket handler
 
-var FINALIZATION_PROOFS_CACHE map[string]string
+var FINALIZATION_PROOFS_CACHE map[string]string // // quorumMember => finalization proof signa
 
 var PROOFS_GRABBER = ProofsGrabber{
 	EpochId: -1,
@@ -40,15 +41,6 @@ var BLOCK_TO_SHARE *block.Block = &block.Block{
 }
 
 var QUORUM_WAITER_FOR_FINALIZATION_PROOFS *utils.QuorumWaiter
-
-func containsInSlice(slice []string, value string) bool {
-	for _, v := range slice {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
 
 func runFinalizationProofsGrabbing() {
 
@@ -132,7 +124,7 @@ func runFinalizationProofsGrabbing() {
 
 					dataThatShouldBeSigned := PROOFS_GRABBER.AcceptedHash + PROOFS_GRABBER.HuntingForBlockId + PROOFS_GRABBER.HuntingForBlockHash + epochFullId
 
-					finalizationProofIsOk := containsInSlice(epochHandler.Quorum, parsedFinalizationProof.Voter) && ed25519.VerifySignature(dataThatShouldBeSigned, parsedFinalizationProof.Voter, parsedFinalizationProof.FinalizationProof)
+					finalizationProofIsOk := slices.Contains(epochHandler.Quorum, parsedFinalizationProof.Voter) && ed25519.VerifySignature(dataThatShouldBeSigned, parsedFinalizationProof.Voter, parsedFinalizationProof.FinalizationProof)
 
 					if finalizationProofIsOk {
 
