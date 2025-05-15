@@ -15,6 +15,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/system_contracts"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
+	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 	"github.com/gorilla/websocket"
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -360,9 +361,46 @@ func generateBlocksPortion() {
 
 			// Add the ALRP for the previous pools in leaders sequence
 
+			pubkeysOfLeadersToGetAlrps := []string{}
+
 			for _, leaderPubKey := range pubKeysOfAllThePreviousPools {
 
+				var votingFinalizationStatsPerPool *structures.PoolVotingStat
+
+				keyBytes := []byte(strconv.Itoa(epochIndex) + ":" + leaderPubKey)
+
+				if finStatsRaw, err := globals.FINALIZATION_VOTING_STATS.Get(keyBytes, nil); err == nil {
+
+					if jsonErrParse := json.Unmarshal(finStatsRaw, votingFinalizationStatsPerPool); jsonErrParse == nil {
+
+						proofThatAtLeastFirstBlockWasCreated := votingFinalizationStatsPerPool.Index >= 0
+
+						// We 100% need ALRP for previous pool
+						// But no need in pools who created at least one block in epoch and it's not our previous pool
+
+						if leaderPubKey != previousToMeLeaderPubKey && proofThatAtLeastFirstBlockWasCreated {
+
+							break
+
+						}
+
+					}
+
+				} else {
+
+					votingFinalizationStatsPerPool = &structures.PoolVotingStat{
+
+						Index: -1,
+						Hash:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+					}
+
+				}
+
+				pubkeysOfLeadersToGetAlrps = append(pubkeysOfLeadersToGetAlrps, leaderPubKey)
+
 			}
+
+			// Now when we have a list of previous leader to get ALRP for them - run it
 
 		}
 
@@ -371,6 +409,37 @@ func generateBlocksPortion() {
 		blockDbAtomicBatch := new(leveldb.Batch)
 
 		blockCandidate := block.NewBlock(getTransactionsFromMempool(), extraData, epochFullID)
+
+		blockHash := blockCandidate.GetHash()
+
+		blockCandidate.Sig = ed25519.GenerateSignature(globals.CONFIGURATION.PrivateKey, blockHash)
+
+		// BlockID has the following format => epochID(epochIndex):Ed25519_Pubkey:IndexOfBlockInCurrentEpoch
+		blockID := strconv.Itoa(epochIndex) + ":" + globals.CONFIGURATION.PublicKey + ":" + strconv.Itoa(blockCandidate.Index)
+
+		utils.LogWithTime("New block generated "+blockID, utils.CYAN_COLOR)
+
+		if blockBytes, serializeErr := json.Marshal(blockCandidate); serializeErr == nil {
+
+			globals.GENERATION_THREAD.PrevHash = blockHash
+
+			globals.GENERATION_THREAD.NextIndex++
+
+			if gtBytes, serializeErr2 := json.Marshal(globals.GENERATION_THREAD); serializeErr2 == nil {
+
+				// Store block locally
+				blockDbAtomicBatch.Put([]byte(blockID), blockBytes)
+
+				// Update the GENERATION_THREAD after all
+				blockDbAtomicBatch.Put([]byte("GT"), gtBytes)
+
+				if err := globals.BLOCKS.Write(blockDbAtomicBatch, nil); err != nil {
+					panic("Can't store GT and block candidate")
+				}
+
+			}
+
+		}
 
 	}
 
