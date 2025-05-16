@@ -365,7 +365,9 @@ func generateBlocksPortion() {
 
 			for _, leaderPubKey := range pubKeysOfAllThePreviousPools {
 
-				var votingFinalizationStatsPerPool *structures.PoolVotingStat
+				votingFinalizationStatsPerPool := &structures.PoolVotingStat{
+					Index: -1,
+				}
 
 				keyBytes := []byte(strconv.Itoa(epochIndex) + ":" + leaderPubKey)
 
