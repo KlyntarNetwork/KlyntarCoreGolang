@@ -386,14 +386,6 @@ func generateBlocksPortion() {
 
 					}
 
-				} else {
-
-					votingFinalizationStatsPerPool = &structures.PoolVotingStat{
-
-						Index: -1,
-						Hash:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-					}
-
 				}
 
 				pubkeysOfLeadersToGetAlrps = append(pubkeysOfLeadersToGetAlrps, leaderPubKey)
