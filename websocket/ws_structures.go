@@ -7,8 +7,8 @@ import (
 
 type WsLeaderRotationProofRequest struct {
 	Route               string                                 `json:"route"`
+	IndexOfPoolToRotate int                                    `json:"indexOfPoolToRotate"`
 	AfpForFirstBlock    structures.AggregatedFinalizationProof `json:"afpForFirstBlock"`
-	IndexOfPoolToRotate int                                    `json:"hisIndexInLeadersSequence"`
 	SkipData            structures.PoolVotingStat              `json:"skipData"`
 }
 

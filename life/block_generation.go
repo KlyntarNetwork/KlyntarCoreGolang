@@ -15,6 +15,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/system_contracts"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
+	ws_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 	"github.com/gorilla/websocket"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -22,11 +23,9 @@ import (
 
 type DoubleMap = map[string]map[string]string
 
-var LEADER_ROTATION_PROOFS DoubleMap // leaderPubkey => map(quorumMemberPubkey=>leaderRotationProofSigna)
+var ALRP_METADATA map[string]*structures.AlrpSkeleton
 
 var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn // quorumMember => websocket handler
-
-var QUORUM_WAITER *utils.QuorumWaiter
 
 type RotationProofCollector struct {
 	wsConnMap map[string]*websocket.Conn
@@ -37,7 +36,7 @@ type RotationProofCollector struct {
 
 func BlocksGenerationThread() {
 
-	generateBlocksPortion()
+	generateBlock()
 
 	time.AfterFunc(time.Duration(globals.APPROVEMENT_THREAD.Thread.NetworkParameters.BlockTime), func() {
 		BlocksGenerationThread()
@@ -45,8 +44,33 @@ func BlocksGenerationThread() {
 
 }
 
+func alrpRequestTemplate(leaderID string) []byte {
+
+	alrpMetadataForPool := ALRP_METADATA[leaderID]
+
+	if alrpMetadataForPool != nil {
+
+		request := ws_structures.WsLeaderRotationProofRequest{
+			Route:               "get_leader_rotation_proof",
+			IndexOfPoolToRotate: 0, // TODO: Take the valid index
+			AfpForFirstBlock:    alrpMetadataForPool.AfpForFirstBlock,
+			SkipData:            alrpMetadataForPool.SkipData,
+		}
+
+		if rawMsg, err := json.Marshal(request); err == nil {
+
+			return rawMsg
+
+		}
+
+	}
+
+	return []byte{}
+
+}
+
 // To grab proofs for multiple previous leaders in a parallel way
-func (c *RotationProofCollector) AlrpForLeadersCollector(ctx context.Context, leaderIDs []string, messageBuilder func(leaderID string) []byte) DoubleMap {
+func (collector *RotationProofCollector) AlrpForLeadersCollector(ctx context.Context, leaderIDs []string) DoubleMap {
 
 	var wg sync.WaitGroup
 	mu := sync.Mutex{}
@@ -59,15 +83,15 @@ func (c *RotationProofCollector) AlrpForLeadersCollector(ctx context.Context, le
 		go func(leaderID string) {
 			defer wg.Done()
 
-			waiter := utils.NewQuorumWaiter(len(c.quorum))
+			waiter := utils.NewQuorumWaiter(len(collector.quorum))
 
 			// Create a timeout for a call
-			leaderCtx, cancel := context.WithTimeout(ctx, c.timeout)
+			leaderCtx, cancel := context.WithTimeout(ctx, collector.timeout)
 			defer cancel()
 
-			message := messageBuilder(leaderID)
+			message := alrpRequestTemplate(leaderID)
 
-			responses, ok := waiter.SendAndWait(leaderCtx, message, c.quorum, c.wsConnMap, c.majority)
+			responses, ok := waiter.SendAndWait(leaderCtx, message, collector.quorum, collector.wsConnMap, collector.majority)
 			if !ok {
 				return
 			}
@@ -225,6 +249,9 @@ func getAggregatedEpochFinalizationProof(epochHandler *structures.EpochHandler) 
 
 func getAggregatedLeaderRotationProof() *structures.AggregatedLeaderRotationProof {
 
+	// TODO: In case in .proofs we have 2/3 votes - return ALRP
+	// TODO: Also check - if no data in ALRP_METADATA - create empty template
+
 	return nil
 
 }
@@ -251,7 +278,7 @@ func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) system_contracts.De
 
 }
 
-func generateBlocksPortion() {
+func generateBlock() {
 
 	globals.APPROVEMENT_THREAD.RWMutex.RLock()
 
@@ -349,7 +376,7 @@ func generateBlocksPortion() {
 
 			//_____________________ Fill the extraData.aggregatedLeadersRotationProofs _____________________
 
-			extraData["aggregatedLeadersRotationProofs"] = make(map[string]structures.AggregatedLeaderRotationProof)
+			alrpsForPreviousLeaders := make(map[string]*structures.AggregatedLeaderRotationProof)
 
 			/*
 
@@ -394,7 +421,49 @@ func generateBlocksPortion() {
 
 			}
 
-			// Now when we have a list of previous leader to get ALRP for them - run it
+			breakedCycle := false
+
+			for _, leaderID := range pubkeysOfLeadersToGetAlrps {
+
+				if possibleAlrp := getAggregatedLeaderRotationProof(); possibleAlrp != nil {
+
+					alrpsForPreviousLeaders[leaderID] = possibleAlrp
+
+				} else {
+
+					breakedCycle = true // this is a signal that we need to initiate ALRP finding process at least one more time
+
+					break
+				}
+
+			}
+
+			if breakedCycle {
+
+				// Now when we have a list of previous leader to get ALRP for them - run it
+
+				collector := RotationProofCollector{
+					wsConnMap: WEBSOCKET_CONNECTIONS_FOR_ALRP,
+					quorum:    epochHandler.Quorum,
+					majority:  common_functions.GetQuorumMajority(&epochHandler),
+					timeout:   5 * time.Second,
+				}
+
+				resultsOfAlrpRequests := collector.AlrpForLeadersCollector(context.Background(), pubkeysOfLeadersToGetAlrps)
+
+				// TODO: Parse results here and modify the content inside ALRP_METADATA
+
+				for leaderID, validatorsResponse := range resultsOfAlrpRequests {
+
+				}
+
+				return
+
+			} else {
+
+				extraData["aggregatedLeadersRotationProofs"] = alrpsForPreviousLeaders
+
+			}
 
 		}
 

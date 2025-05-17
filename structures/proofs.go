@@ -24,8 +24,6 @@ type AggregatedLeaderRotationProof struct {
 
 type AlrpSkeleton struct {
 	AfpForFirstBlock AggregatedFinalizationProof
-	SkipIndex        int
-	SkipHash         string
-	SkipAfp          AggregatedFinalizationProof
-	Proofs           map[string]string
+	SkipData         PoolVotingStat
+	Proofs           map[string]string // quorumMemberPubkey => Signature
 }

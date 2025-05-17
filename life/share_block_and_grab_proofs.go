@@ -112,23 +112,23 @@ func runFinalizationProofsGrabbing() {
 
 				var parsedFinalizationProof websocket_structures.WsFinalizationProofResponse
 
-				if err := json.Unmarshal(raw, &parsedFinalizationProof); err != nil {
-					continue
-				}
+				if err := json.Unmarshal(raw, &parsedFinalizationProof); err == nil {
 
-				// Now verify proof and parse requests
+					// Now verify proof and parse requests
 
-				if parsedFinalizationProof.VotedForHash == PROOFS_GRABBER.HuntingForBlockHash {
+					if parsedFinalizationProof.VotedForHash == PROOFS_GRABBER.HuntingForBlockHash {
 
-					// Verify the finalization proof
+						// Verify the finalization proof
 
-					dataThatShouldBeSigned := PROOFS_GRABBER.AcceptedHash + PROOFS_GRABBER.HuntingForBlockId + PROOFS_GRABBER.HuntingForBlockHash + epochFullId
+						dataThatShouldBeSigned := PROOFS_GRABBER.AcceptedHash + PROOFS_GRABBER.HuntingForBlockId + PROOFS_GRABBER.HuntingForBlockHash + epochFullId
 
-					finalizationProofIsOk := slices.Contains(epochHandler.Quorum, parsedFinalizationProof.Voter) && ed25519.VerifySignature(dataThatShouldBeSigned, parsedFinalizationProof.Voter, parsedFinalizationProof.FinalizationProof)
+						finalizationProofIsOk := slices.Contains(epochHandler.Quorum, parsedFinalizationProof.Voter) && ed25519.VerifySignature(dataThatShouldBeSigned, parsedFinalizationProof.Voter, parsedFinalizationProof.FinalizationProof)
 
-					if finalizationProofIsOk {
+						if finalizationProofIsOk {
 
-						FINALIZATION_PROOFS_CACHE[parsedFinalizationProof.Voter] = parsedFinalizationProof.FinalizationProof
+							FINALIZATION_PROOFS_CACHE[parsedFinalizationProof.Voter] = parsedFinalizationProof.FinalizationProof
+
+						}
 
 					}
 
