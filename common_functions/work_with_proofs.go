@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -512,14 +513,9 @@ func CheckAlrpChainValidity(firstBlockInThisEpochByPool *block.Block, epochHandl
 
 		arrayIndexer := 0
 
-		arrayForIteration := make([]string, position)
+		arrayForIteration := slices.Clone(epochHandler.LeadersSequence[:position])
 
-		copy(arrayForIteration, epochHandler.LeadersSequence[:position])
-
-		// Reverse slice
-		for i, j := 0, len(arrayForIteration)-1; i < j; i, j = i+1, j-1 {
-			arrayForIteration[i], arrayForIteration[j] = arrayForIteration[j], arrayForIteration[i]
-		}
+		slices.Reverse(arrayForIteration) // we need reversed version
 
 		bumpedWithPoolWhoCreatedAtLeastOneBlock := false
 

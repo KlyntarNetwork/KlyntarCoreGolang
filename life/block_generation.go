@@ -21,9 +21,9 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-type DoubleMap = map[string]map[string]string
+type DoubleMap = map[string]map[string][]byte
 
-var ALRP_METADATA map[string]*structures.AlrpSkeleton
+var ALRP_METADATA map[string]*structures.AlrpSkeleton // previousLeaderPubkey => ALRP_METADATA
 
 var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn // quorumMember => websocket handler
 
@@ -81,6 +81,7 @@ func (collector *RotationProofCollector) AlrpForLeadersCollector(ctx context.Con
 		wg.Add(1)
 
 		go func(leaderID string) {
+
 			defer wg.Done()
 
 			waiter := utils.NewQuorumWaiter(len(collector.quorum))
@@ -96,15 +97,10 @@ func (collector *RotationProofCollector) AlrpForLeadersCollector(ctx context.Con
 				return
 			}
 
-			// Build final result
-			mapping := make(map[string]string, len(responses))
-			for validatorID, raw := range responses {
-				mapping[validatorID] = string(raw)
-			}
-
 			mu.Lock()
-			result[leaderID] = mapping
+			result[leaderID] = responses
 			mu.Unlock()
+
 		}(leaderID)
 	}
 
@@ -247,10 +243,34 @@ func getAggregatedEpochFinalizationProof(epochHandler *structures.EpochHandler) 
 	return nil
 }
 
-func getAggregatedLeaderRotationProof() *structures.AggregatedLeaderRotationProof {
+func getAggregatedLeaderRotationProof(majority int, leaderID string) *structures.AggregatedLeaderRotationProof {
 
 	// TODO: In case in .proofs we have 2/3 votes - return ALRP
 	// TODO: Also check - if no data in ALRP_METADATA - create empty template
+
+	alrpMetadataForPool := ALRP_METADATA[leaderID]
+
+	if alrpMetadataForPool != nil {
+
+		if len(alrpMetadataForPool.Proofs) >= majority {
+
+			aggregatedLeaderRotationProof := &structures.AggregatedLeaderRotationProof{
+
+				FirstBlockHash: alrpMetadataForPool.AfpForFirstBlock.BlockHash,
+				SkipIndex:      alrpMetadataForPool.SkipData.Index,
+				SkipHash:       alrpMetadataForPool.SkipData.Hash,
+				Proofs:         alrpMetadataForPool.Proofs,
+			}
+
+			return aggregatedLeaderRotationProof
+
+		}
+
+	} else {
+
+		ALRP_METADATA[leaderID] = &structures.AlrpSkeleton{}
+
+	}
 
 	return nil
 
@@ -291,15 +311,6 @@ func generateBlock() {
 	epochIndex := epochHandler.Id
 
 	currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
-
-	/*
-		TODO:
-
-			let proofsGrabber = GLOBAL_CACHES.TEMP_CACHE.get(epochIndex+':PROOFS_GRABBER')
-
-		    if(proofsGrabber && WORKING_THREADS.GENERATION_THREAD.epochFullId === epochFullID && WORKING_THREADS.GENERATION_THREAD.nextIndex > proofsGrabber.acceptedIndex+1) return
-
-	*/
 
 	// Safe "if" branch to prevent unnecessary blocks generation
 
@@ -355,6 +366,8 @@ func generateBlock() {
 
 			}
 
+			majority := common_functions.GetQuorumMajority(&epochHandler)
+
 			// Build the template to insert to the extraData of block. Structure is {pool0:ALRP,...,poolN:ALRP}
 
 			myIndexInLeadersSequence := slices.Index(epochHandler.LeadersSequence, globals.CONFIGURATION.PublicKey)
@@ -363,10 +376,7 @@ func generateBlock() {
 
 			pubKeysOfAllThePreviousPools := slices.Clone(epochHandler.LeadersSequence[:myIndexInLeadersSequence])
 
-			// Reverse the slice
-			for i, j := 0, len(pubKeysOfAllThePreviousPools)-1; i < j; i, j = i+1, j-1 {
-				pubKeysOfAllThePreviousPools[i], pubKeysOfAllThePreviousPools[j] = pubKeysOfAllThePreviousPools[j], pubKeysOfAllThePreviousPools[i]
-			}
+			slices.Reverse(pubKeysOfAllThePreviousPools)
 
 			indexOfPreviousLeaderToMe := myIndexInLeadersSequence - 1
 
@@ -425,7 +435,7 @@ func generateBlock() {
 
 			for _, leaderID := range pubkeysOfLeadersToGetAlrps {
 
-				if possibleAlrp := getAggregatedLeaderRotationProof(); possibleAlrp != nil {
+				if possibleAlrp := getAggregatedLeaderRotationProof(majority, leaderID); possibleAlrp != nil {
 
 					alrpsForPreviousLeaders[leaderID] = possibleAlrp
 
@@ -445,7 +455,7 @@ func generateBlock() {
 				collector := RotationProofCollector{
 					wsConnMap: WEBSOCKET_CONNECTIONS_FOR_ALRP,
 					quorum:    epochHandler.Quorum,
-					majority:  common_functions.GetQuorumMajority(&epochHandler),
+					majority:  majority,
 					timeout:   5 * time.Second,
 				}
 
@@ -453,7 +463,27 @@ func generateBlock() {
 
 				// TODO: Parse results here and modify the content inside ALRP_METADATA
 
-				for leaderID, validatorsResponse := range resultsOfAlrpRequests {
+				for leaderID, validatorsResponses := range resultsOfAlrpRequests {
+
+					if alrpMetadataForPrevLeader, ok := ALRP_METADATA[leaderID]; ok {
+
+						for validatorID, validatorResponse := range validatorsResponses {
+
+							var resp ResponseStatus
+
+							if errParse := json.Unmarshal(validatorResponse, &resp); errParse != nil {
+
+								if resp.Status == "OK" {
+
+								} else if resp.Status == "UPGRADE" {
+
+								}
+
+							}
+
+						}
+
+					}
 
 				}
 

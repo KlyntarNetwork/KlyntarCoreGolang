@@ -133,7 +133,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 						//_________________________________________2_________________________________________
 
-						// TODO: Verify the ALRP chain validity here
+						// Verify the ALRP chain validity here
 
 						alrpChainIsOk := common_functions.CheckAlrpChainValidity(
 
@@ -327,7 +327,7 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 							Route:            "get_leader_rotation_proof",
 							Voter:            globals.CONFIGURATION.PublicKey,
 							ForPoolPubkey:    poolToRotate,
-							Type:             "UPDATE",
+							Status:           "UPGRADE",
 							AfpForFirstBlock: afpForFirstBlock,
 							SkipData:         localVotingData,
 						}
@@ -423,7 +423,7 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 							ForPoolPubkey: poolToRotate,
 
-							Type: "OK",
+							Status: "OK",
 
 							Sig: ed25519.GenerateSignature(globals.CONFIGURATION.PrivateKey, dataToSignForLeaderRotation),
 						}

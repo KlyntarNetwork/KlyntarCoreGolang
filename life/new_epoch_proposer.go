@@ -24,11 +24,11 @@ type Agreement struct {
 	PubKey, Sig string
 }
 
-var QUORUM_AGREEMENTS map[string]string
-
 type ResponseStatus struct {
 	Status string
 }
+
+var QUORUM_AGREEMENTS map[string]string
 
 func NewEpochProposerThread() {
 

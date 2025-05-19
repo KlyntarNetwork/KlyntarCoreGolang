@@ -16,7 +16,7 @@ type WsLeaderRotationProofResponseOk struct {
 	Route         string `json:"route"`
 	Voter         string `json:"voter"`
 	ForPoolPubkey string `json:"forPoolPubkey"`
-	Type          string `json:"type"`
+	Status        string `json:"status"`
 	Sig           string `json:"sig"`
 }
 
@@ -24,7 +24,7 @@ type WsLeaderRotationProofResponseUpgrade struct {
 	Route            string                                 `json:"route"`
 	Voter            string                                 `json:"voter"`
 	ForPoolPubkey    string                                 `json:"forPoolPubkey"`
-	Type             string                                 `json:"type"`
+	Status           string                                 `json:"status"`
 	AfpForFirstBlock structures.AggregatedFinalizationProof `json:"afpForFirstBlock"`
 	SkipData         structures.PoolVotingStat              `json:"skipData"`
 }
