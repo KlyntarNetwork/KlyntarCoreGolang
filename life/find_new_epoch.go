@@ -201,62 +201,40 @@ func EpochRotationThread() {
 
 					var delayedTransactionsToExecute []map[string]string
 
-					if delayedTransactionsBatchRaw, ok := firstBlock.ExtraData["delayedTxsBatch"]; ok {
+					jsonedDelayedTxs, _ := json.Marshal(firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions)
 
-						// Convert to json first
+					dataThatShouldBeSigned := "SIG_DELAYED_OPERATIONS:" + strconv.Itoa(epochHandler.Id) + ":" + string(jsonedDelayedTxs)
 
-						jsonData, err := json.Marshal(delayedTransactionsBatchRaw)
+					okSignatures := 0
+					unique := make(map[string]bool)
+					quorumMap := make(map[string]bool)
 
-						if err == nil {
+					for _, pk := range epochHandler.Quorum {
+						quorumMap[strings.ToLower(pk)] = true
+					}
 
-							var delayedTransactionsBatch system_contracts.DelayedTransactionsBatch
+					for signerPubKey, signa := range firstBlock.ExtraData.DelayedTransactionsBatch.Proofs {
 
-							if err := json.Unmarshal(jsonData, &delayedTransactionsBatch); err == nil {
+						isOK := ed25519.VerifySignature(dataThatShouldBeSigned, signerPubKey, signa)
 
-								// 4. Verify signatures first
+						loweredPubKey := strings.ToLower(signerPubKey)
 
-								jsonedDelayedTxs, _ := json.Marshal(delayedTransactionsBatch.DelayedTransactions)
+						if isOK && quorumMap[signerPubKey] && !unique[loweredPubKey] {
 
-								dataThatShouldBeSigned := "SIG_DELAYED_OPERATIONS:" +
-									strconv.Itoa(epochHandler.Id) + ":" +
-									string(jsonedDelayedTxs)
+							unique[loweredPubKey] = true
+							okSignatures++
 
-								okSignatures := 0
-								unique := make(map[string]bool)
-								quorumMap := make(map[string]bool)
+						}
 
-								for _, pk := range epochHandler.Quorum {
-									quorumMap[strings.ToLower(pk)] = true
-								}
+					}
 
-								for signerPubKey, signa := range delayedTransactionsBatch.Proofs {
+					if okSignatures >= majority {
+						// 5. Finally - check if this batch has bigger index than already executed
+						// 6. Only in case it's indeed new batch - execute it
+						if int64(epochHandler.Id) > latestBatchIndex {
 
-									isOK := ed25519.VerifySignature(dataThatShouldBeSigned, signerPubKey, signa)
-
-									loweredPubKey := strings.ToLower(signerPubKey)
-
-									if isOK && quorumMap[signerPubKey] && !unique[loweredPubKey] {
-
-										unique[loweredPubKey] = true
-										okSignatures++
-
-									}
-
-								}
-
-								if okSignatures >= majority {
-									// 5. Finally - check if this batch has bigger index than already executed
-									// 6. Only in case it's indeed new batch - execute it
-									if int64(epochHandler.Id) > latestBatchIndex {
-
-										latestBatchIndex = int64(epochHandler.Id)
-										delayedTransactionsToExecute = delayedTransactionsBatch.DelayedTransactions
-
-									}
-
-								}
-
-							}
+							latestBatchIndex = int64(epochHandler.Id)
+							delayedTransactionsToExecute = firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions
 
 						}
 

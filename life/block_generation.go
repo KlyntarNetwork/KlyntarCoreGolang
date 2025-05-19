@@ -13,7 +13,6 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/system_contracts"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	ws_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
@@ -276,7 +275,7 @@ func getAggregatedLeaderRotationProof(majority int, leaderID string) *structures
 
 }
 
-func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) system_contracts.DelayedTransactionsBatch {
+func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) block.DelayedTxsBatch {
 
 	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
 
@@ -284,7 +283,7 @@ func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) system_contracts.De
 
 	if indexOfLeader != 0 {
 
-		return system_contracts.DelayedTransactionsBatch{
+		return block.DelayedTxsBatch{
 			EpochIndex:          prevEpochIndex,
 			DelayedTransactions: []map[string]string{},
 			Proofs:              map[string]string{},
@@ -294,7 +293,7 @@ func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) system_contracts.De
 
 	// var delayedTransactions []map[string]string
 
-	return system_contracts.DelayedTransactionsBatch{}
+	return block.DelayedTxsBatch{}
 
 }
 
@@ -348,7 +347,7 @@ func generateBlock() {
 
 		}
 
-		extraData := make(map[string]any)
+		extraData := block.ExtraData{}
 
 		if globals.GENERATION_THREAD.NextIndex == 0 {
 
@@ -356,7 +355,7 @@ func generateBlock() {
 
 				if aefpForPreviousEpoch != nil {
 
-					extraData["aefpForPreviousEpoch"] = aefpForPreviousEpoch
+					extraData.AefpForPreviousEpoch = aefpForPreviousEpoch
 
 				} else {
 
@@ -382,7 +381,7 @@ func generateBlock() {
 
 			previousToMeLeaderPubKey := epochHandler.LeadersSequence[indexOfPreviousLeaderToMe]
 
-			extraData["delayedTxsBatch"] = getBatchOfApprovedDelayedTxsByQuorum(epochHandler.CurrentLeaderIndex)
+			extraData.DelayedTransactionsBatch = getBatchOfApprovedDelayedTxsByQuorum(epochHandler.CurrentLeaderIndex)
 
 			//_____________________ Fill the extraData.aggregatedLeadersRotationProofs _____________________
 
@@ -491,13 +490,13 @@ func generateBlock() {
 
 			} else {
 
-				extraData["aggregatedLeadersRotationProofs"] = alrpsForPreviousLeaders
+				extraData.AggregatedLeadersRotationProofs = alrpsForPreviousLeaders
 
 			}
 
 		}
 
-		extraData["rest"] = globals.CONFIGURATION.ExtraDataToBlock
+		extraData.Rest = globals.CONFIGURATION.ExtraDataToBlock
 
 		blockDbAtomicBatch := new(leveldb.Batch)
 

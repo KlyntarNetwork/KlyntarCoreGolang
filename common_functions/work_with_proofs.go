@@ -376,27 +376,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 
 			previousPool := epochHandler.LeadersSequence[position]
 
-			raw, ok := blockToEnumerateAlrp.ExtraData["aggregatedLeadersRotationProofs"]
-
-			if !ok {
-				continue
-			}
-
-			jsonBytes, err := json.Marshal(raw)
-			if err != nil {
-				continue
-			}
-
-			var proofs map[string]structures.AggregatedLeaderRotationProof
-
-			if err := json.Unmarshal(jsonBytes, &proofs); err != nil {
-				continue
-			}
-
-			leaderRotationProof, ok := proofs[previousPool]
-			if !ok {
-				continue
-			}
+			leaderRotationProof := blockToEnumerateAlrp.ExtraData.AggregatedLeadersRotationProofs[previousPool]
 
 			if position == 0 {
 
@@ -493,49 +473,31 @@ func VerifyAggregatedLeaderRotationProof(
 
 func CheckAlrpChainValidity(firstBlockInThisEpochByPool *block.Block, epochHandler *structures.EpochHandler, position int) bool {
 
-	if aggregatedLeadersRotationProofsRef, ok := firstBlockInThisEpochByPool.ExtraData["aggregatedLeadersRotationProofs"]; ok {
+	aggregatedLeadersRotationProofsRef := firstBlockInThisEpochByPool.ExtraData.AggregatedLeadersRotationProofs
 
-		jsonBytes, err := json.Marshal(aggregatedLeadersRotationProofsRef)
+	arrayIndexer := 0
 
-		if err != nil {
-			return false
-		}
+	arrayForIteration := slices.Clone(epochHandler.LeadersSequence[:position])
 
-		var aggregatedLeadersRotationProofsParsed map[string]structures.AggregatedLeaderRotationProof
+	slices.Reverse(arrayForIteration) // we need reversed version
 
-		if err := json.Unmarshal(jsonBytes, &aggregatedLeadersRotationProofsParsed); err != nil {
-			return false
-		}
+	bumpedWithPoolWhoCreatedAtLeastOneBlock := false
 
-		arrayIndexer := 0
+	for _, poolPubKey := range arrayForIteration {
 
-		arrayForIteration := slices.Clone(epochHandler.LeadersSequence[:position])
+		if alrpForThisPool, ok := aggregatedLeadersRotationProofsRef[poolPubKey]; ok {
 
-		slices.Reverse(arrayForIteration) // we need reversed version
+			signaIsOk := VerifyAggregatedLeaderRotationProof(poolPubKey, alrpForThisPool, epochHandler)
 
-		bumpedWithPoolWhoCreatedAtLeastOneBlock := false
+			if signaIsOk {
 
-		for _, poolPubKey := range arrayForIteration {
+				arrayIndexer++
 
-			if alrpForThisPool, ok := aggregatedLeadersRotationProofsParsed[poolPubKey]; ok {
+				if alrpForThisPool.SkipIndex >= 0 {
 
-				signaIsOk := VerifyAggregatedLeaderRotationProof(poolPubKey, &alrpForThisPool, epochHandler)
+					bumpedWithPoolWhoCreatedAtLeastOneBlock = true
 
-				if signaIsOk {
-
-					arrayIndexer++
-
-					if alrpForThisPool.SkipIndex >= 0 {
-
-						bumpedWithPoolWhoCreatedAtLeastOneBlock = true
-
-						break
-
-					}
-
-				} else {
-
-					return false
+					break
 
 				}
 
@@ -545,15 +507,17 @@ func CheckAlrpChainValidity(firstBlockInThisEpochByPool *block.Block, epochHandl
 
 			}
 
-		}
+		} else {
 
-		if arrayIndexer == position || bumpedWithPoolWhoCreatedAtLeastOneBlock {
-
-			return true
+			return false
 
 		}
 
-		return false
+	}
+
+	if arrayIndexer == position || bumpedWithPoolWhoCreatedAtLeastOneBlock {
+
+		return true
 
 	}
 

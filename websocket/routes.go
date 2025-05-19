@@ -106,9 +106,9 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 								errParse := json.Unmarshal(legacyEpochHandlerRaw, &legacyEpochHandler)
 
-								aefpFromBlock, typeAssertOk := parsedRequest.Block.ExtraData["aefpForPreviousEpoch"].(structures.AggregatedEpochFinalizationProof)
+								aefpFromBlock := parsedRequest.Block.ExtraData.AefpForPreviousEpoch
 
-								if typeAssertOk && errParse == nil {
+								if errParse == nil {
 
 									legacyEpochFullID := legacyEpochHandler.Hash + "#" + strconv.Itoa(legacyEpochHandler.Id)
 
@@ -116,7 +116,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 									aefpIsOk = epochHandler.Id == 0 || common_functions.VerifyAggregatedEpochFinalizationProof(
 
-										&aefpFromBlock,
+										aefpFromBlock,
 
 										legacyEpochHandler.Quorum,
 
@@ -323,8 +323,6 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 					if err == nil {
 
 						responseData := WsLeaderRotationProofResponseUpgrade{
-
-							Route:            "get_leader_rotation_proof",
 							Voter:            globals.CONFIGURATION.PublicKey,
 							ForPoolPubkey:    poolToRotate,
 							Status:           "UPGRADE",
@@ -416,8 +414,6 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 					if firstBlockAfpIsOk {
 
 						leaderRotationProofMessage := WsLeaderRotationProofResponseOk{
-
-							Route: "get_leader_rotation_proof",
 
 							Voter: globals.CONFIGURATION.PublicKey,
 
