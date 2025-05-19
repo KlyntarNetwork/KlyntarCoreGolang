@@ -10,16 +10,15 @@ import (
 	"github.com/lxzan/gws"
 )
 
-const (
+// const (
 // PingInterval = 5 * time.Second
 // PingWait     = 10 * time.Second
-)
+// )
 
 type Handler struct{}
 
-type Incoming struct {
-	Type string `json:"type"`
-	Data any    `json:"data"`
+type IncomingMsg struct {
+	Route string `json:"route"`
 }
 
 func (h *Handler) OnOpen(conn *gws.Conn) {}
@@ -34,18 +33,18 @@ func (h *Handler) OnMessage(connection *gws.Conn, message *gws.Message) {
 
 	defer message.Close()
 
-	var incoming Incoming
+	var incoming IncomingMsg
 	if err := json.Unmarshal(message.Bytes(), &incoming); err != nil {
 		connection.WriteMessage(gws.OpcodeText, []byte(`{"error":"invalid_json"}`))
 		return
 	}
 
-	switch incoming.Type {
+	switch incoming.Route {
 
 	case "get_finalization_proof":
-		GetFinalizationProof(incoming.Data, connection)
+		GetFinalizationProof(incoming, connection)
 	case "get_leader_rotation_proof":
-		GetLeaderRotationProof(incoming.Data, connection)
+		GetLeaderRotationProof(incoming, connection)
 	default:
 		connection.WriteMessage(gws.OpcodeText, []byte(`{"error":"unknown_type"}`))
 

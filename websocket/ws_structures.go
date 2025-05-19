@@ -13,7 +13,6 @@ type WsLeaderRotationProofRequest struct {
 }
 
 type WsLeaderRotationProofResponseOk struct {
-	Route         string `json:"route"`
 	Voter         string `json:"voter"`
 	ForPoolPubkey string `json:"forPoolPubkey"`
 	Status        string `json:"status"`
@@ -21,7 +20,6 @@ type WsLeaderRotationProofResponseOk struct {
 }
 
 type WsLeaderRotationProofResponseUpgrade struct {
-	Route            string                                 `json:"route"`
 	Voter            string                                 `json:"voter"`
 	ForPoolPubkey    string                                 `json:"forPoolPubkey"`
 	Status           string                                 `json:"status"`
@@ -30,6 +28,7 @@ type WsLeaderRotationProofResponseUpgrade struct {
 }
 
 type WsFinalizationProofRequest struct {
+	Route            string                                 `json:"route"`
 	Block            block.Block                            `json:"block"`
 	PreviousBlockAfp structures.AggregatedFinalizationProof `json:"previousBlockAfp"`
 }

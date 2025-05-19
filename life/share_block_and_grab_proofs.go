@@ -16,7 +16,7 @@ import (
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 	"github.com/gorilla/websocket"
 
-	websocket_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
+	ws_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
 )
 
 type ProofsGrabber struct {
@@ -87,8 +87,8 @@ func runFinalizationProofsGrabbing() {
 
 		// Build message - then parse to JSON
 
-		message := websocket_structures.WsFinalizationProofRequest{
-
+		message := ws_structures.WsFinalizationProofRequest{
+			Route:            "get_finalization_proof",
 			Block:            *BLOCK_TO_SHARE,
 			PreviousBlockAfp: PROOFS_GRABBER.AfpForPrevious,
 		}
@@ -110,7 +110,7 @@ func runFinalizationProofsGrabbing() {
 
 			for _, raw := range responses {
 
-				var parsedFinalizationProof websocket_structures.WsFinalizationProofResponse
+				var parsedFinalizationProof ws_structures.WsFinalizationProofResponse
 
 				if err := json.Unmarshal(raw, &parsedFinalizationProof); err == nil {
 
