@@ -347,7 +347,7 @@ func EpochRotationThread() {
 
 	}
 
-	time.AfterFunc(3*time.Second, func() {
+	time.AfterFunc(time.Second, func() {
 		EpochRotationThread()
 	})
 

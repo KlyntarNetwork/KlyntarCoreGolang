@@ -221,7 +221,7 @@ func BlocksSharingAndProofsGrabingThread() {
 
 	if currentLeaderPubKey != globals.CONFIGURATION.PublicKey {
 
-		time.AfterFunc(2*time.Second, func() {
+		time.AfterFunc(time.Second, func() {
 			BlocksSharingAndProofsGrabingThread()
 		})
 
