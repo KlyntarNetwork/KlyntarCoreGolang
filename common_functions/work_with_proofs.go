@@ -62,11 +62,7 @@ func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *str
 
 	allKnownNodes := append(quorumUrls, globals.CONFIGURATION.BootstrapNodes...)
 
-	type result struct {
-		block *block.Block
-	}
-
-	resultChan := make(chan result, len(allKnownNodes))
+	resultChan := make(chan *block.Block, len(allKnownNodes))
 	var wg sync.WaitGroup
 
 	for _, node := range allKnownNodes {
@@ -98,7 +94,7 @@ func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *str
 			var block block.Block
 
 			if err := json.NewDecoder(resp.Body).Decode(&block); err == nil {
-				resultChan <- result{block: &block}
+				resultChan <- &block
 			}
 
 		}(node)
@@ -110,9 +106,9 @@ func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *str
 		close(resultChan)
 	}()
 
-	for res := range resultChan {
-		if res.block != nil {
-			return res.block
+	for block := range resultChan {
+		if block != nil {
+			return block
 		}
 	}
 

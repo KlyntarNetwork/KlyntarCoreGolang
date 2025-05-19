@@ -147,15 +147,15 @@ func GetQuorumUrlsAndPubkeys(epochHandler *structures.EpochHandler) []QuorumMemb
 
 func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int, newEpochSeed string) []string {
 
-	lenOfRegistry := len(epochHandler.PoolsRegistry)
+	totalNumberOfValidators := len(epochHandler.PoolsRegistry)
 
-	if lenOfRegistry <= quorumSize {
+	if totalNumberOfValidators <= quorumSize {
 
 		futureQuorum := make([]string, 0, len(epochHandler.PoolsRegistry))
 
-		for k := range epochHandler.PoolsRegistry {
+		for validatorPubkey := range epochHandler.PoolsRegistry {
 
-			futureQuorum = append(futureQuorum, k)
+			futureQuorum = append(futureQuorum, validatorPubkey)
 		}
 
 		return futureQuorum
@@ -170,6 +170,7 @@ func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int
 	totalStakeSum := big.NewInt(0)
 
 	for validatorPubKey := range epochHandler.PoolsRegistry {
+
 		validatorData := GetFromApprovementThreadState(validatorPubKey + "(POOL)_STORAGE_POOL")
 
 		totalStakeByThisValidator := new(big.Int)
