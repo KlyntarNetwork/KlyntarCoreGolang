@@ -30,7 +30,7 @@ type ProofsGrabber struct {
 
 var WEBSOCKET_CONNECTIONS map[string]*websocket.Conn // quorumMember => websocket handler
 
-var FINALIZATION_PROOFS_CACHE map[string]string // // quorumMember => finalization proof signa
+var FINALIZATION_PROOFS_CACHE map[string]string // quorumMember => finalization proof signa
 
 var PROOFS_GRABBER = ProofsGrabber{
 	EpochId: -1,

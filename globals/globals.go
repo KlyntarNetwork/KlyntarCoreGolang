@@ -9,7 +9,15 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-func GetCoreMajorVersion(versionFilePath string) (int, error) {
+func openDB(dbName string) *leveldb.DB {
+	db, err := leveldb.OpenFile(CHAINDATA_PATH+"/"+dbName, nil)
+	if err != nil {
+		panic("Impossible to open db : " + dbName + " =>" + err.Error())
+	}
+	return db
+}
+
+func getCoreMajorVersion(versionFilePath string) (int, error) {
 
 	versionData, err := os.ReadFile(versionFilePath)
 	if err != nil {
@@ -26,7 +34,7 @@ func GetCoreMajorVersion(versionFilePath string) (int, error) {
 
 var CORE_MAJOR_VERSION int = func() int {
 
-	version, err := GetCoreMajorVersion("version.txt")
+	version, err := getCoreMajorVersion("version.txt")
 
 	if err != nil {
 		panic("Failed to get core version: " + err.Error())
@@ -38,15 +46,8 @@ var CORE_MAJOR_VERSION int = func() int {
 
 var CHAINDATA_PATH, GENESIS_PATH, CONFIGS_PATH string // pathes to 3 main directories
 
-func openDB(dbName string) *leveldb.DB {
-	db, err := leveldb.OpenFile(CHAINDATA_PATH+"/"+dbName, nil)
-	if err != nil {
-		panic("Impossible to open db : " + dbName + " =>" + err.Error())
-	}
-	return db
-}
-
 var CONFIGURATION structures.NodeLevelConfig
+
 var GENESIS structures.Genesis
 
 var MEMPOOL struct {

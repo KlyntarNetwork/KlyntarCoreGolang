@@ -345,10 +345,10 @@ func EpochRotationThread() {
 
 		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
 
-		time.AfterFunc(3*time.Second, func() {
-			EpochRotationThread()
-		})
-
 	}
+
+	time.AfterFunc(3*time.Second, func() {
+		EpochRotationThread()
+	})
 
 }

@@ -291,10 +291,10 @@ func NewEpochProposerThread() {
 
 		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
 
-		time.AfterFunc(3*time.Second, func() {
-			NewEpochProposerThread()
-		})
-
 	}
+
+	time.AfterFunc(3*time.Second, func() {
+		NewEpochProposerThread()
+	})
 
 }

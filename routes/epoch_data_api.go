@@ -15,7 +15,7 @@ type ErrMsg struct {
 	Err string `json:"err"`
 }
 
-func sendJSON(ctx *fasthttp.RequestCtx, payload any) {
+func sendJson(ctx *fasthttp.RequestCtx, payload any) {
 	ctx.SetContentType("application/json")
 	ctx.SetStatusCode(fasthttp.StatusOK)
 	jsonBytes, _ := json.Marshal(payload)
@@ -90,7 +90,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 	var proposition structures.EpochFinishRequest
 
 	if err := json.Unmarshal(ctx.PostBody(), &proposition); err != nil {
-		sendJSON(ctx, ErrMsg{Err: "Wrong format"})
+		sendJson(ctx, ErrMsg{Err: "Wrong format"})
 		return
 	}
 
@@ -111,7 +111,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 	signalRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte("EPOCH_FINISH_RESPONSE:"+strconv.Itoa(epochIndex)), nil)
 
 	if err != nil || signalRaw == nil {
-		sendJSON(ctx, ErrMsg{Err: "Too early"})
+		sendJson(ctx, ErrMsg{Err: "Too early"})
 		return
 	}
 
@@ -149,7 +149,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 	if hashOfFirstBlock == "" {
 
-		sendJSON(ctx, ErrMsg{Err: "Can't verify hash"})
+		sendJson(ctx, ErrMsg{Err: "Can't verify hash"})
 
 		return
 
@@ -171,7 +171,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 				Sig:    ed25519.GenerateSignature(globals.CONFIGURATION.PrivateKey, dataToSign),
 			}
 
-			sendJSON(ctx, response)
+			sendJson(ctx, response)
 
 		} else if votingData.Index > proposition.LastBlockProposition.Index {
 
@@ -181,7 +181,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 				LastBlockProposition: votingData,
 			}
 
-			sendJSON(ctx, response)
+			sendJson(ctx, response)
 
 		}
 
@@ -193,7 +193,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 			LastBlockProposition: votingData,
 		}
 
-		sendJSON(ctx, response)
+		sendJson(ctx, response)
 
 	}
 

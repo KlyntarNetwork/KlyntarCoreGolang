@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -11,15 +12,6 @@ import (
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 	"github.com/lxzan/gws"
 )
-
-func IndexOf(slice []string, target string) int {
-	for i, s := range slice {
-		if s == target {
-			return i
-		}
-	}
-	return -1
-}
 
 func GetFinalizationProof(data any, connection *gws.Conn) {
 
@@ -65,7 +57,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 				var futureVotingDataToStore structures.PoolVotingStat
 
-				positionOfBlockCreatorInLeadersSequence := IndexOf(epochHandler.LeadersSequence, parsedRequest.Block.Creator)
+				positionOfBlockCreatorInLeadersSequence := slices.Index(epochHandler.LeadersSequence, parsedRequest.Block.Creator)
 
 				if parsedRequest.Block.VerifySignature() {
 
