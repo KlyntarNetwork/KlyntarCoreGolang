@@ -44,7 +44,7 @@ func BlocksGenerationThread() {
 
 }
 
-func alrpRequestTemplate(leaderID string) []byte {
+func alrpRequestTemplate(leaderID string, epochHandler *structures.EpochHandler) []byte {
 
 	alrpMetadataForPool := ALRP_METADATA[leaderID]
 
@@ -52,7 +52,7 @@ func alrpRequestTemplate(leaderID string) []byte {
 
 		request := ws_structures.WsLeaderRotationProofRequest{
 			Route:               "get_leader_rotation_proof",
-			IndexOfPoolToRotate: 0, // TODO: Take the valid index
+			IndexOfPoolToRotate: slices.Index(epochHandler.LeadersSequence, leaderID),
 			AfpForFirstBlock:    alrpMetadataForPool.AfpForFirstBlock,
 			SkipData:            alrpMetadataForPool.SkipData,
 		}
