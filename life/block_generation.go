@@ -385,7 +385,9 @@ func generateBlock() {
 
 			globals.GENERATION_THREAD.NextIndex = 0
 
-			// TODO: Open websocket connections with new quorum
+			// Open websocket connections with the quorum of new epoch
+
+			utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS_FOR_ALRP)
 
 		}
 
