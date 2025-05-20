@@ -515,7 +515,21 @@ func generateBlock() {
 
 									if errParse := json.Unmarshal(validatorResponse, &lrpOk); errParse == nil {
 
-										// TODO: Verify proof-signature and add to alrpMetadataForPrevLeader.Proofs
+										dataThatShouldBeSigned := "LEADER_ROTATION_PROOF:" + leaderID
+
+										dataThatShouldBeSigned += ":" + alrpMetadataForPrevLeader.AfpForFirstBlock.BlockHash
+
+										dataThatShouldBeSigned += ":" + strconv.Itoa(alrpMetadataForPrevLeader.SkipData.Index)
+
+										dataThatShouldBeSigned += ":" + alrpMetadataForPrevLeader.SkipData.Hash
+
+										dataThatShouldBeSigned += ":" + epochFullID
+
+										if validatorID == lrpOk.Voter && leaderID == lrpOk.ForPoolPubkey && ed25519.VerifySignature(dataThatShouldBeSigned, validatorID, lrpOk.Sig) {
+
+											alrpMetadataForPrevLeader.Proofs[validatorID] = lrpOk.Sig
+
+										}
 
 									}
 
