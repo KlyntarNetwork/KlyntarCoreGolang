@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
@@ -12,6 +13,8 @@ import (
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 	"github.com/lxzan/gws"
 )
+
+var BLOCK_CREATOR_REQUEST_MUTEX = sync.Mutex{} // only one block creator can request proof for block at a choosen period of time T
 
 func GetFinalizationProof(data any, connection *gws.Conn) {
 
@@ -56,6 +59,10 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 				positionOfBlockCreatorInLeadersSequence := slices.Index(epochHandler.LeadersSequence, parsedRequest.Block.Creator)
 
 				if parsedRequest.Block.VerifySignature() {
+
+					BLOCK_CREATOR_REQUEST_MUTEX.Lock()
+
+					defer BLOCK_CREATOR_REQUEST_MUTEX.Unlock()
 
 					if localVotingDataForPool.Index == int(parsedRequest.Block.Index) {
 

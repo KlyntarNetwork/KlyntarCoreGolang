@@ -244,14 +244,13 @@ func getAggregatedEpochFinalizationProof(epochHandler *structures.EpochHandler) 
 
 func getAggregatedLeaderRotationProof(majority, epochIndex int, leaderPubkey string) *structures.AggregatedLeaderRotationProof {
 
-	// TODO: In case in .proofs we have 2/3 votes - return ALRP
-	// TODO: Also check - if no data in ALRP_METADATA - create empty template
-
 	alrpMetadataForPool := ALRP_METADATA[leaderPubkey]
 
 	if alrpMetadataForPool != nil {
 
 		if len(alrpMetadataForPool.Proofs) >= majority {
+
+			// 1. In case in .proofs we have 2/3 votes - return ALRP
 
 			aggregatedLeaderRotationProof := &structures.AggregatedLeaderRotationProof{
 
@@ -266,6 +265,8 @@ func getAggregatedLeaderRotationProof(majority, epochIndex int, leaderPubkey str
 		}
 
 	} else {
+
+		// 2. If no data in ALRP_METADATA - create empty template
 
 		skipDataForLeader := structures.PoolVotingStat{}
 
