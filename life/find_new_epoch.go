@@ -94,11 +94,17 @@ func EpochRotationThread() {
 
 		epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
-		keyValue := []byte("EPOCH_FINISH_RESPONSE:" + strconv.Itoa(epochHandler.Id))
+		if !utils.SignalAboutEpochRotationExists(epochHandler.Id) {
 
-		readyToChangeEpochRaw, err := globals.FINALIZATION_VOTING_STATS.Get(keyValue, nil)
+			// If epoch is not fresh - send the signal to persistent db that we finish it - not to create AFPs, ALRPs anymor
 
-		if err == nil && string(readyToChangeEpochRaw) == "TRUE" {
+			keyValue := []byte("EPOCH_FINISH:" + strconv.Itoa(epochHandler.Id))
+
+			globals.FINALIZATION_VOTING_STATS.Put(keyValue, []byte("TRUE"), nil)
+
+		}
+
+		if utils.SignalAboutEpochRotationExists(epochHandler.Id) {
 
 			majority := common_functions.GetQuorumMajority(&epochHandler)
 
@@ -338,8 +344,6 @@ func EpochRotationThread() {
 			}
 
 		}
-
-		go EpochRotationThread()
 
 	} else {
 

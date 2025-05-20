@@ -36,7 +36,7 @@ type ResponseStatus struct {
 	Status string
 }
 
-var QUORUM_AGREEMENTS map[string]string
+var QUORUM_AGREEMENTS = make(map[string]string)
 
 func NewEpochProposerThread() {
 

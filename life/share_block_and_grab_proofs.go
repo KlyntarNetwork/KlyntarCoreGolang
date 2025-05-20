@@ -28,9 +28,9 @@ type ProofsGrabber struct {
 	HuntingForBlockHash string
 }
 
-var WEBSOCKET_CONNECTIONS map[string]*websocket.Conn // quorumMember => websocket handler
+var WEBSOCKET_CONNECTIONS = make(map[string]*websocket.Conn) // quorumMember => websocket handler
 
-var FINALIZATION_PROOFS_CACHE map[string]string // quorumMember => finalization proof signa
+var FINALIZATION_PROOFS_CACHE = make(map[string]string) // quorumMember => finalization proof signa
 
 var PROOFS_GRABBER = ProofsGrabber{
 	EpochId: -1,
@@ -267,6 +267,7 @@ func BlocksSharingAndProofsGrabingThread() {
 		utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS)
 
 		// Create new QuorumWaiter
+
 		QUORUM_WAITER_FOR_FINALIZATION_PROOFS = utils.NewQuorumWaiter(len(epochHandler.Quorum))
 
 	}

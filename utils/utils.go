@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -31,6 +32,20 @@ const (
 )
 
 var shutdownOnce sync.Once
+
+func SignalAboutEpochRotationExists(epochIndex int) bool {
+
+	keyValue := []byte("EPOCH_FINISH:" + strconv.Itoa(epochIndex))
+
+	if readyToChangeEpochRaw, err := globals.FINALIZATION_VOTING_STATS.Get(keyValue, nil); err == nil && string(readyToChangeEpochRaw) == "TRUE" {
+
+		return true
+
+	}
+
+	return false
+
+}
 
 func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*websocket.Conn) {
 

@@ -10,6 +10,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 	"github.com/lxzan/gws"
 )
@@ -58,7 +59,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 				positionOfBlockCreatorInLeadersSequence := slices.Index(epochHandler.LeadersSequence, parsedRequest.Block.Creator)
 
-				if parsedRequest.Block.VerifySignature() {
+				if parsedRequest.Block.VerifySignature() && !utils.SignalAboutEpochRotationExists(epochIndex) {
 
 					BLOCK_CREATOR_REQUEST_MUTEX.Lock()
 

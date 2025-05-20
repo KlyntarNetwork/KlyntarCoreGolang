@@ -22,9 +22,9 @@ import (
 
 type DoubleMap = map[string]map[string][]byte
 
-var ALRP_METADATA map[string]*structures.AlrpSkeleton // previousLeaderPubkey => ALRP_METADATA
+var ALRP_METADATA = make(map[string]*structures.AlrpSkeleton) // previousLeaderPubkey => ALRP_METADATA
 
-var WEBSOCKET_CONNECTIONS_FOR_ALRP map[string]*websocket.Conn // quorumMember => websocket handler
+var WEBSOCKET_CONNECTIONS_FOR_ALRP = make(map[string]*websocket.Conn) // quorumMember => websocket handler
 
 type RotationProofCollector struct {
 	wsConnMap map[string]*websocket.Conn
@@ -384,6 +384,8 @@ func generateBlock() {
 			globals.GENERATION_THREAD.PrevHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 			globals.GENERATION_THREAD.NextIndex = 0
+
+			// TODO: Open websocket connections with new quorum
 
 		}
 
