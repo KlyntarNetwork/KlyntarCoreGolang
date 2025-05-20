@@ -497,7 +497,7 @@ func generateBlock() {
 
 				resultsOfAlrpRequests := collector.AlrpForLeadersCollector(context.Background(), pubkeysOfLeadersToGetAlrps, &epochHandler)
 
-				// TODO: Parse results here and modify the content inside ALRP_METADATA
+				// Parse results here and modify the content inside ALRP_METADATA
 
 				for leaderID, validatorsResponses := range resultsOfAlrpRequests {
 
@@ -533,13 +533,41 @@ func generateBlock() {
 
 									}
 
+									if len(alrpMetadataForPrevLeader.Proofs) >= majority {
+
+										break
+
+									}
+
 								} else if resp.Status == "UPGRADE" {
 
 									var lrpUpgrade ws_structures.WsLeaderRotationProofResponseUpgrade
 
 									if errParse := json.Unmarshal(validatorResponse, &lrpUpgrade); errParse == nil {
 
-										// TODO: Verify UPGRADE proof and if ok - clear the .Proofs mapping to vote for bigger height later
+										ourLocalHeightIsLower := alrpMetadataForPrevLeader.SkipData.Index < lrpUpgrade.SkipData.Index
+
+										if ourLocalHeightIsLower {
+
+											blockIdInAfp := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + strconv.Itoa(lrpUpgrade.SkipData.Index)
+
+											proposedHeightIsValid := lrpUpgrade.SkipData.Hash == lrpUpgrade.AfpForFirstBlock.BlockHash && blockIdInAfp == lrpUpgrade.AfpForFirstBlock.BlockID && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.SkipData.Afp, &epochHandler)
+
+											firstBlockID := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + ":0"
+
+											proposedFirstBlockIsValid := firstBlockID == lrpUpgrade.AfpForFirstBlock.BlockID && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.AfpForFirstBlock, &epochHandler)
+
+											if proposedFirstBlockIsValid && proposedHeightIsValid {
+
+												alrpMetadataForPrevLeader.AfpForFirstBlock = lrpUpgrade.AfpForFirstBlock
+
+												alrpMetadataForPrevLeader.SkipData = lrpUpgrade.SkipData
+
+												alrpMetadataForPrevLeader.Proofs = make(map[string]string)
+
+											}
+
+										}
 
 									}
 
