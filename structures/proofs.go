@@ -25,5 +25,16 @@ type AggregatedLeaderRotationProof struct {
 type AlrpSkeleton struct {
 	AfpForFirstBlock AggregatedFinalizationProof
 	SkipData         PoolVotingStat
-	Proofs           map[string]string // quorumMemberPubkey => Signature
+	Proofs           map[string]string // quorumMemberPubkey => signature
+}
+
+func NewAlrpSkeletonTemplate() *AlrpSkeleton {
+
+	return &AlrpSkeleton{
+
+		AfpForFirstBlock: AggregatedFinalizationProof{},
+		SkipData:         NewPoolVotingStatTemplate(),
+		Proofs:           make(map[string]string),
+	}
+
 }

@@ -123,11 +123,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 	if err != nil || votingRaw == nil {
 
-		votingData = structures.PoolVotingStat{
-			Index: -1,
-			Hash:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-			Afp:   structures.AggregatedFinalizationProof{},
-		}
+		votingData = structures.NewPoolVotingStatTemplate()
 
 	} else {
 		_ = json.Unmarshal(votingRaw, &votingData)

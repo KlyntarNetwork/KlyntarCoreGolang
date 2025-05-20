@@ -31,11 +31,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 		if itsLeader {
 
-			localVotingDataForPool := structures.PoolVotingStat{
-				Index: -1,
-				Hash:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-				Afp:   structures.AggregatedFinalizationProof{},
-			}
+			localVotingDataForPool := structures.NewPoolVotingStatTemplate()
 
 			localVotingDataRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte(strconv.Itoa(epochIndex)+":"+parsedRequest.Block.Creator), nil)
 
@@ -282,11 +278,7 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 		if epochHandler.CurrentLeaderIndex > parsedRequest.IndexOfPoolToRotate {
 
-			localVotingData := structures.PoolVotingStat{
-				Index: -1,
-				Hash:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-				Afp:   structures.AggregatedFinalizationProof{},
-			}
+			localVotingData := structures.NewPoolVotingStatTemplate()
 
 			localVotingDataRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte(strconv.Itoa(epochIndex)+":"+poolToRotate), nil)
 

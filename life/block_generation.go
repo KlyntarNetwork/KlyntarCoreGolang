@@ -242,12 +242,12 @@ func getAggregatedEpochFinalizationProof(epochHandler *structures.EpochHandler) 
 	return nil
 }
 
-func getAggregatedLeaderRotationProof(majority int, leaderID string) *structures.AggregatedLeaderRotationProof {
+func getAggregatedLeaderRotationProof(majority, epochIndex int, leaderPubkey string) *structures.AggregatedLeaderRotationProof {
 
 	// TODO: In case in .proofs we have 2/3 votes - return ALRP
 	// TODO: Also check - if no data in ALRP_METADATA - create empty template
 
-	alrpMetadataForPool := ALRP_METADATA[leaderID]
+	alrpMetadataForPool := ALRP_METADATA[leaderPubkey]
 
 	if alrpMetadataForPool != nil {
 
@@ -267,7 +267,46 @@ func getAggregatedLeaderRotationProof(majority int, leaderID string) *structures
 
 	} else {
 
-		ALRP_METADATA[leaderID] = &structures.AlrpSkeleton{}
+		skipDataForLeader := structures.PoolVotingStat{}
+
+		keyBytes := []byte(strconv.Itoa(epochIndex) + ":" + leaderPubkey)
+
+		if finStatsRaw, dbErr := globals.FINALIZATION_VOTING_STATS.Get(keyBytes, nil); dbErr == nil {
+
+			if jsonErrParse := json.Unmarshal(finStatsRaw, &skipDataForLeader); jsonErrParse == nil {
+
+				firstBlockID := strconv.Itoa(epochIndex) + ":" + leaderPubkey + ":0"
+
+				if afpForFirstBlockRaw, errAfp := globals.EPOCH_DATA.Get([]byte("AFP:"+firstBlockID), nil); errAfp == nil {
+
+					var afpForFirstBlock structures.AggregatedFinalizationProof
+
+					if errParse := json.Unmarshal(afpForFirstBlockRaw, &afpForFirstBlock); errParse == nil {
+
+						ALRP_METADATA[leaderPubkey] = &structures.AlrpSkeleton{
+
+							AfpForFirstBlock: afpForFirstBlock,
+
+							SkipData: skipDataForLeader,
+
+							Proofs: make(map[string]string),
+						}
+
+					}
+
+				}
+
+			}
+
+		}
+
+		if _, alrpDataExists := ALRP_METADATA[leaderPubkey]; !alrpDataExists {
+
+			// Create just empty template
+
+			ALRP_METADATA[leaderPubkey] = structures.NewAlrpSkeletonTemplate()
+
+		}
 
 	}
 
@@ -377,9 +416,7 @@ func generateBlock() {
 
 			slices.Reverse(pubKeysOfAllThePreviousPools)
 
-			indexOfPreviousLeaderToMe := myIndexInLeadersSequence - 1
-
-			previousToMeLeaderPubKey := epochHandler.LeadersSequence[indexOfPreviousLeaderToMe]
+			previousToMeLeaderPubKey := epochHandler.LeadersSequence[myIndexInLeadersSequence-1]
 
 			extraData.DelayedTransactionsBatch = getBatchOfApprovedDelayedTxsByQuorum(epochHandler.CurrentLeaderIndex)
 
@@ -434,7 +471,7 @@ func generateBlock() {
 
 			for _, leaderID := range pubkeysOfLeadersToGetAlrps {
 
-				if possibleAlrp := getAggregatedLeaderRotationProof(majority, leaderID); possibleAlrp != nil {
+				if possibleAlrp := getAggregatedLeaderRotationProof(majority, epochIndex, leaderID); possibleAlrp != nil {
 
 					alrpsForPreviousLeaders[leaderID] = possibleAlrp
 
@@ -474,7 +511,23 @@ func generateBlock() {
 
 								if resp.Status == "OK" {
 
+									var lrpOk ws_structures.WsLeaderRotationProofResponseOk
+
+									if errParse := json.Unmarshal(validatorResponse, &lrpOk); errParse == nil {
+
+										// TODO: Verify proof-signature and add to alrpMetadataForPrevLeader.Proofs
+
+									}
+
 								} else if resp.Status == "UPGRADE" {
+
+									var lrpUpgrade ws_structures.WsLeaderRotationProofResponseUpgrade
+
+									if errParse := json.Unmarshal(validatorResponse, &lrpUpgrade); errParse == nil {
+
+										// TODO: Verify UPGRADE proof and if ok - clear the .Proofs mapping to vote for bigger height later
+
+									}
 
 								}
 
@@ -507,6 +560,7 @@ func generateBlock() {
 		blockCandidate.Sig = ed25519.GenerateSignature(globals.CONFIGURATION.PrivateKey, blockHash)
 
 		// BlockID has the following format => epochID(epochIndex):Ed25519_Pubkey:IndexOfBlockInCurrentEpoch
+
 		blockID := strconv.Itoa(epochIndex) + ":" + globals.CONFIGURATION.PublicKey + ":" + strconv.Itoa(blockCandidate.Index)
 
 		utils.LogWithTime("New block generated "+blockID, utils.CYAN_COLOR)
@@ -520,13 +574,17 @@ func generateBlock() {
 			if gtBytes, serializeErr2 := json.Marshal(globals.GENERATION_THREAD); serializeErr2 == nil {
 
 				// Store block locally
+
 				blockDbAtomicBatch.Put([]byte(blockID), blockBytes)
 
 				// Update the GENERATION_THREAD after all
+
 				blockDbAtomicBatch.Put([]byte("GT"), gtBytes)
 
 				if err := globals.BLOCKS.Write(blockDbAtomicBatch, nil); err != nil {
+
 					panic("Can't store GT and block candidate")
+
 				}
 
 			}

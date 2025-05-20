@@ -5,3 +5,13 @@ type PoolVotingStat struct {
 	Hash  string                      `json:"hash"`
 	Afp   AggregatedFinalizationProof `json:"afp"`
 }
+
+func NewPoolVotingStatTemplate() PoolVotingStat {
+
+	return PoolVotingStat{
+		Index: -1,
+		Hash:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		Afp:   AggregatedFinalizationProof{},
+	}
+
+}

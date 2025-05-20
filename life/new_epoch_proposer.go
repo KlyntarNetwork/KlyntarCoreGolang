@@ -82,11 +82,7 @@ func NewEpochProposerThread() {
 
 			if err != nil {
 
-				localVotingData = structures.PoolVotingStat{
-					Index: -1,
-					Hash:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-					Afp:   structures.AggregatedFinalizationProof{},
-				}
+				localVotingData = structures.NewPoolVotingStatTemplate()
 
 			} else {
 
