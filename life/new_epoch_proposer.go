@@ -18,22 +18,20 @@ import (
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 
-type LeaderIndexCache struct {
-	EpochID int
-	Index   int
-}
-
-var CURRENT_LEADER_INDEX_DATA = LeaderIndexCache{
-	EpochID: -1,
-	Index:   0,
-}
-
 type Agreement struct {
 	PubKey, Sig string
 }
 
 type ResponseStatus struct {
 	Status string
+}
+
+var CURRENT_LEADER_INDEX_DATA = struct {
+	EpochID int
+	Index   int
+}{
+	EpochID: -1,
+	Index:   0,
 }
 
 var QUORUM_AGREEMENTS = make(map[string]string)

@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -33,6 +32,21 @@ const (
 
 var shutdownOnce sync.Once
 
+type QuorumWaiter struct {
+	responseCh chan quorumResponse
+	done       chan struct{}
+	answered   map[string]bool
+	responses  map[string][]byte
+	timer      *time.Timer
+	mu         sync.Mutex
+	buf        []string
+}
+
+type quorumResponse struct {
+	id  string
+	msg []byte
+}
+
 func SignalAboutEpochRotationExists(epochIndex int) bool {
 
 	keyValue := []byte("EPOCH_FINISH:" + strconv.Itoa(epochIndex))
@@ -49,76 +63,45 @@ func SignalAboutEpochRotationExists(epochIndex int) bool {
 
 func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*websocket.Conn) {
 
-	for _, validatorID := range quorum {
+	// Close and remove any existing connections
 
-		// Skip if connection already exists
-		if _, exists := wsConnMap[validatorID]; exists {
-			continue
+	// For safety reasons - close connections even in case websocket handler exists for quorum member in NEW quorum
+
+	for id, conn := range wsConnMap {
+		if conn != nil {
+			_ = conn.Close()
 		}
+		delete(wsConnMap, id)
+	}
 
-		// Fetch data from LevelDB
-		raw, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte(validatorID), nil)
-
+	// Establish new connections for each validator in the quorum
+	for _, validatorPubkey := range quorum {
+		// Fetch validator metadata from LevelDB
+		raw, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte(validatorPubkey+"(POOL)_STORAGE_POOL"), nil)
 		if err != nil {
 			continue
 		}
 
-		// Parse JSON into PoolStorage
+		// Parse JSON metadata
 		var pool structures.PoolStorage
-
 		if err := json.Unmarshal(raw, &pool); err != nil {
 			continue
 		}
 
-		// Check if the validator is active and has a WebSocket URL
+		// Skip inactive validators or those without WebSocket URL
 		if !pool.Activated || pool.WssPoolURL == "" {
 			continue
 		}
 
-		// Dial the WebSocket
+		// Open WebSocket connection
 		conn, _, err := websocket.DefaultDialer.Dial(pool.WssPoolURL, nil)
-
 		if err != nil {
 			continue
 		}
 
-		// Store the connection
-		wsConnMap[validatorID] = conn
-
+		// Store the new connection in the map
+		wsConnMap[validatorPubkey] = conn
 	}
-
-}
-
-func CleanupWebsocketConnections(quorum []string, wsConnMap map[string]*websocket.Conn) {
-
-	// Build a set of current quorum IDs for fast lookup
-	active := make(map[string]struct{})
-	for _, id := range quorum {
-		active[id] = struct{}{}
-	}
-
-	for id, conn := range wsConnMap {
-		if _, ok := active[id]; !ok {
-			// Validator is no longer in quorum — close and remove
-			conn.Close()
-			delete(wsConnMap, id)
-		}
-	}
-}
-
-type QuorumWaiter struct {
-	responseCh chan quorumResponse
-	done       chan struct{}
-	answered   map[string]bool
-	responses  map[string][]byte
-	timer      *time.Timer
-	mu         sync.Mutex
-	buf        []string
-}
-
-type quorumResponse struct {
-	id  string
-	msg []byte
 }
 
 func NewQuorumWaiter(maxQuorumSize int) *QuorumWaiter {
@@ -313,14 +296,4 @@ func GetCurrentLeader() CurrentLeaderData {
 	}
 
 	return CurrentLeaderData{IsMeLeader: false, Url: ""}
-}
-
-func IntToBytes(n int64) []byte {
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, uint64(n))
-	return buf
-}
-
-func BytesToInt(b []byte) int64 {
-	return int64(binary.BigEndian.Uint64(b))
 }

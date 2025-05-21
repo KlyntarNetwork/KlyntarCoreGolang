@@ -2,6 +2,7 @@ package life
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -201,7 +202,7 @@ func EpochRotationThread() {
 
 					if err == nil {
 
-						latestBatchIndex = utils.BytesToInt(latestBatchIndexRaw)
+						latestBatchIndex = int64(binary.BigEndian.Uint64(latestBatchIndexRaw))
 
 					}
 
