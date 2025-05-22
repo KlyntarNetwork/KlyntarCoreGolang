@@ -65,8 +65,6 @@ func CreateWebsocketServer() {
 
 		if err != nil {
 
-			log.Println("Upgrade error:", err)
-
 			return
 
 		}

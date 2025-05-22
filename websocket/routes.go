@@ -15,7 +15,8 @@ import (
 	"github.com/lxzan/gws"
 )
 
-var BLOCK_CREATOR_REQUEST_MUTEX = sync.Mutex{} // only one block creator can request proof for block at a choosen period of time T
+// Only one block creator can request proof for block at a choosen period of time T
+var BLOCK_CREATOR_REQUEST_MUTEX = sync.Mutex{}
 
 func GetFinalizationProof(data any, connection *gws.Conn) {
 
