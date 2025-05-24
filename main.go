@@ -122,49 +122,24 @@ func klyntarBannerPrint() {
 
 	var finalArt string
 
-	if os.Getenv("KLY_MODE") == "mainnet" {
+	banner, err := os.ReadFile("images/banner.txt")
 
-		// Read banner
-
-		banner, err := os.ReadFile("images/banner.txt")
-
-		if err != nil {
-			fmt.Println("Error while reading banner:", err)
-			return
-		}
-
-		//...and add extra colors & changes)
-
-		finalArt = strings.ReplaceAll(string(banner), "Made on Earth for Universe", "\x1b[31mMade on Earth for Universe\x1b[36m")
-
-		finalArt = strings.ReplaceAll(finalArt, "REMEMBER:To infinity and beyond!", "\x1b[31mREMEMBER:To infinity and beyond!\u001b[37m")
-		finalArt = strings.ReplaceAll(finalArt, "≈", "\x1b[31m≈\x1b[36m")
-		finalArt = strings.ReplaceAll(finalArt, "#", "\x1b[31m#\u001b[37m")
-
-	} else {
-
-		testmodeBanner, err := os.ReadFile("images/testmode_banner.txt")
-
-		if err != nil {
-			fmt.Println("Error while reading banner:", err)
-			return
-		}
-
-		//...and add extra colors & changes)
-
-		finalArt = strings.ReplaceAll(string(testmodeBanner), "Made on Earth for Universe", "\u001b[38;5;87mMade on Earth for Universe\u001b[37m")
-
-		finalArt = strings.ReplaceAll(finalArt, "REMEMBER:To infinity and beyond!", "\u001b[38;5;87mREMEMBER:To infinity and beyond!\u001b[37m")
-		finalArt = strings.ReplaceAll(finalArt, "≈", "\x1b[31m≈\u001b[37m")
-
-		finalArt = strings.ReplaceAll(finalArt, "█", "\u001b[38;5;202m█\u001b[37m")
-		finalArt = strings.ReplaceAll(finalArt, "=", "\u001b[38;5;87m═\u001b[37m")
-		finalArt = strings.ReplaceAll(finalArt, "╝", "\u001b[38;5;87m╝\u001b[37m")
-		finalArt = strings.ReplaceAll(finalArt, "╚", "\u001b[38;5;87m╚\u001b[37m")
-
-		finalArt = strings.ReplaceAll(finalArt, "#", "\u001b[38;5;202m#\u001b[37m")
-
+	if err != nil {
+		fmt.Println("Error while reading banner:", err)
+		return
 	}
+
+	//...and add extra colors & changes)
+
+	finalArt = strings.ReplaceAll(string(banner), "Made on Earth for Universe", "\u001b[37mMade on Earth for Universe\u001b[0m")
+
+	finalArt = strings.ReplaceAll(finalArt, "█", "\u001b[38;5;50m█\x1b[0m")
+	finalArt = strings.ReplaceAll(finalArt, "#", "\x1b[31m#\x1b[36m")
+	finalArt = strings.ReplaceAll(finalArt, ")", "\u001b[38;5;3m)\x1b[0m")
+	finalArt = strings.ReplaceAll(finalArt, "(", "\u001b[38;5;57m(\x1b[0m")
+	finalArt = strings.ReplaceAll(finalArt, "|", "\u001b[38;5;87m|\x1b[0m")
+	finalArt = strings.ReplaceAll(finalArt, "Follow our Github to build the future", "\u001b[38;5;23mFollow our Github to build the future\x1b[0m")
+	finalArt += "\x1b[0m\n"
 
 	fmt.Println(finalArt)
 

@@ -132,7 +132,7 @@ func prepareBlockchain() {
 
 		utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
 
-		if data, err := os.ReadFile("images/events/update.txt"); err == nil {
+		if data, err := os.ReadFile("images/update.txt"); err == nil {
 			fmt.Println(string(data))
 		}
 
