@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/block"
@@ -18,6 +19,8 @@ import (
 
 	ws_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
 )
+
+var PROOFS_GRABBER_MUTEX = sync.RWMutex{}
 
 type ProofsGrabber struct {
 	EpochId             int
@@ -46,6 +49,12 @@ func runFinalizationProofsGrabbing() {
 
 	// Call SendAndWait here
 	// Once received 2/3 votes for block - continue
+
+	PROOFS_GRABBER_MUTEX.Lock()
+
+	defer PROOFS_GRABBER_MUTEX.Unlock()
+
+	fmt.Println("DEBUG: Graaaaab here => ")
 
 	epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
@@ -84,6 +93,8 @@ func runFinalizationProofsGrabbing() {
 	PROOFS_GRABBER.HuntingForBlockHash = blockHash
 
 	if len(FINALIZATION_PROOFS_CACHE) < majority {
+
+		fmt.Println("DEBUG: Try grab here => ")
 
 		// Build message - then parse to JSON
 
@@ -229,19 +240,27 @@ func BlocksSharingAndProofsGrabingThread() {
 
 	}
 
+	PROOFS_GRABBER_MUTEX.RLock()
+
 	if PROOFS_GRABBER.EpochId != epochHandler.Id {
+
+		PROOFS_GRABBER_MUTEX.RUnlock()
+
+		PROOFS_GRABBER_MUTEX.Lock()
 
 		// Try to get stored proofs grabber from db
 
 		dbKey := []byte(strconv.Itoa(epochHandler.Id) + ":PROOFS_GRABBER")
 
-		if rawGrabber, err := globals.FINALIZATION_VOTING_STATS.Get(dbKey, nil); err != nil {
+		if rawGrabber, err := globals.FINALIZATION_VOTING_STATS.Get(dbKey, nil); err == nil {
 
 			json.Unmarshal(rawGrabber, &PROOFS_GRABBER)
 
 		} else {
 
 			// Assign initial value of proofs grabber for each new epoch
+
+			fmt.Println("DEBUG: Assigning new val => ")
 
 			PROOFS_GRABBER = ProofsGrabber{
 
@@ -261,6 +280,8 @@ func BlocksSharingAndProofsGrabingThread() {
 			globals.FINALIZATION_VOTING_STATS.Put(dbKey, serialized, nil)
 
 		}
+
+		PROOFS_GRABBER_MUTEX.Unlock()
 
 		// Also, open connections with quorum here. Create QuorumWaiter etc.
 

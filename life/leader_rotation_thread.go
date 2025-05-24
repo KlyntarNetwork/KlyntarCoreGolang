@@ -65,7 +65,7 @@ func LeaderRotationThread() {
 
 	// The workflow of this function is infinite
 
-	time.AfterFunc(time.Second, func() {
+	time.AfterFunc(200*time.Millisecond, func() {
 		LeaderRotationThread()
 	})
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/life"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
@@ -22,20 +23,20 @@ func RunBlockchain() {
 
 	//_________________________ RUN SEVERAL THREADS _________________________
 
-	// //✅1.Thread to find AEFPs and change the epoch for AT
-	// go life.EpochRotationThread()
+	//✅1.Thread to find AEFPs and change the epoch for AT
+	go life.EpochRotationThread()
 
-	// //✅2.Share our blocks within quorum members and get the finalization proofs
-	// go life.BlocksSharingAndProofsGrabingThread()
+	//✅2.Share our blocks within quorum members and get the finalization proofs
+	go life.BlocksSharingAndProofsGrabingThread()
 
-	// //✅3.Thread to propose AEFPs to move to next epoch
-	// go life.NewEpochProposerThread()
+	//✅3.Thread to propose AEFPs to move to next epoch
+	go life.NewEpochProposerThread()
 
-	// //✅4.Start to generate blocks
-	// go life.BlocksGenerationThread()
+	//✅4.Start to generate blocks
+	go life.BlocksGenerationThread()
 
-	// //✅5.Start a separate thread to work with voting for blocks in a sync way (for security)
-	// go life.LeaderRotationThread()
+	//✅5.Start a separate thread to work with voting for blocks in a sync way (for security)
+	go life.LeaderRotationThread()
 
 	serverAddr := globals.CONFIGURATION.Interface + ":" + strconv.Itoa(globals.CONFIGURATION.Port)
 
@@ -64,7 +65,7 @@ func prepareBlockchain() {
 	globals.FINALIZATION_VOTING_STATS = utils.OpenDb("FINALIZATION_VOTING_STATS")
 
 	// Load GT - Generation Thread handler
-	if data, err := globals.BLOCKS.Get([]byte("GT"), nil); err == nil && data != nil {
+	if data, err := globals.BLOCKS.Get([]byte("GT"), nil); err == nil {
 		var gtHandler structures.GenerationThread
 		if err := json.Unmarshal(data, &gtHandler); err == nil {
 			globals.GENERATION_THREAD_HANDLER = gtHandler
@@ -89,7 +90,7 @@ func prepareBlockchain() {
 	}
 
 	// Load AT - Approvement Thread handler
-	if data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("AT"), nil); err == nil && data != nil {
+	if data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("AT"), nil); err == nil {
 
 		var atHandler structures.ApprovementThread
 

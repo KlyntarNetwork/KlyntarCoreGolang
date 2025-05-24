@@ -351,9 +351,13 @@ func generateBlock() {
 
 	currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
 
+	PROOFS_GRABBER_MUTEX.RLock()
+
 	// Safe "if" branch to prevent unnecessary blocks generation
 
-	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
+	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey && !(globals.GENERATION_THREAD_HANDLER.NextIndex > PROOFS_GRABBER.AcceptedIndex+1) {
+
+		PROOFS_GRABBER_MUTEX.RUnlock()
 
 		var aefpForPreviousEpoch *structures.AggregatedEpochFinalizationProof = nil
 
@@ -415,160 +419,164 @@ func generateBlock() {
 
 			myIndexInLeadersSequence := slices.Index(epochHandler.LeadersSequence, globals.CONFIGURATION.PublicKey)
 
-			// Get all previous pools - from zero to <my_position>
+			if myIndexInLeadersSequence > 0 {
 
-			pubKeysOfAllThePreviousPools := slices.Clone(epochHandler.LeadersSequence[:myIndexInLeadersSequence])
+				// Get all previous pools - from zero to <my_position>
 
-			slices.Reverse(pubKeysOfAllThePreviousPools)
+				pubKeysOfAllThePreviousPools := slices.Clone(epochHandler.LeadersSequence[:myIndexInLeadersSequence])
 
-			previousToMeLeaderPubKey := epochHandler.LeadersSequence[myIndexInLeadersSequence-1]
+				slices.Reverse(pubKeysOfAllThePreviousPools)
 
-			extraData.DelayedTransactionsBatch = getBatchOfApprovedDelayedTxsByQuorum(epochHandler.CurrentLeaderIndex)
+				previousToMeLeaderPubKey := epochHandler.LeadersSequence[myIndexInLeadersSequence-1]
 
-			//_____________________ Fill the extraData.aggregatedLeadersRotationProofs _____________________
+				extraData.DelayedTransactionsBatch = getBatchOfApprovedDelayedTxsByQuorum(epochHandler.CurrentLeaderIndex)
 
-			alrpsForPreviousLeaders := make(map[string]*structures.AggregatedLeaderRotationProof)
+				//_____________________ Fill the extraData.aggregatedLeadersRotationProofs _____________________
 
-			/*
+				alrpsForPreviousLeaders := make(map[string]*structures.AggregatedLeaderRotationProof)
 
-			   Here we need to fill the object with aggregated leader rotation proofs (ALRPs) for all the previous pools till the pool which was rotated on not-zero height
+				/*
 
-			   If we can't find all the required ALRPs - skip this iteration to try again later
+				   Here we need to fill the object with aggregated leader rotation proofs (ALRPs) for all the previous pools till the pool which was rotated on not-zero height
 
-			*/
+				   If we can't find all the required ALRPs - skip this iteration to try again later
 
-			// Add the ALRP for the previous pools in leaders sequence
+				*/
 
-			pubkeysOfLeadersToGetAlrps := []string{}
+				// Add the ALRP for the previous pools in leaders sequence
 
-			for _, leaderPubKey := range pubKeysOfAllThePreviousPools {
+				pubkeysOfLeadersToGetAlrps := []string{}
 
-				votingFinalizationStatsPerPool := &structures.PoolVotingStat{
-					Index: -1,
-				}
+				for _, leaderPubKey := range pubKeysOfAllThePreviousPools {
 
-				keyBytes := []byte(strconv.Itoa(epochIndex) + ":" + leaderPubKey)
+					votingFinalizationStatsPerPool := &structures.PoolVotingStat{
+						Index: -1,
+					}
 
-				if finStatsRaw, err := globals.FINALIZATION_VOTING_STATS.Get(keyBytes, nil); err == nil {
+					keyBytes := []byte(strconv.Itoa(epochIndex) + ":" + leaderPubKey)
 
-					if jsonErrParse := json.Unmarshal(finStatsRaw, votingFinalizationStatsPerPool); jsonErrParse == nil {
+					if finStatsRaw, err := globals.FINALIZATION_VOTING_STATS.Get(keyBytes, nil); err == nil {
 
-						proofThatAtLeastFirstBlockWasCreated := votingFinalizationStatsPerPool.Index >= 0
+						if jsonErrParse := json.Unmarshal(finStatsRaw, votingFinalizationStatsPerPool); jsonErrParse == nil {
 
-						// We 100% need ALRP for previous pool
-						// But no need in pools who created at least one block in epoch and it's not our previous pool
+							proofThatAtLeastFirstBlockWasCreated := votingFinalizationStatsPerPool.Index >= 0
 
-						if leaderPubKey != previousToMeLeaderPubKey && proofThatAtLeastFirstBlockWasCreated {
+							// We 100% need ALRP for previous pool
+							// But no need in pools who created at least one block in epoch and it's not our previous pool
 
-							break
+							if leaderPubKey != previousToMeLeaderPubKey && proofThatAtLeastFirstBlockWasCreated {
+
+								break
+
+							}
 
 						}
 
 					}
 
+					pubkeysOfLeadersToGetAlrps = append(pubkeysOfLeadersToGetAlrps, leaderPubKey)
+
 				}
 
-				pubkeysOfLeadersToGetAlrps = append(pubkeysOfLeadersToGetAlrps, leaderPubKey)
+				breakedCycle := false
 
-			}
+				for _, leaderID := range pubkeysOfLeadersToGetAlrps {
 
-			breakedCycle := false
+					if possibleAlrp := getAggregatedLeaderRotationProof(majority, epochIndex, leaderID); possibleAlrp != nil {
 
-			for _, leaderID := range pubkeysOfLeadersToGetAlrps {
+						alrpsForPreviousLeaders[leaderID] = possibleAlrp
 
-				if possibleAlrp := getAggregatedLeaderRotationProof(majority, epochIndex, leaderID); possibleAlrp != nil {
+					} else {
 
-					alrpsForPreviousLeaders[leaderID] = possibleAlrp
+						breakedCycle = true // this is a signal that we need to initiate ALRP finding process at least one more time
 
-				} else {
+						break
+					}
 
-					breakedCycle = true // this is a signal that we need to initiate ALRP finding process at least one more time
-
-					break
 				}
 
-			}
+				if breakedCycle {
 
-			if breakedCycle {
+					// Now when we have a list of previous leader to get ALRP for them - run it
 
-				// Now when we have a list of previous leader to get ALRP for them - run it
+					collector := RotationProofCollector{
+						wsConnMap: WEBSOCKET_CONNECTIONS_FOR_ALRP,
+						quorum:    epochHandler.Quorum,
+						majority:  majority,
+						timeout:   5 * time.Second,
+					}
 
-				collector := RotationProofCollector{
-					wsConnMap: WEBSOCKET_CONNECTIONS_FOR_ALRP,
-					quorum:    epochHandler.Quorum,
-					majority:  majority,
-					timeout:   5 * time.Second,
-				}
+					resultsOfAlrpRequests := collector.AlrpForLeadersCollector(context.Background(), pubkeysOfLeadersToGetAlrps, &epochHandler)
 
-				resultsOfAlrpRequests := collector.AlrpForLeadersCollector(context.Background(), pubkeysOfLeadersToGetAlrps, &epochHandler)
+					// Parse results here and modify the content inside ALRP_METADATA
 
-				// Parse results here and modify the content inside ALRP_METADATA
+					for leaderID, validatorsResponses := range resultsOfAlrpRequests {
 
-				for leaderID, validatorsResponses := range resultsOfAlrpRequests {
+						if alrpMetadataForPrevLeader, ok := ALRP_METADATA[leaderID]; ok {
 
-					if alrpMetadataForPrevLeader, ok := ALRP_METADATA[leaderID]; ok {
+							for validatorID, validatorResponse := range validatorsResponses {
 
-						for validatorID, validatorResponse := range validatorsResponses {
+								var resp ResponseStatus
 
-							var resp ResponseStatus
+								if errParse := json.Unmarshal(validatorResponse, &resp); errParse != nil {
 
-							if errParse := json.Unmarshal(validatorResponse, &resp); errParse != nil {
+									if resp.Status == "OK" {
 
-								if resp.Status == "OK" {
+										var lrpOk ws_structures.WsLeaderRotationProofResponseOk
 
-									var lrpOk ws_structures.WsLeaderRotationProofResponseOk
+										if errParse := json.Unmarshal(validatorResponse, &lrpOk); errParse == nil {
 
-									if errParse := json.Unmarshal(validatorResponse, &lrpOk); errParse == nil {
+											dataThatShouldBeSigned := "LEADER_ROTATION_PROOF:" + leaderID
 
-										dataThatShouldBeSigned := "LEADER_ROTATION_PROOF:" + leaderID
+											dataThatShouldBeSigned += ":" + alrpMetadataForPrevLeader.AfpForFirstBlock.BlockHash
 
-										dataThatShouldBeSigned += ":" + alrpMetadataForPrevLeader.AfpForFirstBlock.BlockHash
+											dataThatShouldBeSigned += ":" + strconv.Itoa(alrpMetadataForPrevLeader.SkipData.Index)
 
-										dataThatShouldBeSigned += ":" + strconv.Itoa(alrpMetadataForPrevLeader.SkipData.Index)
+											dataThatShouldBeSigned += ":" + alrpMetadataForPrevLeader.SkipData.Hash
 
-										dataThatShouldBeSigned += ":" + alrpMetadataForPrevLeader.SkipData.Hash
+											dataThatShouldBeSigned += ":" + epochFullID
 
-										dataThatShouldBeSigned += ":" + epochFullID
+											if validatorID == lrpOk.Voter && leaderID == lrpOk.ForPoolPubkey && ed25519.VerifySignature(dataThatShouldBeSigned, validatorID, lrpOk.Sig) {
 
-										if validatorID == lrpOk.Voter && leaderID == lrpOk.ForPoolPubkey && ed25519.VerifySignature(dataThatShouldBeSigned, validatorID, lrpOk.Sig) {
+												alrpMetadataForPrevLeader.Proofs[validatorID] = lrpOk.Sig
 
-											alrpMetadataForPrevLeader.Proofs[validatorID] = lrpOk.Sig
+											}
 
 										}
 
-									}
+										if len(alrpMetadataForPrevLeader.Proofs) >= majority {
 
-									if len(alrpMetadataForPrevLeader.Proofs) >= majority {
+											break
 
-										break
+										}
 
-									}
+									} else if resp.Status == "UPGRADE" {
 
-								} else if resp.Status == "UPGRADE" {
+										var lrpUpgrade ws_structures.WsLeaderRotationProofResponseUpgrade
 
-									var lrpUpgrade ws_structures.WsLeaderRotationProofResponseUpgrade
+										if errParse := json.Unmarshal(validatorResponse, &lrpUpgrade); errParse == nil {
 
-									if errParse := json.Unmarshal(validatorResponse, &lrpUpgrade); errParse == nil {
+											ourLocalHeightIsLower := alrpMetadataForPrevLeader.SkipData.Index < lrpUpgrade.SkipData.Index
 
-										ourLocalHeightIsLower := alrpMetadataForPrevLeader.SkipData.Index < lrpUpgrade.SkipData.Index
+											if ourLocalHeightIsLower {
 
-										if ourLocalHeightIsLower {
+												blockIdInAfp := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + strconv.Itoa(lrpUpgrade.SkipData.Index)
 
-											blockIdInAfp := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + strconv.Itoa(lrpUpgrade.SkipData.Index)
+												proposedHeightIsValid := lrpUpgrade.SkipData.Hash == lrpUpgrade.AfpForFirstBlock.BlockHash && blockIdInAfp == lrpUpgrade.AfpForFirstBlock.BlockID && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.SkipData.Afp, &epochHandler)
 
-											proposedHeightIsValid := lrpUpgrade.SkipData.Hash == lrpUpgrade.AfpForFirstBlock.BlockHash && blockIdInAfp == lrpUpgrade.AfpForFirstBlock.BlockID && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.SkipData.Afp, &epochHandler)
+												firstBlockID := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + ":0"
 
-											firstBlockID := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + ":0"
+												proposedFirstBlockIsValid := firstBlockID == lrpUpgrade.AfpForFirstBlock.BlockID && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.AfpForFirstBlock, &epochHandler)
 
-											proposedFirstBlockIsValid := firstBlockID == lrpUpgrade.AfpForFirstBlock.BlockID && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.AfpForFirstBlock, &epochHandler)
+												if proposedFirstBlockIsValid && proposedHeightIsValid {
 
-											if proposedFirstBlockIsValid && proposedHeightIsValid {
+													alrpMetadataForPrevLeader.AfpForFirstBlock = lrpUpgrade.AfpForFirstBlock
 
-												alrpMetadataForPrevLeader.AfpForFirstBlock = lrpUpgrade.AfpForFirstBlock
+													alrpMetadataForPrevLeader.SkipData = lrpUpgrade.SkipData
 
-												alrpMetadataForPrevLeader.SkipData = lrpUpgrade.SkipData
+													alrpMetadataForPrevLeader.Proofs = make(map[string]string)
 
-												alrpMetadataForPrevLeader.Proofs = make(map[string]string)
+												}
 
 											}
 
@@ -584,13 +592,13 @@ func generateBlock() {
 
 					}
 
+					return
+
+				} else {
+
+					extraData.AggregatedLeadersRotationProofs = alrpsForPreviousLeaders
+
 				}
-
-				return
-
-			} else {
-
-				extraData.AggregatedLeadersRotationProofs = alrpsForPreviousLeaders
 
 			}
 
@@ -637,6 +645,10 @@ func generateBlock() {
 			}
 
 		}
+
+	} else {
+
+		PROOFS_GRABBER_MUTEX.RUnlock()
 
 	}
 
