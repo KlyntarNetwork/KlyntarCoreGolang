@@ -45,12 +45,12 @@ func CreateStakingPool(delayedTransaction map[string]string) bool {
 		globals.APPROVEMENT_THREAD.Thread.Cache[storageKey] = &structures.PoolStorage{
 			Activated:      true,
 			Percentage:     percentage,
-			TotalStakedKly: big.NewInt(0),
-			TotalStakedUno: big.NewInt(0),
+			TotalStakedKly: structures.BigInt{Int: big.NewInt(0)},
+			TotalStakedUno: structures.BigInt{Int: big.NewInt(0)},
 			Stakers: map[string]structures.Staker{
 				creator: {
-					Kly: big.NewInt(0),
-					Uno: big.NewInt(0),
+					Kly: structures.BigInt{Int: big.NewInt(0)},
+					Uno: structures.BigInt{Int: big.NewInt(0)},
 				},
 			},
 			PoolURL:    poolURL,
@@ -89,7 +89,7 @@ func UpdateStakingPool(delayedTransaction map[string]string) bool {
 		requiredStake := globals.APPROVEMENT_THREAD.Thread.NetworkParameters.ValidatorStake
 
 		if activated {
-			if poolStorage.TotalStakedKly.Cmp(requiredStake) >= 0 {
+			if poolStorage.TotalStakedKly.Int.Cmp(requiredStake.Int) >= 0 {
 				globals.APPROVEMENT_THREAD.Thread.EpochHandler.PoolsRegistry[creator] = struct{}{}
 			}
 		} else {
@@ -124,7 +124,7 @@ func Stake(delayedTransaction map[string]string) bool {
 
 		minStake := globals.APPROVEMENT_THREAD.Thread.NetworkParameters.MinimalStakePerEntity
 
-		if amount.Cmp(minStake) < 0 {
+		if amount.Cmp(minStake.Int) < 0 {
 
 			return false
 
@@ -132,18 +132,22 @@ func Stake(delayedTransaction map[string]string) bool {
 
 		if _, exists := poolStorage.Stakers[staker]; !exists {
 
-			poolStorage.Stakers[staker] = structures.Staker{Kly: big.NewInt(0), Uno: big.NewInt(0)}
+			poolStorage.Stakers[staker] = structures.Staker{
+
+				Kly: structures.BigInt{Int: big.NewInt(0)},
+				Uno: structures.BigInt{Int: big.NewInt(0)},
+			}
 
 		}
 
 		stakerData := poolStorage.Stakers[staker]
-		stakerData.Kly = new(big.Int).Add(stakerData.Kly, amount)
-		poolStorage.TotalStakedKly = new(big.Int).Add(poolStorage.TotalStakedKly, amount)
+		stakerData.Kly = structures.BigInt{Int: new(big.Int).Add(stakerData.Kly.Int, amount)}
+		poolStorage.TotalStakedKly = structures.BigInt{Int: new(big.Int).Add(poolStorage.TotalStakedKly.Int, amount)}
 		poolStorage.Stakers[staker] = stakerData
 
 		requiredStake := globals.APPROVEMENT_THREAD.Thread.NetworkParameters.ValidatorStake
 
-		if poolStorage.Activated && poolStorage.TotalStakedKly.Cmp(requiredStake) >= 0 {
+		if poolStorage.Activated && poolStorage.TotalStakedKly.Cmp(requiredStake.Int) >= 0 {
 
 			if _, exists := globals.APPROVEMENT_THREAD.Thread.EpochHandler.PoolsRegistry[poolPubKey]; !exists {
 
@@ -191,9 +195,9 @@ func Unstake(delayedTransaction map[string]string) bool {
 
 		}
 
-		stakerData.Kly.Sub(stakerData.Kly, amount)
+		stakerData.Kly.Sub(stakerData.Kly.Int, amount)
 
-		poolStorage.TotalStakedKly.Sub(poolStorage.TotalStakedKly, amount)
+		poolStorage.TotalStakedKly.Sub(poolStorage.TotalStakedKly.Int, amount)
 
 		if stakerData.Kly.Cmp(big.NewInt(0)) == 0 && stakerData.Uno.Cmp(big.NewInt(0)) == 0 {
 
@@ -207,7 +211,7 @@ func Unstake(delayedTransaction map[string]string) bool {
 
 		requiredStake := globals.APPROVEMENT_THREAD.Thread.NetworkParameters.ValidatorStake
 
-		if poolStorage.TotalStakedKly.Cmp(requiredStake) < 0 {
+		if poolStorage.TotalStakedKly.Cmp(requiredStake.Int) < 0 {
 
 			delete(globals.APPROVEMENT_THREAD.Thread.EpochHandler.PoolsRegistry, poolPubKey)
 
@@ -246,14 +250,14 @@ func ChangeUnobtaniumAmount(delayedTransaction map[string]string) bool {
 			stakerData, exists := poolStorage.Stakers[key]
 
 			if !exists {
-				stakerData = structures.Staker{Kly: big.NewInt(0), Uno: big.NewInt(0)}
+				stakerData = structures.Staker{Kly: structures.BigInt{Int: big.NewInt(0)}, Uno: structures.BigInt{Int: big.NewInt(0)}}
 			}
 
-			stakerData.Uno = new(big.Int).Add(stakerData.Uno, delta)
+			stakerData.Uno = structures.BigInt{Int: new(big.Int).Add(stakerData.Uno.Int, delta)}
 
 			if stakerData.Uno.Sign() < 0 {
 
-				stakerData.Uno = big.NewInt(0)
+				stakerData.Uno = structures.BigInt{Int: big.NewInt(0)}
 
 			}
 
@@ -270,7 +274,7 @@ func ChangeUnobtaniumAmount(delayedTransaction map[string]string) bool {
 			totalChange = new(big.Int).Add(totalChange, delta)
 		}
 
-		poolStorage.TotalStakedUno = new(big.Int).Add(poolStorage.TotalStakedUno, totalChange)
+		poolStorage.TotalStakedUno = structures.BigInt{Int: new(big.Int).Add(poolStorage.TotalStakedUno.Int, totalChange)}
 
 		return true
 

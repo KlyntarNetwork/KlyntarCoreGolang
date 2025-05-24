@@ -69,8 +69,8 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 
 		totalStakeByThisValidator := new(big.Int)
 
-		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedKly)
-		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedUno)
+		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedKly.Int)
+		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedUno.Int)
 
 		totalStakeSum.Add(totalStakeSum, totalStakeByThisValidator)
 
@@ -174,8 +174,8 @@ func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int
 		validatorData := GetFromApprovementThreadState(validatorPubKey + "(POOL)_STORAGE_POOL")
 
 		totalStakeByThisValidator := new(big.Int)
-		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedKly)
-		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedUno)
+		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedKly.Int)
+		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedUno.Int)
 
 		validatorsExtendedData[validatorPubKey] = ValidatorData{
 			ValidatorPubKey: validatorPubKey,

@@ -122,7 +122,7 @@ func klyntarBannerPrint() {
 
 	var finalArt string
 
-	if os.Getenv("KLY_MODE") == "main" {
+	if os.Getenv("KLY_MODE") == "mainnet" {
 
 		// Read banner
 
