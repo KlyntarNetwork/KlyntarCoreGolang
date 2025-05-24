@@ -13,6 +13,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/gorilla/websocket"
+	"github.com/syndtr/goleveldb/leveldb"
 	"lukechampine.com/blake3"
 )
 
@@ -59,6 +60,15 @@ func SignalAboutEpochRotationExists(epochIndex int) bool {
 
 	return false
 
+}
+
+func OpenDb(dbName string) *leveldb.DB {
+
+	db, err := leveldb.OpenFile(globals.CHAINDATA_PATH+"/"+dbName, nil)
+	if err != nil {
+		panic("Impossible to open db : " + dbName + " =>" + err.Error())
+	}
+	return db
 }
 
 func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*websocket.Conn) {

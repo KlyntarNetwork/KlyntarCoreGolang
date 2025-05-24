@@ -51,12 +51,17 @@ func RunBlockchain() {
 
 func prepareBlockchain() {
 
-	// Create dir
+	// Create dir for chaindata
 	if _, err := os.Stat(globals.CHAINDATA_PATH); os.IsNotExist(err) {
 		if err := os.MkdirAll(globals.CHAINDATA_PATH, 0755); err != nil {
 			return
 		}
 	}
+
+	globals.BLOCKS = utils.OpenDb("BLOCKS")
+	globals.EPOCH_DATA = utils.OpenDb("EPOCH_DATA")
+	globals.APPROVEMENT_THREAD_METADATA = utils.OpenDb("APPROVEMENT_THREAD_METADATA")
+	globals.FINALIZATION_VOTING_STATS = utils.OpenDb("FINALIZATION_VOTING_STATS")
 
 	// Load GT - Generation Thread handler
 	if data, err := globals.BLOCKS.Get([]byte("GT"), nil); err == nil && data != nil {
@@ -85,9 +90,13 @@ func prepareBlockchain() {
 
 	// Load AT - Approvement Thread handler
 	if data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("AT"), nil); err == nil && data != nil {
+
 		var atHandler structures.ApprovementThread
+
 		if err := json.Unmarshal(data, &atHandler); err == nil {
+
 			globals.APPROVEMENT_THREAD_HANDLER.Thread = atHandler
+
 		} else {
 
 			fmt.Println("failed to unmarshal APPROVEMENT_THREAD: %w", err)
@@ -95,6 +104,7 @@ func prepareBlockchain() {
 			return
 
 		}
+
 	}
 
 	// Init genesis if version is -1

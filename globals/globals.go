@@ -9,14 +9,6 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-func openDB(dbName string) *leveldb.DB {
-	db, err := leveldb.OpenFile(CHAINDATA_PATH+"/"+dbName, nil)
-	if err != nil {
-		panic("Impossible to open db : " + dbName + " =>" + err.Error())
-	}
-	return db
-}
-
 func getCoreMajorVersion(versionFilePath string) (int, error) {
 
 	versionData, err := os.ReadFile(versionFilePath)
@@ -61,16 +53,10 @@ var APPROVEMENT_THREAD_HANDLER = struct {
 	RWMutex sync.RWMutex
 	Thread  structures.ApprovementThread
 }{
-	RWMutex: sync.RWMutex{},
 	Thread: structures.ApprovementThread{
 		CoreMajorVersion: -1,
 		Cache:            make(map[string]*structures.PoolStorage),
 	},
 }
 
-var (
-	BLOCKS                      = openDB("BLOCKS")
-	EPOCH_DATA                  = openDB("EPOCH_DATA")
-	APPROVEMENT_THREAD_METADATA = openDB("APPROVEMENT_THREAD_METADATA")
-	FINALIZATION_VOTING_STATS   = openDB("FINALIZATION_VOTING_STATS")
-)
+var BLOCKS, EPOCH_DATA, APPROVEMENT_THREAD_METADATA, FINALIZATION_VOTING_STATS *leveldb.DB
