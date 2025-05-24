@@ -41,8 +41,8 @@ func NewBlock(transactions []structures.Transaction, extraData ExtraData, epochF
 		Epoch:        epochFullID,
 		Transactions: transactions,
 		ExtraData:    extraData,
-		Index:        globals.GENERATION_THREAD.NextIndex,
-		PrevHash:     globals.GENERATION_THREAD.PrevHash,
+		Index:        globals.GENERATION_THREAD_HANDLER.NextIndex,
+		PrevHash:     globals.GENERATION_THREAD_HANDLER.PrevHash,
 		Sig:          "",
 	}
 }

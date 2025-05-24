@@ -37,7 +37,7 @@ func BlocksGenerationThread() {
 
 	generateBlock()
 
-	time.AfterFunc(time.Duration(globals.APPROVEMENT_THREAD.Thread.NetworkParameters.BlockTime), func() {
+	time.AfterFunc(time.Duration(globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.BlockTime), func() {
 		BlocksGenerationThread()
 	})
 
@@ -112,7 +112,7 @@ func getTransactionsFromMempool() []structures.Transaction {
 	globals.MEMPOOL.Mutex.Lock()
 	defer globals.MEMPOOL.Mutex.Unlock()
 
-	limit := globals.APPROVEMENT_THREAD.Thread.NetworkParameters.TxLimitPerBlock
+	limit := globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.TxLimitPerBlock
 
 	if limit > len(globals.MEMPOOL.Slice) {
 		limit = len(globals.MEMPOOL.Slice)
@@ -317,7 +317,7 @@ func getAggregatedLeaderRotationProof(majority, epochIndex int, leaderPubkey str
 
 func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) block.DelayedTxsBatch {
 
-	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+	epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
 	prevEpochIndex := epochHandler.Id - 2
 
@@ -339,11 +339,11 @@ func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) block.DelayedTxsBat
 
 func generateBlock() {
 
-	globals.APPROVEMENT_THREAD.RWMutex.RLock()
+	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	defer globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+	defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+	epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
 	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
@@ -359,7 +359,7 @@ func generateBlock() {
 
 		// Check if <epochFullID> is the same in APPROVEMENT_THREAD and in GENERATION_THREAD
 
-		if globals.GENERATION_THREAD.EpochFullId != epochFullID {
+		if globals.GENERATION_THREAD_HANDLER.EpochFullId != epochFullID {
 
 			// If new epoch - add the aggregated proof of previous epoch finalization
 
@@ -377,13 +377,13 @@ func generateBlock() {
 
 			// Update the index & hash of epoch
 
-			globals.GENERATION_THREAD.EpochFullId = epochFullID
+			globals.GENERATION_THREAD_HANDLER.EpochFullId = epochFullID
 
 			// Nullish the index & hash in generation thread for new epoch
 
-			globals.GENERATION_THREAD.PrevHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+			globals.GENERATION_THREAD_HANDLER.PrevHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
-			globals.GENERATION_THREAD.NextIndex = 0
+			globals.GENERATION_THREAD_HANDLER.NextIndex = 0
 
 			// Open websocket connections with the quorum of new epoch
 
@@ -393,7 +393,7 @@ func generateBlock() {
 
 		extraData := block.ExtraData{}
 
-		if globals.GENERATION_THREAD.NextIndex == 0 {
+		if globals.GENERATION_THREAD_HANDLER.NextIndex == 0 {
 
 			if epochIndex > 0 {
 
@@ -614,11 +614,11 @@ func generateBlock() {
 
 		if blockBytes, serializeErr := json.Marshal(blockCandidate); serializeErr == nil {
 
-			globals.GENERATION_THREAD.PrevHash = blockHash
+			globals.GENERATION_THREAD_HANDLER.PrevHash = blockHash
 
-			globals.GENERATION_THREAD.NextIndex++
+			globals.GENERATION_THREAD_HANDLER.NextIndex++
 
-			if gtBytes, serializeErr2 := json.Marshal(globals.GENERATION_THREAD); serializeErr2 == nil {
+			if gtBytes, serializeErr2 := json.Marshal(globals.GENERATION_THREAD_HANDLER); serializeErr2 == nil {
 
 				// Store block locally
 

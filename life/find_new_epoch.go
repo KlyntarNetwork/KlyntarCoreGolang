@@ -81,17 +81,17 @@ func fetchAefp(ctx context.Context, url string, quorum []string, majority int, e
 
 func EpochRotationThread() {
 
-	globals.APPROVEMENT_THREAD.RWMutex.RLock()
+	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD.Thread) {
+	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
 
-		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-		globals.APPROVEMENT_THREAD.RWMutex.Lock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
 
-		defer globals.APPROVEMENT_THREAD.RWMutex.Unlock()
+		defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
 
-		epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+		epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
 		epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
@@ -281,7 +281,7 @@ func EpochRotationThread() {
 
 					}
 
-					for key, value := range globals.APPROVEMENT_THREAD.Thread.Cache {
+					for key, value := range globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache {
 
 						valBytes, _ := json.Marshal(value)
 
@@ -299,7 +299,7 @@ func EpochRotationThread() {
 
 					nextEpochHash := utils.Blake3(AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash)
 
-					nextEpochQuorumSize := globals.APPROVEMENT_THREAD.Thread.NetworkParameters.QuorumSize
+					nextEpochQuorumSize := globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.QuorumSize
 
 					nextEpochHandler := structures.EpochHandler{
 						Id:                 nextEpochId,
@@ -308,7 +308,7 @@ func EpochRotationThread() {
 						ShardsRegistry:     epochHandler.ShardsRegistry,
 						Quorum:             common_functions.GetCurrentEpochQuorum(&epochHandler, nextEpochQuorumSize, nextEpochHash),
 						LeadersSequence:    []string{},
-						StartTimestamp:     epochHandler.StartTimestamp + uint64(globals.APPROVEMENT_THREAD.Thread.NetworkParameters.EpochTime),
+						StartTimestamp:     epochHandler.StartTimestamp + uint64(globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.EpochTime),
 						CurrentLeaderIndex: 0,
 					}
 
@@ -316,15 +316,15 @@ func EpochRotationThread() {
 
 					atomicBatch.Put([]byte("LATEST_BATCH_INDEX:"), []byte(strconv.Itoa(int(latestBatchIndex))))
 
-					globals.APPROVEMENT_THREAD.Thread.EpochHandler = nextEpochHandler
+					globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler = nextEpochHandler
 
-					jsonedAT, _ := json.Marshal(globals.APPROVEMENT_THREAD.Thread)
+					jsonedAT, _ := json.Marshal(globals.APPROVEMENT_THREAD_HANDLER.Thread)
 
 					atomicBatch.Put([]byte("AT"), jsonedAT)
 
 					// Clean cache
 
-					clear(globals.APPROVEMENT_THREAD.Thread.Cache)
+					clear(globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache)
 
 					globals.APPROVEMENT_THREAD_METADATA.Write(atomicBatch, nil)
 
@@ -332,7 +332,7 @@ func EpochRotationThread() {
 
 					//_______________________Check the version required for the next epoch________________________
 
-					if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD.Thread) {
+					if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
 
 						utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
 
@@ -348,7 +348,7 @@ func EpochRotationThread() {
 
 	} else {
 
-		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
 	}
 

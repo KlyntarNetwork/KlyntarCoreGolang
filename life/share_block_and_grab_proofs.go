@@ -47,7 +47,7 @@ func runFinalizationProofsGrabbing() {
 	// Call SendAndWait here
 	// Once received 2/3 votes for block - continue
 
-	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+	epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
 	epochFullId := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
@@ -211,11 +211,11 @@ func runFinalizationProofsGrabbing() {
 
 func BlocksSharingAndProofsGrabingThread() {
 
-	globals.APPROVEMENT_THREAD.RWMutex.RLock()
+	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	defer globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+	defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+	epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
 	currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
 

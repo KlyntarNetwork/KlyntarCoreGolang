@@ -25,9 +25,9 @@ func timeIsOutForCurrentLeader(approvementThread *structures.ApprovementThread) 
 
 func LeaderRotationThread() {
 
-	globals.APPROVEMENT_THREAD.RWMutex.RLock()
+	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	approvementThread := globals.APPROVEMENT_THREAD.Thread
+	approvementThread := globals.APPROVEMENT_THREAD_HANDLER.Thread
 
 	epochHandler := approvementThread.EpochHandler
 
@@ -37,11 +37,11 @@ func LeaderRotationThread() {
 
 	if haveNextCandidate && timeIsOutForCurrentLeader(&approvementThread) {
 
-		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-		globals.APPROVEMENT_THREAD.RWMutex.Lock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
 
-		approvementThread = globals.APPROVEMENT_THREAD.Thread
+		approvementThread = globals.APPROVEMENT_THREAD_HANDLER.Thread
 
 		epochHandler = approvementThread.EpochHandler
 
@@ -57,10 +57,10 @@ func LeaderRotationThread() {
 
 		}
 
-		globals.APPROVEMENT_THREAD.RWMutex.Unlock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
 
 	} else {
-		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 	}
 
 	// The workflow of this function is infinite

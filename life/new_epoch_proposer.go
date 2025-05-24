@@ -38,17 +38,17 @@ var QUORUM_AGREEMENTS = make(map[string]string)
 
 func NewEpochProposerThread() {
 
-	globals.APPROVEMENT_THREAD.RWMutex.RLock()
+	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD.Thread) {
+	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
 
-		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-		globals.APPROVEMENT_THREAD.RWMutex.Lock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
 
-		defer globals.APPROVEMENT_THREAD.RWMutex.Unlock()
+		defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
 
-		atEpochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+		atEpochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
 		epochIndex := atEpochHandler.Id
 
@@ -301,7 +301,7 @@ func NewEpochProposerThread() {
 
 	} else {
 
-		globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
 	}
 

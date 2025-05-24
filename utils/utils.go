@@ -283,11 +283,11 @@ func EpochStillFresh(thread *structures.ApprovementThread) bool {
 
 func GetCurrentLeader() CurrentLeaderData {
 
-	globals.APPROVEMENT_THREAD.RWMutex.RLock()
+	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	defer globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+	defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-	currentLeaderPubKey := globals.APPROVEMENT_THREAD.Thread.EpochHandler.LeadersSequence[globals.APPROVEMENT_THREAD.Thread.EpochHandler.CurrentLeaderIndex]
+	currentLeaderPubKey := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler.LeadersSequence[globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler.CurrentLeaderIndex]
 
 	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
 

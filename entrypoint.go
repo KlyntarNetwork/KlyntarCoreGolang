@@ -58,11 +58,11 @@ func prepareBlockchain() {
 		}
 	}
 
-	// Load GT
+	// Load GT - Generation Thread handler
 	if data, err := globals.BLOCKS.Get([]byte("GT"), nil); err == nil && data != nil {
-		var gt structures.GenerationThread
-		if err := json.Unmarshal(data, &gt); err == nil {
-			globals.GENERATION_THREAD = gt
+		var gtHandler structures.GenerationThread
+		if err := json.Unmarshal(data, &gtHandler); err == nil {
+			globals.GENERATION_THREAD_HANDLER = gtHandler
 		} else {
 
 			fmt.Println("failed to unmarshal GENERATION_THREAD: %w", err)
@@ -70,13 +70,24 @@ func prepareBlockchain() {
 			return
 
 		}
+	} else {
+
+		// Create initial generation thread handler
+
+		globals.GENERATION_THREAD_HANDLER = structures.GenerationThread{
+
+			EpochFullId: utils.Blake3("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"+globals.GENESIS.NetworkID) + "#-1",
+			PrevHash:    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			NextIndex:   0,
+		}
+
 	}
 
-	// Load AT
+	// Load AT - Approvement Thread handler
 	if data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("AT"), nil); err == nil && data != nil {
-		var at structures.ApprovementThread
-		if err := json.Unmarshal(data, &at); err == nil {
-			globals.APPROVEMENT_THREAD.Thread = at
+		var atHandler structures.ApprovementThread
+		if err := json.Unmarshal(data, &atHandler); err == nil {
+			globals.APPROVEMENT_THREAD_HANDLER.Thread = atHandler
 		} else {
 
 			fmt.Println("failed to unmarshal APPROVEMENT_THREAD: %w", err)
@@ -87,11 +98,11 @@ func prepareBlockchain() {
 	}
 
 	// Init genesis if version is -1
-	if globals.APPROVEMENT_THREAD.Thread.CoreMajorVersion == -1 {
+	if globals.APPROVEMENT_THREAD_HANDLER.Thread.CoreMajorVersion == -1 {
 
 		setGenesisToState()
 
-		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD.Thread)
+		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD_HANDLER.Thread)
 		if err != nil {
 			fmt.Println("failed to marshal APPROVEMENT_THREAD: %w", err)
 			return
@@ -106,7 +117,7 @@ func prepareBlockchain() {
 	}
 
 	// Version check
-	if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD.Thread) {
+	if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
 
 		utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
 
@@ -148,11 +159,11 @@ func setGenesisToState() error {
 
 	}
 
-	globals.APPROVEMENT_THREAD.Thread.CoreMajorVersion = globals.GENESIS.CoreMajorVersion
+	globals.APPROVEMENT_THREAD_HANDLER.Thread.CoreMajorVersion = globals.GENESIS.CoreMajorVersion
 
-	globals.APPROVEMENT_THREAD.Thread.NetworkParameters = globals.GENESIS.NetworkParameters
+	globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters = globals.GENESIS.NetworkParameters
 
-	// Write batch
+	// Commit changes
 	if err := globals.APPROVEMENT_THREAD_METADATA.Write(batch, nil); err != nil {
 		return err
 	}
@@ -161,8 +172,8 @@ func setGenesisToState() error {
 
 	initEpochHash := utils.Blake3(hashInput)
 
-	// Create new epoch handler
-	epoch := structures.EpochHandler{
+	// Create new epochHandler handler
+	epochHandler := structures.EpochHandler{
 		Id:                 0,
 		Hash:               initEpochHash,
 		PoolsRegistry:      poolsRegistryForEpochHandler,
@@ -173,13 +184,13 @@ func setGenesisToState() error {
 		CurrentLeaderIndex: 0,
 	}
 
-	// Assign quorum
-	epoch.Quorum = common_functions.GetCurrentEpochQuorum(&epoch, globals.APPROVEMENT_THREAD.Thread.NetworkParameters.QuorumSize, initEpochHash)
+	// Assign quorum - pseudorandomly and in deterministic way
+	epochHandler.Quorum = common_functions.GetCurrentEpochQuorum(&epochHandler, globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.QuorumSize, initEpochHash)
 
-	// Assign sequence of leaders
-	common_functions.SetLeadersSequence(&epoch, initEpochHash)
+	// Now set the block generators for epoch pseudorandomly and in deterministic way
+	common_functions.SetLeadersSequence(&epochHandler, initEpochHash)
 
-	globals.APPROVEMENT_THREAD.Thread.EpochHandler = epoch
+	globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler = epochHandler
 
 	return nil
 

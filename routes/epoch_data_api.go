@@ -95,11 +95,11 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	globals.APPROVEMENT_THREAD.RWMutex.RLock()
+	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	defer globals.APPROVEMENT_THREAD.RWMutex.RUnlock()
+	defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-	epochHandler := globals.APPROVEMENT_THREAD.Thread.EpochHandler
+	epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
 	epochIndex := epochHandler.Id
 

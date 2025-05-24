@@ -55,11 +55,17 @@ var MEMPOOL struct {
 	Mutex sync.Mutex
 }
 
-var GENERATION_THREAD structures.GenerationThread
+var GENERATION_THREAD_HANDLER structures.GenerationThread
 
-var APPROVEMENT_THREAD struct {
+var APPROVEMENT_THREAD_HANDLER = struct {
 	RWMutex sync.RWMutex
 	Thread  structures.ApprovementThread
+}{
+	RWMutex: sync.RWMutex{},
+	Thread: structures.ApprovementThread{
+		CoreMajorVersion: -1,
+		Cache:            make(map[string]*structures.PoolStorage),
+	},
 }
 
 var (
