@@ -236,7 +236,7 @@ func LogWithTime(msg, msgColor string) {
 
 	var prefixColor string
 
-	if os.Getenv("KLY_MODE") == "test" {
+	if os.Getenv("KLY_MODE") == "testnet" {
 
 		prefixColor = DEEP_ORANGE_COLOR
 
