@@ -76,7 +76,7 @@ type Genesis struct {
 	FirstEpochStartTimestamp uint64                 `json:"FIRST_EPOCH_START_TIMESTAMP"`
 	NetworkCreatorsContact   map[string]string      `json:"NETWORK_CREATORS_CONTACT"`
 	HiveMind                 []string               `json:"HIVEMIND"`
-	Hostchains               map[string]string      `json:"HOSTCHAINS"`
+	Hostchains               map[string]any         `json:"HOSTCHAINS"`
 	NetworkWorkflow          string                 `json:"NETWORK_WORKFLOW"`
 	NetworkParameters        NetworkParameters      `json:"NETWORK_PARAMETERS"`
 	Pools                    map[string]PoolStorage `json:"POOLS"`

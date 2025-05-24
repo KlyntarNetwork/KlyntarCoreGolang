@@ -218,11 +218,11 @@ func GracefulShutdown() {
 
 	shutdownOnce.Do(func() {
 
-		LogWithTime("\x1b[31;1mKLYNTAR\x1b[36;1m stop has been initiated.Keep waiting...", CYAN_COLOR)
+		LogWithTime("Stop signal has been initiated.Keep waiting...", CYAN_COLOR)
 
 		LogWithTime("Closing server connections...", CYAN_COLOR)
 
-		LogWithTime("Node was gracefully stopped", CYAN_COLOR)
+		LogWithTime("Node was gracefully stopped", GREEN_COLOR)
 
 		os.Exit(0)
 
