@@ -2,11 +2,12 @@ package websocket
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/lxzan/gws"
 )
 
@@ -83,11 +84,11 @@ func CreateWebsocketServer() {
 
 	address := wsInterface + ":" + strconv.Itoa(wsPort)
 
-	log.Printf("WebSocket server listening on %s\n", address)
+	utils.LogWithTime(fmt.Sprintf("✅ Websocket server is starting at ws://%s ...", address), utils.WHITE_COLOR)
 
 	if err := http.ListenAndServe(address, nil); err != nil {
 
-		log.Fatalf("WebSocket server failed: %v", err)
+		utils.LogWithTime(fmt.Sprintf("Error in websocket server: %s", err), utils.RED_COLOR)
 
 	}
 

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 
@@ -23,7 +22,7 @@ func RunBlockchain() {
 
 	//_________________________ RUN SEVERAL THREADS _________________________
 
-	//✅1.Thread to find AEFPs and change the epoch for AT
+	// //✅1.Thread to find AEFPs and change the epoch for AT
 	go life.EpochRotationThread()
 
 	//✅2.Share our blocks within quorum members and get the finalization proofs
@@ -38,15 +37,21 @@ func RunBlockchain() {
 	//✅5.Start a separate thread to work with voting for blocks in a sync way (for security)
 	go life.LeaderRotationThread()
 
+	//___________________ RUN SERVERS - WEBSOCKET AND HTTP __________________
+
+	go websocket.CreateWebsocketServer()
+
 	serverAddr := globals.CONFIGURATION.Interface + ":" + strconv.Itoa(globals.CONFIGURATION.Port)
+
+	utils.LogWithTime(fmt.Sprintf("✅ Server is starting at http://%s ...", serverAddr), utils.WHITE_COLOR)
 
 	err := fasthttp.ListenAndServe(serverAddr, NewRouter())
 
 	if err != nil {
-		log.Fatalf("Error in server: %s", err)
-	}
 
-	websocket.CreateWebsocketServer()
+		utils.LogWithTime(fmt.Sprintf("Error in server: %s", err), utils.RED_COLOR)
+
+	}
 
 }
 
@@ -54,9 +59,13 @@ func prepareBlockchain() {
 
 	// Create dir for chaindata
 	if _, err := os.Stat(globals.CHAINDATA_PATH); os.IsNotExist(err) {
+
 		if err := os.MkdirAll(globals.CHAINDATA_PATH, 0755); err != nil {
+
 			return
+
 		}
+
 	}
 
 	globals.BLOCKS = utils.OpenDb("BLOCKS")
@@ -66,9 +75,13 @@ func prepareBlockchain() {
 
 	// Load GT - Generation Thread handler
 	if data, err := globals.BLOCKS.Get([]byte("GT"), nil); err == nil {
+
 		var gtHandler structures.GenerationThread
+
 		if err := json.Unmarshal(data, &gtHandler); err == nil {
+
 			globals.GENERATION_THREAD_HANDLER = gtHandler
+
 		} else {
 
 			fmt.Println("failed to unmarshal GENERATION_THREAD: %w", err)
@@ -90,6 +103,7 @@ func prepareBlockchain() {
 	}
 
 	// Load AT - Approvement Thread handler
+
 	if data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("AT"), nil); err == nil {
 
 		var atHandler structures.ApprovementThread
@@ -97,10 +111,13 @@ func prepareBlockchain() {
 		if err := json.Unmarshal(data, &atHandler); err == nil {
 
 			if atHandler.Cache == nil {
+
 				atHandler.Cache = make(map[string]*structures.PoolStorage)
+
 			}
 
 			globals.APPROVEMENT_THREAD_HANDLER.Thread = atHandler
+
 		} else {
 			fmt.Printf("failed to unmarshal APPROVEMENT_THREAD: %v\n", err)
 			return
@@ -114,14 +131,21 @@ func prepareBlockchain() {
 		setGenesisToState()
 
 		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD_HANDLER.Thread)
+
 		if err != nil {
+
 			fmt.Println("failed to marshal APPROVEMENT_THREAD: %w", err)
+
 			return
+
 		}
 
 		if err := globals.APPROVEMENT_THREAD_METADATA.Put([]byte("AT"), serialized, nil); err != nil {
+
 			fmt.Println("failed to save APPROVEMENT_THREAD: %w", err)
+
 			return
+
 		}
 
 		return
@@ -133,7 +157,9 @@ func prepareBlockchain() {
 		utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
 
 		if data, err := os.ReadFile("images/update.txt"); err == nil {
+
 			fmt.Println(string(data))
+
 		}
 
 		utils.GracefulShutdown()

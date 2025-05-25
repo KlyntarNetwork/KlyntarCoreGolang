@@ -88,6 +88,7 @@ func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*w
 	for _, validatorPubkey := range quorum {
 		// Fetch validator metadata from LevelDB
 		raw, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte(validatorPubkey+"(POOL)_STORAGE_POOL"), nil)
+
 		if err != nil {
 			continue
 		}
@@ -103,9 +104,14 @@ func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*w
 			continue
 		}
 
+		fmt.Println("DEBUG: Try open connection => ", pool)
+
 		// Open WebSocket connection
 		conn, _, err := websocket.DefaultDialer.Dial(pool.WssPoolURL, nil)
 		if err != nil {
+
+			fmt.Println("DEBUG:Error => ", err)
+
 			continue
 		}
 
@@ -176,6 +182,10 @@ func (qw *QuorumWaiter) SendAndWait(
 	}
 	qw.timer.Reset(time.Second)
 	qw.done = make(chan struct{})
+
+	fmt.Println("DEBUG: Sending to ", quorum)
+	fmt.Println("DEBUG: Sending msg ", message)
+	fmt.Println("DEBUG: Sending to ", wsConnMap)
 
 	qw.sendMessages(quorum, message, wsConnMap)
 

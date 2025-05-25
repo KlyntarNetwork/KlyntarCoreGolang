@@ -50,6 +50,8 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 	// Call SendAndWait here
 	// Once received 2/3 votes for block - continue
 
+	fmt.Println("DEBUG: Try grabbing")
+
 	PROOFS_GRABBER_MUTEX.Lock()
 
 	defer PROOFS_GRABBER_MUTEX.Unlock()
@@ -104,6 +106,14 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 			defer cancel()
 
 			responses, ok := QUORUM_WAITER_FOR_FINALIZATION_PROOFS.SendAndWait(ctx, messageJsoned, epochHandler.Quorum, WEBSOCKET_CONNECTIONS, majority)
+
+			fmt.Println("DEBUG: Size of is => ", len(responses))
+
+			if pretty, err := json.MarshalIndent(message, "", "  "); err == nil {
+				fmt.Println("Try sending block =>\n", string(pretty))
+			} else {
+				fmt.Printf("Failed to marshal BLOCK_TO_SHARE for debug: %v\n", err)
+			}
 
 			if !ok {
 				return
