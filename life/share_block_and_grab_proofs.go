@@ -45,7 +45,7 @@ var BLOCK_TO_SHARE *block.Block = &block.Block{
 
 var QUORUM_WAITER_FOR_FINALIZATION_PROOFS *utils.QuorumWaiter
 
-func runFinalizationProofsGrabbing() {
+func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 
 	// Call SendAndWait here
 	// Once received 2/3 votes for block - continue
@@ -53,10 +53,6 @@ func runFinalizationProofsGrabbing() {
 	PROOFS_GRABBER_MUTEX.Lock()
 
 	defer PROOFS_GRABBER_MUTEX.Unlock()
-
-	fmt.Println("DEBUG: Graaaaab here => ")
-
-	epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
 	epochFullId := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
@@ -66,17 +62,15 @@ func runFinalizationProofsGrabbing() {
 
 	blockIdThatInPointer := strconv.Itoa(epochHandler.Id) + ":" + globals.CONFIGURATION.PublicKey + ":" + strconv.Itoa(BLOCK_TO_SHARE.Index)
 
-	majority := common_functions.GetQuorumMajority(&epochHandler)
+	majority := common_functions.GetQuorumMajority(epochHandler)
 
 	if blockIdForHunting != blockIdThatInPointer {
 
 		blockDataRaw, errDB := globals.BLOCKS.Get([]byte(blockIdForHunting), nil)
 
-		if errDB != nil {
+		if errDB == nil {
 
-			parseErr := json.Unmarshal(blockDataRaw, BLOCK_TO_SHARE)
-
-			if parseErr != nil {
+			if parseErr := json.Unmarshal(blockDataRaw, BLOCK_TO_SHARE); parseErr != nil {
 				return
 			}
 
@@ -94,8 +88,6 @@ func runFinalizationProofsGrabbing() {
 
 	if len(FINALIZATION_PROOFS_CACHE) < majority {
 
-		fmt.Println("DEBUG: Try grab here => ")
-
 		// Build message - then parse to JSON
 
 		message := ws_structures.WsFinalizationProofRequest{
@@ -104,14 +96,12 @@ func runFinalizationProofsGrabbing() {
 			PreviousBlockAfp: PROOFS_GRABBER.AfpForPrevious,
 		}
 
-		if messageJsoned, err := json.Marshal(message); err != nil {
+		if messageJsoned, err := json.Marshal(message); err == nil {
 
 			// Create max delay
 
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
-
-			majority := common_functions.GetQuorumMajority(&epochHandler)
 
 			responses, ok := QUORUM_WAITER_FOR_FINALIZATION_PROOFS.SendAndWait(ctx, messageJsoned, epochHandler.Quorum, WEBSOCKET_CONNECTIONS, majority)
 
@@ -206,7 +196,9 @@ func runFinalizationProofsGrabbing() {
 
 				// Delete finalization proofs that we don't need more
 
-				FINALIZATION_PROOFS_CACHE = map[string]string{}
+				for k := range FINALIZATION_PROOFS_CACHE {
+					delete(FINALIZATION_PROOFS_CACHE, k)
+				}
 
 			} else {
 				return
@@ -222,81 +214,81 @@ func runFinalizationProofsGrabbing() {
 
 func BlocksSharingAndProofsGrabingThread() {
 
-	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+	for {
 
-	defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
+		epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
-	currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-	if currentLeaderPubKey != globals.CONFIGURATION.PublicKey {
+		currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
 
-		time.AfterFunc(time.Second, func() {
-			BlocksSharingAndProofsGrabingThread()
-		})
+		if currentLeaderPubKey != globals.CONFIGURATION.PublicKey {
 
-		return
+			time.Sleep(1 * time.Second)
 
-	}
+			continue
 
-	PROOFS_GRABBER_MUTEX.RLock()
+		}
 
-	if PROOFS_GRABBER.EpochId != epochHandler.Id {
+		PROOFS_GRABBER_MUTEX.RLock()
 
-		PROOFS_GRABBER_MUTEX.RUnlock()
+		if PROOFS_GRABBER.EpochId != epochHandler.Id {
 
-		PROOFS_GRABBER_MUTEX.Lock()
+			PROOFS_GRABBER_MUTEX.RUnlock()
 
-		// Try to get stored proofs grabber from db
+			PROOFS_GRABBER_MUTEX.Lock()
 
-		dbKey := []byte(strconv.Itoa(epochHandler.Id) + ":PROOFS_GRABBER")
+			// Try to get stored proofs grabber from db
 
-		if rawGrabber, err := globals.FINALIZATION_VOTING_STATS.Get(dbKey, nil); err == nil {
+			dbKey := []byte(strconv.Itoa(epochHandler.Id) + ":PROOFS_GRABBER")
 
-			json.Unmarshal(rawGrabber, &PROOFS_GRABBER)
+			if rawGrabber, err := globals.FINALIZATION_VOTING_STATS.Get(dbKey, nil); err == nil {
+
+				json.Unmarshal(rawGrabber, &PROOFS_GRABBER)
+
+			} else {
+
+				// Assign initial value of proofs grabber for each new epoch
+
+				PROOFS_GRABBER = ProofsGrabber{
+
+					EpochId: epochHandler.Id,
+
+					AcceptedIndex: -1,
+
+					AcceptedHash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+				}
+
+			}
+
+			// And store new descriptor
+
+			if serialized, err := json.Marshal(PROOFS_GRABBER); err == nil {
+
+				globals.FINALIZATION_VOTING_STATS.Put(dbKey, serialized, nil)
+
+			}
+
+			PROOFS_GRABBER_MUTEX.Unlock()
+
+			// Also, open connections with quorum here. Create QuorumWaiter etc.
+
+			utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS)
+
+			// Create new QuorumWaiter
+
+			QUORUM_WAITER_FOR_FINALIZATION_PROOFS = utils.NewQuorumWaiter(len(epochHandler.Quorum))
 
 		} else {
 
-			// Assign initial value of proofs grabber for each new epoch
-
-			fmt.Println("DEBUG: Assigning new val => ")
-
-			PROOFS_GRABBER = ProofsGrabber{
-
-				EpochId: epochHandler.Id,
-
-				AcceptedIndex: -1,
-
-				AcceptedHash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-			}
+			PROOFS_GRABBER_MUTEX.RUnlock()
 
 		}
 
-		// And store new descriptor
-
-		if serialized, err := json.Marshal(PROOFS_GRABBER); err == nil {
-
-			globals.FINALIZATION_VOTING_STATS.Put(dbKey, serialized, nil)
-
-		}
-
-		PROOFS_GRABBER_MUTEX.Unlock()
-
-		// Also, open connections with quorum here. Create QuorumWaiter etc.
-
-		utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS)
-
-		// Create new QuorumWaiter
-
-		QUORUM_WAITER_FOR_FINALIZATION_PROOFS = utils.NewQuorumWaiter(len(epochHandler.Quorum))
+		runFinalizationProofsGrabbing(&epochHandler)
 
 	}
-
-	// Continue here
-
-	runFinalizationProofsGrabbing()
-
-	go BlocksSharingAndProofsGrabingThread()
 
 }
