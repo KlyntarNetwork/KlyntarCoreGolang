@@ -35,11 +35,13 @@ type RotationProofCollector struct {
 
 func BlocksGenerationThread() {
 
-	generateBlock()
+	for {
 
-	time.AfterFunc(time.Duration(globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.BlockTime), func() {
-		BlocksGenerationThread()
-	})
+		generateBlock()
+
+		time.Sleep(time.Duration(globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.BlockTime) * time.Millisecond)
+
+	}
 
 }
 
@@ -518,7 +520,7 @@ func generateBlock() {
 
 								var resp ResponseStatus
 
-								if errParse := json.Unmarshal(validatorResponse, &resp); errParse != nil {
+								if errParse := json.Unmarshal(validatorResponse, &resp); errParse == nil {
 
 									if resp.Status == "OK" {
 
