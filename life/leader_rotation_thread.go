@@ -2,6 +2,7 @@ package life
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
@@ -25,48 +26,49 @@ func timeIsOutForCurrentLeader(approvementThread *structures.ApprovementThread) 
 
 func LeaderRotationThread() {
 
-	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+	for {
 
-	approvementThread := globals.APPROVEMENT_THREAD_HANDLER.Thread
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-	epochHandler := approvementThread.EpochHandler
+		epochHandler := &globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
-	haveNextCandidate := epochHandler.CurrentLeaderIndex+1 < len(epochHandler.LeadersSequence)
+		haveNextCandidate := epochHandler.CurrentLeaderIndex+1 < len(epochHandler.LeadersSequence)
 
-	storedEpochIndex := epochHandler.Id
+		if haveNextCandidate && timeIsOutForCurrentLeader(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
 
-	if haveNextCandidate && timeIsOutForCurrentLeader(&approvementThread) {
+			storedEpochIndex := epochHandler.Id
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
 
-		approvementThread = globals.APPROVEMENT_THREAD_HANDLER.Thread
+			threadHandler := &globals.APPROVEMENT_THREAD_HANDLER.Thread
 
-		epochHandler = approvementThread.EpochHandler
+			if storedEpochIndex == threadHandler.EpochHandler.Id {
 
-		if storedEpochIndex == epochHandler.Id {
+				threadHandler.EpochHandler.CurrentLeaderIndex++
 
-			approvementThread.EpochHandler.CurrentLeaderIndex++
+				// Store the updated AT
 
-			// Store the updated AT
+				jsonedHandler, _ := json.Marshal(threadHandler)
 
-			jsonedAT, _ := json.Marshal(approvementThread)
+				if err := globals.APPROVEMENT_THREAD_METADATA.Put([]byte("AT"), jsonedHandler, nil); err != nil {
 
-			globals.APPROVEMENT_THREAD_METADATA.Put([]byte("AT"), jsonedAT, nil)
+					fmt.Printf("Failed to store AT state: %v", err)
 
+					panic("Impossible to store the approvement thread state")
+
+				}
+
+			}
+
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
+
+		} else {
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 		}
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
-
-	} else {
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+		time.Sleep(200 * time.Millisecond)
 	}
-
-	// The workflow of this function is infinite
-
-	time.AfterFunc(200*time.Millisecond, func() {
-		LeaderRotationThread()
-	})
 
 }

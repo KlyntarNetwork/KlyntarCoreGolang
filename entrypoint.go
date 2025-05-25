@@ -96,14 +96,14 @@ func prepareBlockchain() {
 
 		if err := json.Unmarshal(data, &atHandler); err == nil {
 
+			if atHandler.Cache == nil {
+				atHandler.Cache = make(map[string]*structures.PoolStorage)
+			}
+
 			globals.APPROVEMENT_THREAD_HANDLER.Thread = atHandler
-
 		} else {
-
-			fmt.Println("failed to unmarshal APPROVEMENT_THREAD: %w", err)
-
+			fmt.Printf("failed to unmarshal APPROVEMENT_THREAD: %v\n", err)
 			return
-
 		}
 
 	}
