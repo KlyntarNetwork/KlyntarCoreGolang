@@ -26,12 +26,16 @@ type ResponseStatus struct {
 	Status string
 }
 
-var CURRENT_LEADER_INDEX_DATA = struct {
-	EpochID int
-	Index   int
-}{
-	EpochID: -1,
-	Index:   0,
+type PivotMetadata struct {
+	EpochIndex       int
+	LeaderIndex      int
+	QuorumAgreements map[string]string
+}
+
+var CURRENT_PROPOSITION_STATE = PivotMetadata{
+	EpochIndex:       -1,
+	LeaderIndex:      0,
+	QuorumAgreements: make(map[string]string),
 }
 
 var QUORUM_AGREEMENTS = make(map[string]string)
@@ -54,11 +58,13 @@ func NewEpochProposerThread() {
 
 		// Reset CURRENT_LEADER_STATE only if epoch changed
 
-		if CURRENT_LEADER_INDEX_DATA.EpochID != epochIndex {
+		if CURRENT_PROPOSITION_STATE.EpochIndex != epochIndex {
 
-			CURRENT_LEADER_INDEX_DATA.EpochID = epochIndex
-
-			CURRENT_LEADER_INDEX_DATA.Index = 0
+			CURRENT_PROPOSITION_STATE = PivotMetadata{
+				EpochIndex:       epochIndex,
+				LeaderIndex:      0,
+				QuorumAgreements: make(map[string]string),
+			}
 
 		}
 
@@ -66,7 +72,7 @@ func NewEpochProposerThread() {
 
 		leadersSequence := atEpochHandler.LeadersSequence
 
-		pubKeyOfLeader := leadersSequence[CURRENT_LEADER_INDEX_DATA.Index]
+		pubKeyOfLeader := leadersSequence[CURRENT_PROPOSITION_STATE.LeaderIndex]
 
 		iAmInTheQuorum := slices.Contains(atEpochHandler.Quorum, globals.CONFIGURATION.PublicKey)
 
@@ -90,7 +96,7 @@ func NewEpochProposerThread() {
 
 			if localVotingData.Index == -1 {
 
-				for position := CURRENT_LEADER_INDEX_DATA.Index - 1; position >= 0; position-- {
+				for position := CURRENT_PROPOSITION_STATE.LeaderIndex - 1; position >= 0; position-- {
 
 					prevLeader := atEpochHandler.LeadersSequence[position]
 
@@ -106,7 +112,7 @@ func NewEpochProposerThread() {
 
 							pubKeyOfLeader = prevLeader
 
-							CURRENT_LEADER_INDEX_DATA.Index = position
+							CURRENT_PROPOSITION_STATE.LeaderIndex = position
 
 							localVotingData = prevVotingData
 
@@ -133,7 +139,7 @@ func NewEpochProposerThread() {
 				json.Unmarshal(afpForFirstBlockRaw, &afpForFirstBlock)
 
 				epochFinishProposition = structures.EpochFinishRequest{
-					CurrentLeader:        CURRENT_LEADER_INDEX_DATA.Index,
+					CurrentLeader:        CURRENT_PROPOSITION_STATE.LeaderIndex,
 					LastBlockProposition: localVotingData,
 					AfpForFirstBlock:     afpForFirstBlock,
 				}
@@ -229,7 +235,7 @@ func NewEpochProposerThread() {
 
 							sameHash := resultAsStruct.LastBlockProposition.Hash == resultAsStruct.LastBlockProposition.Afp.BlockHash
 
-							proposedLeaderHasBiggerIndex := resultAsStruct.CurrentLeader > CURRENT_LEADER_INDEX_DATA.Index
+							proposedLeaderHasBiggerIndex := resultAsStruct.CurrentLeader > CURRENT_PROPOSITION_STATE.LeaderIndex
 
 							if sameBlockID && sameHash && proposedLeaderHasBiggerIndex {
 
@@ -259,11 +265,11 @@ func NewEpochProposerThread() {
 
 			for upgradeProposition := range upgradeCh {
 
-				if upgradeProposition.CurrentLeader > CURRENT_LEADER_INDEX_DATA.Index {
+				if upgradeProposition.CurrentLeader > CURRENT_PROPOSITION_STATE.LeaderIndex {
 
-					CURRENT_LEADER_INDEX_DATA.Index = upgradeProposition.CurrentLeader
+					CURRENT_PROPOSITION_STATE.LeaderIndex = upgradeProposition.CurrentLeader
 
-					keyAsBytes := []byte(strconv.Itoa(epochIndex) + ":" + leadersSequence[CURRENT_LEADER_INDEX_DATA.Index])
+					keyAsBytes := []byte(strconv.Itoa(epochIndex) + ":" + leadersSequence[CURRENT_PROPOSITION_STATE.LeaderIndex])
 
 					valueAsBytes, _ := json.Marshal(upgradeProposition.LastBlockProposition)
 
