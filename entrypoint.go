@@ -22,7 +22,7 @@ func RunBlockchain() {
 
 	//_________________________ RUN SEVERAL THREADS _________________________
 
-	// //✅1.Thread to find AEFPs and change the epoch for AT
+	//✅1.Thread to find AEFPs and change the epoch for AT
 	go life.EpochRotationThread()
 
 	//✅2.Share our blocks within quorum members and get the finalization proofs
@@ -43,7 +43,7 @@ func RunBlockchain() {
 
 	serverAddr := globals.CONFIGURATION.Interface + ":" + strconv.Itoa(globals.CONFIGURATION.Port)
 
-	utils.LogWithTime(fmt.Sprintf("✅ Server is starting at http://%s ...", serverAddr), utils.WHITE_COLOR)
+	utils.LogWithTime(fmt.Sprintf("Server is starting at http://%s ...✅", serverAddr), utils.CYAN_COLOR)
 
 	err := fasthttp.ListenAndServe(serverAddr, NewRouter())
 

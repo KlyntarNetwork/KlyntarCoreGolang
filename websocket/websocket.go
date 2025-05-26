@@ -84,7 +84,7 @@ func CreateWebsocketServer() {
 
 	address := wsInterface + ":" + strconv.Itoa(wsPort)
 
-	utils.LogWithTime(fmt.Sprintf("✅ Websocket server is starting at ws://%s ...", address), utils.WHITE_COLOR)
+	utils.LogWithTime(fmt.Sprintf("Websocket server is starting at ws://%s ...✅", address), utils.CYAN_COLOR)
 
 	if err := http.ListenAndServe(address, nil); err != nil {
 

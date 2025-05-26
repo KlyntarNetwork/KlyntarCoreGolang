@@ -254,17 +254,7 @@ func LogWithTime(msg, msgColor string) {
 
 	formattedDate := time.Now().Format("02 January 2006 at 03:04:05 PM")
 
-	var prefixColor string
-
-	if os.Getenv("KLY_MODE") == "testnet" {
-
-		prefixColor = DEEP_ORANGE_COLOR
-
-	} else {
-
-		prefixColor = DEEP_GREEN_COLOR
-
-	}
+	var prefixColor = DEEP_GREEN_COLOR
 
 	fmt.Printf(prefixColor+"[%s]"+MAGENTA_COLOR+"(pid:%d)"+msgColor+"  %s\n"+RESET_COLOR, formattedDate, os.Getpid(), msg)
 
