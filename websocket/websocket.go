@@ -11,11 +11,6 @@ import (
 	"github.com/lxzan/gws"
 )
 
-// const (
-// PingInterval = 5 * time.Second
-// PingWait     = 10 * time.Second
-// )
-
 type Handler struct{}
 
 type IncomingMsg struct {
