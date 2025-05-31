@@ -95,7 +95,7 @@ func prepareBlockchain() {
 
 		globals.GENERATION_THREAD_HANDLER = structures.GenerationThread{
 
-			EpochFullId: utils.Blake3("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"+globals.GENESIS.NetworkID) + "#-1",
+			EpochFullId: utils.Blake3("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"+globals.GENESIS.NetworkId) + "#-1",
 			PrevHash:    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 			NextIndex:   0,
 		}
@@ -205,7 +205,7 @@ func setGenesisToState() error {
 		return err
 	}
 
-	hashInput := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" + globals.GENESIS.NetworkID
+	hashInput := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" + globals.GENESIS.NetworkId
 
 	initEpochHash := utils.Blake3(hashInput)
 

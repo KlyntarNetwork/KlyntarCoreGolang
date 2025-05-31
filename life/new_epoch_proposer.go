@@ -231,7 +231,7 @@ func NewEpochProposerThread() {
 								leadersSequence[resultAsStruct.CurrentLeader] + ":" +
 								strconv.Itoa(resultAsStruct.LastBlockProposition.Index)
 
-							sameBlockID := blockID == resultAsStruct.LastBlockProposition.Afp.BlockID
+							sameBlockID := blockID == resultAsStruct.LastBlockProposition.Afp.BlockId
 
 							sameHash := resultAsStruct.LastBlockProposition.Hash == resultAsStruct.LastBlockProposition.Afp.BlockHash
 

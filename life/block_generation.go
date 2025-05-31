@@ -564,11 +564,11 @@ func generateBlock() {
 
 												blockIdInAfp := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + strconv.Itoa(lrpUpgrade.SkipData.Index)
 
-												proposedHeightIsValid := lrpUpgrade.SkipData.Hash == lrpUpgrade.AfpForFirstBlock.BlockHash && blockIdInAfp == lrpUpgrade.AfpForFirstBlock.BlockID && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.SkipData.Afp, &epochHandler)
+												proposedHeightIsValid := lrpUpgrade.SkipData.Hash == lrpUpgrade.AfpForFirstBlock.BlockHash && blockIdInAfp == lrpUpgrade.AfpForFirstBlock.BlockId && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.SkipData.Afp, &epochHandler)
 
 												firstBlockID := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + ":0"
 
-												proposedFirstBlockIsValid := firstBlockID == lrpUpgrade.AfpForFirstBlock.BlockID && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.AfpForFirstBlock, &epochHandler)
+												proposedFirstBlockIsValid := firstBlockID == lrpUpgrade.AfpForFirstBlock.BlockId && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.AfpForFirstBlock, &epochHandler)
 
 												if proposedFirstBlockIsValid && proposedHeightIsValid {
 

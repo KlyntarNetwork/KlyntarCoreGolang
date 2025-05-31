@@ -129,7 +129,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 		var hashOfFirstBlock string
 
-		if proposition.AfpForFirstBlock.BlockID == blockID && proposition.LastBlockProposition.Index >= 0 {
+		if proposition.AfpForFirstBlock.BlockId == blockID && proposition.LastBlockProposition.Index >= 0 {
 
 			if common_functions.VerifyAggregatedFinalizationProof(&proposition.AfpForFirstBlock, &epochHandler) {
 

@@ -100,14 +100,14 @@ func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*w
 		}
 
 		// Skip inactive validators or those without WebSocket URL
-		if !pool.Activated || pool.WssPoolURL == "" {
+		if !pool.Activated || pool.WssPoolUrl == "" {
 			continue
 		}
 
 		fmt.Println("DEBUG: Try open connection => ", pool)
 
 		// Open WebSocket connection
-		conn, _, err := websocket.DefaultDialer.Dial(pool.WssPoolURL, nil)
+		conn, _, err := websocket.DefaultDialer.Dial(pool.WssPoolUrl, nil)
 		if err != nil {
 
 			fmt.Println("DEBUG:Error => ", err)

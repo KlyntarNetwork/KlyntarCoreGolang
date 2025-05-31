@@ -60,7 +60,7 @@ type RouteAPIConfig struct {
 
 type RouteTriggersConfig struct {
 	Main RouteMainConfig       `json:"MAIN"`
-	API  RouteAPITriggerConfig `json:"API"`
+	Api  RouteAPITriggerConfig `json:"API"`
 }
 
 type RouteMainConfig struct {
@@ -86,7 +86,7 @@ type RouteAPITriggerConfig struct {
 	DataAboutEpochOnThread int `json:"DATA_ABOUT_EPOCH_ON_THREAD"`
 	GetCurrentShardLeaders int `json:"GET_CURRENT_SHARD_LEADERS"`
 	GetEpochByIndex        int `json:"GET_EPOCH_BY_INDEX"`
-	KlyEVMMetadata         int `json:"KLY_EVM_METADATA"`
+	KlyEvmMetadata         int `json:"KLY_EVM_METADATA"`
 }
 
 type TLSConfig struct {

@@ -51,7 +51,7 @@ func (block *Block) GetHash() string {
 
 	jsonedTransactions, _ := json.Marshal(block.Transactions)
 
-	networkID := globals.GENESIS.NetworkID
+	networkID := globals.GENESIS.NetworkId
 
 	dataToHash := block.Creator + strconv.FormatInt(block.Time, 10) + string(jsonedTransactions) + networkID + block.Epoch + strconv.FormatUint(uint64(block.Index), 10) + block.PrevHash
 

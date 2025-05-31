@@ -153,7 +153,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 						// Check if AFP inside related to previous block AFP
 
-						if previousBlockId == parsedRequest.PreviousBlockAfp.BlockID && common_functions.VerifyAggregatedFinalizationProof(&parsedRequest.PreviousBlockAfp, &epochHandler) {
+						if previousBlockId == parsedRequest.PreviousBlockAfp.BlockId && common_functions.VerifyAggregatedFinalizationProof(&parsedRequest.PreviousBlockAfp, &epochHandler) {
 
 							// In case it's request for the third block, we'll receive AFP for the second block which includes .prevBlockHash field
 							// This will be the assumption of hash of the first block in epoch
@@ -341,7 +341,7 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 				afpIsOk := false
 
-				parts := strings.Split(propSkipData.Afp.BlockID, ":")
+				parts := strings.Split(propSkipData.Afp.BlockId, ":")
 
 				if len(parts) != 3 {
 					return
@@ -380,7 +380,7 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 						blockIdOfFirstBlock := strconv.Itoa(epochIndex) + ":" + poolToRotate + ":0"
 
-						blockIdsTheSame := parsedRequest.AfpForFirstBlock.BlockID == blockIdOfFirstBlock
+						blockIdsTheSame := parsedRequest.AfpForFirstBlock.BlockId == blockIdOfFirstBlock
 
 						if blockIdsTheSame && common_functions.VerifyAggregatedFinalizationProof(&parsedRequest.AfpForFirstBlock, &epochHandler) {
 

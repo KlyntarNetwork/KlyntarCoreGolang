@@ -158,7 +158,7 @@ func VerifyAggregatedFinalizationProof(
 ) bool {
 
 	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
-	dataThatShouldBeSigned := proof.PrevBlockHash + proof.BlockID + proof.BlockHash + epochFullID
+	dataThatShouldBeSigned := proof.PrevBlockHash + proof.BlockId + proof.BlockHash + epochFullID
 
 	majority := GetQuorumMajority(epochHandler)
 
@@ -319,7 +319,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 
 				expectedSecondBlockID := strconv.Itoa(epochHandler.Id) + ":" + firstBlockCreator + ":1"
 
-				if expectedSecondBlockID == prop.AfpForSecondBlock.BlockID &&
+				if expectedSecondBlockID == prop.AfpForSecondBlock.BlockId &&
 					prop.IndexOfFirstBlockCreator < minimalIndexOfLeader {
 
 					minimalIndexOfLeader = prop.IndexOfFirstBlockCreator

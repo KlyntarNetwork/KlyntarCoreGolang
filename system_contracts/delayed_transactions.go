@@ -54,7 +54,7 @@ func CreateStakingPool(delayedTransaction map[string]string) bool {
 				},
 			},
 			PoolURL:    poolURL,
-			WssPoolURL: wssPoolURL,
+			WssPoolUrl: wssPoolURL,
 		}
 
 		return true
@@ -84,7 +84,7 @@ func UpdateStakingPool(delayedTransaction map[string]string) bool {
 		poolStorage.Activated = activated
 		poolStorage.Percentage = percentage
 		poolStorage.PoolURL = poolURL
-		poolStorage.WssPoolURL = wssPoolURL
+		poolStorage.WssPoolUrl = wssPoolURL
 
 		requiredStake := globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.ValidatorStake
 

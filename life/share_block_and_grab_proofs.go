@@ -157,7 +157,7 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 
 			PrevBlockHash: PROOFS_GRABBER.AcceptedHash,
 
-			BlockID: blockIdForHunting,
+			BlockId: blockIdForHunting,
 
 			BlockHash: blockHash,
 

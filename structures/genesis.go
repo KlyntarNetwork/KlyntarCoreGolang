@@ -65,12 +65,12 @@ type PoolStorage struct {
 	TotalStakedUno BigInt            `json:"totalStakedUno"`
 	Stakers        map[string]Staker `json:"stakers"`
 	PoolURL        string            `json:"poolURL"`
-	WssPoolURL     string            `json:"wssPoolURL"`
+	WssPoolUrl     string            `json:"wssPoolURL"`
 	Activated      bool              `json:"activated"`
 }
 
 type Genesis struct {
-	NetworkID                string                 `json:"NETWORK_ID"`
+	NetworkId                string                 `json:"NETWORK_ID"`
 	Shard                    string                 `json:"SHARD"`
 	CoreMajorVersion         int                    `json:"CORE_MAJOR_VERSION"`
 	FirstEpochStartTimestamp uint64                 `json:"FIRST_EPOCH_START_TIMESTAMP"`
