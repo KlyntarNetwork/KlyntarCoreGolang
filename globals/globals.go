@@ -9,27 +9,18 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-func getCoreMajorVersion(versionFilePath string) (int, error) {
-
-	versionData, err := os.ReadFile(versionFilePath)
-	if err != nil {
-		return 0, err
-	}
-
-	majorVersion, err := strconv.ParseInt(string(versionData), 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(majorVersion), nil
-}
-
 var CORE_MAJOR_VERSION int = func() int {
 
-	version, err := getCoreMajorVersion("version.txt")
+	data, err := os.ReadFile("version.txt")
 
 	if err != nil {
-		panic("Failed to get core version: " + err.Error())
+		panic("Failed to read version.txt: " + err.Error())
+	}
+
+	version, err := strconv.Atoi(string(data))
+
+	if err != nil {
+		panic("Invalid version format: " + err.Error())
 	}
 
 	return version
@@ -47,13 +38,13 @@ var MEMPOOL struct {
 	Mutex sync.Mutex
 }
 
-var GENERATION_THREAD_HANDLER structures.GenerationThread
+var GENERATION_THREAD_METADATA_HANDLER structures.GenerationThreadMetadataHandler
 
-var APPROVEMENT_THREAD_HANDLER = struct {
+var APPROVEMENT_THREAD_METADATA_HANDLER = struct {
 	RWMutex sync.RWMutex
-	Thread  structures.ApprovementThread
+	Handler structures.ApprovementThreadMetadataHandler
 }{
-	Thread: structures.ApprovementThread{
+	Handler: structures.ApprovementThreadMetadataHandler{
 		CoreMajorVersion: -1,
 		Cache:            make(map[string]*structures.PoolStorage),
 	},

@@ -15,13 +15,9 @@ type ValidatorData struct {
 	TotalStake      *big.Int
 }
 
-type QuorumMemberData struct {
-	PubKey, Url string
-}
-
 func GetFromApprovementThreadState(poolId string) *structures.PoolStorage {
 
-	if val, ok := globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache[poolId]; ok {
+	if val, ok := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.Cache[poolId]; ok {
 		return val
 	}
 
@@ -39,7 +35,7 @@ func GetFromApprovementThreadState(poolId string) *structures.PoolStorage {
 		return nil
 	}
 
-	globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache[poolId] = &pool
+	globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.Cache[poolId] = &pool
 
 	return &pool
 
@@ -86,8 +82,11 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 
 		// Generate deterministic random value using the hash of metadata
 		hashInput := hashOfMetadataFromOldEpoch + "_" + strconv.Itoa(i)
+
 		deterministicRandomValue := new(big.Int)
+
 		deterministicRandomValue.SetString(utils.Blake3(hashInput), 16)
+
 		deterministicRandomValue.Mod(deterministicRandomValue, totalStakeSum)
 
 		// Find the validator based on the random value
@@ -102,6 +101,7 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 
 				// Update totalStakeSum and remove the chosen validator from the map
 				totalStakeSum.Sub(totalStakeSum, validator.TotalStake)
+
 				delete(validatorsExtendedData, validatorPubKey)
 
 				break
@@ -129,15 +129,15 @@ func GetQuorumMajority(epochHandler *structures.EpochHandler) int {
 	return majority
 }
 
-func GetQuorumUrlsAndPubkeys(epochHandler *structures.EpochHandler) []QuorumMemberData {
+func GetQuorumUrlsAndPubkeys(epochHandler *structures.EpochHandler) []structures.QuorumMemberData {
 
-	var toReturn []QuorumMemberData
+	var toReturn []structures.QuorumMemberData
 
 	for _, pubKey := range epochHandler.Quorum {
 
 		poolStorage := GetFromApprovementThreadState(pubKey + "(POOL)_STORAGE_POOL")
 
-		toReturn = append(toReturn, QuorumMemberData{PubKey: pubKey, Url: poolStorage.PoolURL})
+		toReturn = append(toReturn, structures.QuorumMemberData{PubKey: pubKey, Url: poolStorage.PoolURL})
 
 	}
 
@@ -167,6 +167,7 @@ func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int
 	hashOfMetadataFromEpoch := utils.Blake3(newEpochSeed)
 
 	validatorsExtendedData := make(map[string]ValidatorData)
+
 	totalStakeSum := big.NewInt(0)
 
 	for validatorPubKey := range epochHandler.PoolsRegistry {
@@ -174,6 +175,7 @@ func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int
 		validatorData := GetFromApprovementThreadState(validatorPubKey + "(POOL)_STORAGE_POOL")
 
 		totalStakeByThisValidator := new(big.Int)
+
 		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedKly.Int)
 		totalStakeByThisValidator.Add(totalStakeByThisValidator, validatorData.TotalStakedUno.Int)
 
@@ -190,8 +192,11 @@ func GetCurrentEpochQuorum(epochHandler *structures.EpochHandler, quorumSize int
 		cumulativeSum := big.NewInt(0)
 
 		hashInput := hashOfMetadataFromEpoch + "_" + strconv.Itoa(i)
+
 		deterministicRandomValue := new(big.Int)
+
 		deterministicRandomValue.SetString(utils.Blake3(hashInput), 16)
+
 		deterministicRandomValue.Mod(deterministicRandomValue, totalStakeSum)
 
 		for validatorPubKey, validator := range validatorsExtendedData {

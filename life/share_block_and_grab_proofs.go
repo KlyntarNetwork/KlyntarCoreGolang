@@ -224,11 +224,11 @@ func BlocksSharingAndProofsGrabingThread() {
 
 	for {
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
-		epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
+		epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
 		currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
 

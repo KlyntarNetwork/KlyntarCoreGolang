@@ -22,10 +22,6 @@ type Agreement struct {
 	PubKey, Sig string
 }
 
-type ResponseStatus struct {
-	Status string
-}
-
 type LastLeaderProposition struct {
 	EpochIndex, LeaderIndex int
 	QuorumAgreements        map[string]string
@@ -43,21 +39,21 @@ func NewEpochProposerThread() {
 
 	for {
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
-		if utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
+		if utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
 
-			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
 			time.Sleep(1 * time.Second)
 
 			continue
 		}
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
 
-		atEpochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
+		atEpochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 		epochIndex := atEpochHandler.Id
 
 		// Reset CURRENT_LEADER_STATE only if epoch changed
@@ -161,7 +157,7 @@ func NewEpochProposerThread() {
 
 				wg.Add(1)
 
-				go func(desc common_functions.QuorumMemberData) {
+				go func(desc structures.QuorumMemberData) {
 					defer wg.Done()
 
 					body, _ := json.Marshal(epochFinishProposition)
@@ -186,13 +182,13 @@ func NewEpochProposerThread() {
 						return
 					}
 
-					var respStatus ResponseStatus
+					var responseStatus structures.ResponseStatus
 
-					if err := json.Unmarshal(responseBytes, &respStatus); err != nil {
+					if err := json.Unmarshal(responseBytes, &responseStatus); err != nil {
 						return
 					}
 
-					switch respStatus.Status {
+					switch responseStatus.Status {
 
 					case "OK":
 
@@ -297,7 +293,7 @@ func NewEpochProposerThread() {
 
 		}
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Unlock()
 
 		time.Sleep(1 * time.Second)
 

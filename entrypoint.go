@@ -76,11 +76,11 @@ func prepareBlockchain() {
 	// Load GT - Generation Thread handler
 	if data, err := globals.BLOCKS.Get([]byte("GT"), nil); err == nil {
 
-		var gtHandler structures.GenerationThread
+		var gtHandler structures.GenerationThreadMetadataHandler
 
 		if err := json.Unmarshal(data, &gtHandler); err == nil {
 
-			globals.GENERATION_THREAD_HANDLER = gtHandler
+			globals.GENERATION_THREAD_METADATA_HANDLER = gtHandler
 
 		} else {
 
@@ -93,7 +93,7 @@ func prepareBlockchain() {
 
 		// Create initial generation thread handler
 
-		globals.GENERATION_THREAD_HANDLER = structures.GenerationThread{
+		globals.GENERATION_THREAD_METADATA_HANDLER = structures.GenerationThreadMetadataHandler{
 
 			EpochFullId: utils.Blake3("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"+globals.GENESIS.NetworkId) + "#-1",
 			PrevHash:    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
@@ -106,7 +106,7 @@ func prepareBlockchain() {
 
 	if data, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("AT"), nil); err == nil {
 
-		var atHandler structures.ApprovementThread
+		var atHandler structures.ApprovementThreadMetadataHandler
 
 		if err := json.Unmarshal(data, &atHandler); err == nil {
 
@@ -116,7 +116,7 @@ func prepareBlockchain() {
 
 			}
 
-			globals.APPROVEMENT_THREAD_HANDLER.Thread = atHandler
+			globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler = atHandler
 
 		} else {
 
@@ -129,11 +129,11 @@ func prepareBlockchain() {
 	}
 
 	// Init genesis if version is -1
-	if globals.APPROVEMENT_THREAD_HANDLER.Thread.CoreMajorVersion == -1 {
+	if globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.CoreMajorVersion == -1 {
 
 		setGenesisToState()
 
-		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD_HANDLER.Thread)
+		serialized, err := json.Marshal(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler)
 
 		if err != nil {
 
@@ -155,7 +155,7 @@ func prepareBlockchain() {
 	}
 
 	// Version check
-	if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
+	if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
 
 		utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
 
@@ -199,9 +199,9 @@ func setGenesisToState() error {
 
 	}
 
-	globals.APPROVEMENT_THREAD_HANDLER.Thread.CoreMajorVersion = globals.GENESIS.CoreMajorVersion
+	globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.CoreMajorVersion = globals.GENESIS.CoreMajorVersion
 
-	globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters = globals.GENESIS.NetworkParameters
+	globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters = globals.GENESIS.NetworkParameters
 
 	// Commit changes
 	if err := globals.APPROVEMENT_THREAD_METADATA.Write(batch, nil); err != nil {
@@ -225,12 +225,12 @@ func setGenesisToState() error {
 	}
 
 	// Assign quorum - pseudorandomly and in deterministic way
-	epochHandler.Quorum = common_functions.GetCurrentEpochQuorum(&epochHandler, globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.QuorumSize, initEpochHash)
+	epochHandler.Quorum = common_functions.GetCurrentEpochQuorum(&epochHandler, globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.QuorumSize, initEpochHash)
 
 	// Now set the block generators for epoch pseudorandomly and in deterministic way
 	common_functions.SetLeadersSequence(&epochHandler, initEpochHash)
 
-	globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler = epochHandler
+	globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler = epochHandler
 
 	return nil
 

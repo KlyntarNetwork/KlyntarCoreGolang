@@ -10,16 +10,10 @@ import (
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
 )
 
-type DelayedTxsBatch struct {
-	EpochIndex          int                 `json:"epochIndex"`
-	DelayedTransactions []map[string]string `json:"delayedTransactions"`
-	Proofs              map[string]string   `json:"proofs"`
-}
-
 type ExtraData struct {
 	Rest                            map[string]string                                    `json:"rest"`
 	AefpForPreviousEpoch            *structures.AggregatedEpochFinalizationProof         `json:"aefpForPreviousEpoch"`
-	DelayedTransactionsBatch        DelayedTxsBatch                                      `json:"delayedTxsBatch"`
+	DelayedTransactionsBatch        structures.DelayedTransactionsBatch                  `json:"delayedTxsBatch"`
 	AggregatedLeadersRotationProofs map[string]*structures.AggregatedLeaderRotationProof `json:"aggregatedLeadersRotationProofs"`
 }
 
@@ -41,8 +35,8 @@ func NewBlock(transactions []structures.Transaction, extraData ExtraData, epochF
 		Epoch:        epochFullID,
 		Transactions: transactions,
 		ExtraData:    extraData,
-		Index:        globals.GENERATION_THREAD_HANDLER.NextIndex,
-		PrevHash:     globals.GENERATION_THREAD_HANDLER.PrevHash,
+		Index:        globals.GENERATION_THREAD_METADATA_HANDLER.NextIndex,
+		PrevHash:     globals.GENERATION_THREAD_METADATA_HANDLER.PrevHash,
 		Sig:          "",
 	}
 }

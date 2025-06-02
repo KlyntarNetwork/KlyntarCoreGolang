@@ -22,11 +22,11 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 	if parsedRequest, ok := data.(WsFinalizationProofRequest); ok {
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
-		defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+		defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-		epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
+		epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
 		epochIndex := epochHandler.Id
 
@@ -168,7 +168,7 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 								if err != nil {
 
-									assumption := common_functions.FirstBlockAssumption{
+									assumption := structures.FirstBlockAssumption{
 
 										IndexOfFirstBlockCreator: positionOfBlockCreatorInLeadersSequence,
 
@@ -275,11 +275,11 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 
 	if parsedRequest, typeAssertOk := data.(WsLeaderRotationProofRequest); typeAssertOk {
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
-		defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+		defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-		epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
+		epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
 		epochIndex := epochHandler.Id
 
@@ -436,9 +436,5 @@ func GetLeaderRotationProof(data any, connection *gws.Conn) {
 		}
 
 	}
-
-}
-
-func GetBlocksRange(data any, connection *gws.Conn) {
 
 }

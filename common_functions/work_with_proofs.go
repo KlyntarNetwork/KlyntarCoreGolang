@@ -23,11 +23,6 @@ type PivotSearchData struct {
 	FirstBlockHash    string
 }
 
-type FirstBlockAssumption struct {
-	IndexOfFirstBlockCreator int                                    `json:"indexOfFirstBlockCreator"`
-	AfpForSecondBlock        structures.AggregatedFinalizationProof `json:"afpForSecondBlock"`
-}
-
 type FirstBlockResult struct {
 	FirstBlockCreator, FirstBlockHash string
 }
@@ -271,7 +266,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 
 		var wg sync.WaitGroup
 
-		responses := make(chan *FirstBlockAssumption, len(allKnownNodes))
+		responses := make(chan *structures.FirstBlockAssumption, len(allKnownNodes))
 
 		for _, node := range allKnownNodes {
 			wg.Add(1)
@@ -293,7 +288,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 				}
 				defer resp.Body.Close()
 
-				var prop FirstBlockAssumption
+				var prop structures.FirstBlockAssumption
 				if err := json.NewDecoder(resp.Body).Decode(&prop); err != nil {
 					return
 				}
@@ -303,12 +298,15 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 		}
 
 		wg.Wait()
+
 		close(responses)
 
 		minimalIndexOfLeader := 100_000_000
+
 		var afpForSecondBlock *structures.AggregatedFinalizationProof
 
 		for prop := range responses {
+
 			if prop == nil {
 				continue
 			}
@@ -323,21 +321,26 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 
 				expectedSecondBlockID := strconv.Itoa(epochHandler.Id) + ":" + firstBlockCreator + ":1"
 
-				if expectedSecondBlockID == prop.AfpForSecondBlock.BlockId &&
-					prop.IndexOfFirstBlockCreator < minimalIndexOfLeader {
+				if expectedSecondBlockID == prop.AfpForSecondBlock.BlockId && prop.IndexOfFirstBlockCreator < minimalIndexOfLeader {
 
 					minimalIndexOfLeader = prop.IndexOfFirstBlockCreator
+
 					afpForSecondBlock = &prop.AfpForSecondBlock
+
 				}
+
 			}
+
 		}
 
 		if afpForSecondBlock != nil {
 
 			position := minimalIndexOfLeader
+
 			pivotPubKey := epochHandler.LeadersSequence[position]
 
 			firstBlockByPivot := GetBlock(epochHandler.Id, pivotPubKey, uint(0), epochHandler)
+
 			firstBlockHash := afpForSecondBlock.PrevBlockHash
 
 			if firstBlockByPivot != nil && firstBlockHash == firstBlockByPivot.GetHash() {
@@ -443,8 +446,7 @@ func VerifyAggregatedLeaderRotationProof(
 
 	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
-	dataThatShouldBeSigned := "LEADER_ROTATION_PROOF:" +
-		pubKeyOfSomePreviousLeader + ":" +
+	dataThatShouldBeSigned := "LEADER_ROTATION_PROOF:" + pubKeyOfSomePreviousLeader + ":" +
 		proof.FirstBlockHash + ":" +
 		strconv.Itoa(proof.SkipIndex) + ":" +
 		proof.SkipHash + ":" +
@@ -463,12 +465,16 @@ func VerifyAggregatedLeaderRotationProof(
 	for pubKey, signature := range proof.Proofs {
 
 		if ed25519.VerifySignature(dataThatShouldBeSigned, pubKey, signature) {
+
 			loweredPubKey := strings.ToLower(pubKey)
+
 			if quorumMap[loweredPubKey] && !seen[loweredPubKey] {
 				seen[loweredPubKey] = true
 				okSignatures++
 			}
+
 		}
+
 	}
 
 	return okSignatures >= majority

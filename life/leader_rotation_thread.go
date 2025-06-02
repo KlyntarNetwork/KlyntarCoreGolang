@@ -10,7 +10,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 )
 
-func timeIsOutForCurrentLeader(approvementThread *structures.ApprovementThread) bool {
+func timeIsOutForCurrentLeader(approvementThread *structures.ApprovementThreadMetadataHandler) bool {
 
 	// Function to check if time frame for current leader is done and we have to move to next pool in sequence
 
@@ -28,21 +28,21 @@ func LeaderRotationThread() {
 
 	for {
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
-		epochHandler := &globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
+		epochHandler := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
 		haveNextCandidate := epochHandler.CurrentLeaderIndex+1 < len(epochHandler.LeadersSequence)
 
-		if haveNextCandidate && timeIsOutForCurrentLeader(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
+		if haveNextCandidate && timeIsOutForCurrentLeader(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
 
 			storedEpochIndex := epochHandler.Id
 
-			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
+			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
 
-			threadHandler := &globals.APPROVEMENT_THREAD_HANDLER.Thread
+			threadHandler := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler
 
 			if storedEpochIndex == threadHandler.EpochHandler.Id {
 
@@ -70,10 +70,10 @@ func LeaderRotationThread() {
 
 			}
 
-			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
+			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Unlock()
 
 		} else {
-			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 		}
 
 		time.Sleep(200 * time.Millisecond)

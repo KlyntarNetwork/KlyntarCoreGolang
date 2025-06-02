@@ -34,7 +34,7 @@ const (
 var shutdownOnce sync.Once
 
 type QuorumWaiter struct {
-	responseCh chan quorumResponse
+	responseCh chan QuorumResponse
 	done       chan struct{}
 	answered   map[string]bool
 	responses  map[string][]byte
@@ -43,7 +43,7 @@ type QuorumWaiter struct {
 	buf        []string
 }
 
-type quorumResponse struct {
+type QuorumResponse struct {
 	id  string
 	msg []byte
 }
@@ -118,7 +118,7 @@ func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*w
 
 func NewQuorumWaiter(maxQuorumSize int) *QuorumWaiter {
 	return &QuorumWaiter{
-		responseCh: make(chan quorumResponse, maxQuorumSize),
+		responseCh: make(chan QuorumResponse, maxQuorumSize),
 		done:       make(chan struct{}),
 		answered:   make(map[string]bool, maxQuorumSize),
 		responses:  make(map[string][]byte, maxQuorumSize),
@@ -150,7 +150,7 @@ func (qw *QuorumWaiter) sendMessages(targets []string, msg []byte, wsConnMap map
 
 				select {
 
-				case qw.responseCh <- quorumResponse{id: id, msg: raw}:
+				case qw.responseCh <- QuorumResponse{id: id, msg: raw}:
 				case <-qw.done:
 
 				}
@@ -283,13 +283,13 @@ type CurrentLeaderData struct {
 	Url        string
 }
 
-func IsMyCoreVersionOld(thread *structures.ApprovementThread) bool {
+func IsMyCoreVersionOld(thread *structures.ApprovementThreadMetadataHandler) bool {
 
 	return thread.CoreMajorVersion > globals.CORE_MAJOR_VERSION
 
 }
 
-func EpochStillFresh(thread *structures.ApprovementThread) bool {
+func EpochStillFresh(thread *structures.ApprovementThreadMetadataHandler) bool {
 
 	return (thread.EpochHandler.StartTimestamp + uint64(thread.NetworkParameters.EpochTime)) > uint64(GetUTCTimestampInMilliSeconds())
 
@@ -297,11 +297,11 @@ func EpochStillFresh(thread *structures.ApprovementThread) bool {
 
 func GetCurrentLeader() CurrentLeaderData {
 
-	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+	globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
-	defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+	defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-	currentLeaderPubKey := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler.LeadersSequence[globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler.CurrentLeaderIndex]
+	currentLeaderPubKey := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler.LeadersSequence[globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler.CurrentLeaderIndex]
 
 	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
 
