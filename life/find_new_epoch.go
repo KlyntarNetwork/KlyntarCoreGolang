@@ -326,6 +326,10 @@ func EpochRotationThread() {
 
 					clear(globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache)
 
+					// Clean in-memory helpful object
+
+					AEFP_AND_FIRST_BLOCK_DATA = FirstBlockDataWithAefp{}
+
 					globals.APPROVEMENT_THREAD_METADATA.Write(atomicBatch, nil)
 
 					utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)

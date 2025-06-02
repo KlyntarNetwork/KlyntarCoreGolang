@@ -22,6 +22,10 @@ import (
 
 type DoubleMap = map[string]map[string][]byte
 
+type RespStatus struct {
+	Status string
+}
+
 var ALRP_METADATA = make(map[string]*structures.AlrpSkeleton) // previousLeaderPubkey => ALRP_METADATA
 
 var WEBSOCKET_CONNECTIONS_FOR_ALRP = make(map[string]*websocket.Conn) // quorumMember => websocket handler
@@ -518,11 +522,11 @@ func generateBlock() {
 
 							for validatorID, validatorResponse := range validatorsResponses {
 
-								var resp ResponseStatus
+								var response RespStatus
 
-								if errParse := json.Unmarshal(validatorResponse, &resp); errParse == nil {
+								if errParse := json.Unmarshal(validatorResponse, &response); errParse == nil {
 
-									if resp.Status == "OK" {
+									if response.Status == "OK" {
 
 										var lrpOk ws_structures.WsLeaderRotationProofResponseOk
 
@@ -552,7 +556,7 @@ func generateBlock() {
 
 										}
 
-									} else if resp.Status == "UPGRADE" {
+									} else if response.Status == "UPGRADE" {
 
 										var lrpUpgrade ws_structures.WsLeaderRotationProofResponseUpgrade
 

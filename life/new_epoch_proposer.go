@@ -27,9 +27,8 @@ type ResponseStatus struct {
 }
 
 type PivotMetadata struct {
-	EpochIndex       int
-	LeaderIndex      int
-	QuorumAgreements map[string]string
+	EpochIndex, LeaderIndex int
+	QuorumAgreements        map[string]string
 }
 
 var CURRENT_PROPOSITION_STATE = PivotMetadata{
@@ -292,6 +291,8 @@ func NewEpochProposerThread() {
 					HashOfFirstBlockByLastLeader: epochFinishProposition.AfpForFirstBlock.BlockHash,
 					Proofs:                       QUORUM_AGREEMENTS,
 				}
+
+				// Make final verification before store to make sure it's indeed a valid proof
 
 				if common_functions.VerifyAggregatedEpochFinalizationProof(&aggregatedEpochFinalizationProof, atEpochHandler.Quorum, majority, epochFullID) {
 
