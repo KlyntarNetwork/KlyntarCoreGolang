@@ -104,14 +104,10 @@ func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*w
 			continue
 		}
 
-		fmt.Println("DEBUG: Try open connection => ", pool)
-
 		// Open WebSocket connection
 		conn, _, err := websocket.DefaultDialer.Dial(pool.WssPoolUrl, nil)
+
 		if err != nil {
-
-			fmt.Println("DEBUG:Error => ", err)
-
 			continue
 		}
 
@@ -182,10 +178,6 @@ func (qw *QuorumWaiter) SendAndWait(
 	}
 	qw.timer.Reset(time.Second)
 	qw.done = make(chan struct{})
-
-	fmt.Println("DEBUG: Sending to ", quorum)
-	fmt.Println("DEBUG: Sending msg ", message)
-	fmt.Println("DEBUG: Sending to ", wsConnMap)
 
 	qw.sendMessages(quorum, message, wsConnMap)
 

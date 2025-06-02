@@ -50,8 +50,6 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 	// Call SendAndWait here
 	// Once received 2/3 votes for block - continue
 
-	fmt.Println("DEBUG: Try grabbing")
-
 	PROOFS_GRABBER_MUTEX.Lock()
 
 	defer PROOFS_GRABBER_MUTEX.Unlock()
