@@ -26,12 +26,12 @@ type ResponseStatus struct {
 	Status string
 }
 
-type PivotMetadata struct {
+type LastLeaderProposition struct {
 	EpochIndex, LeaderIndex int
 	QuorumAgreements        map[string]string
 }
 
-var CURRENT_PROPOSITION_STATE = PivotMetadata{
+var LAST_LEADER_PROPOSITION = LastLeaderProposition{
 	EpochIndex:       -1,
 	LeaderIndex:      0,
 	QuorumAgreements: make(map[string]string),
@@ -41,25 +41,30 @@ var QUORUM_AGREEMENTS = make(map[string]string)
 
 func NewEpochProposerThread() {
 
-	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+	for {
 
-	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+
+		if utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
+
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+
+			time.Sleep(1 * time.Second)
+
+			continue
+		}
 
 		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
-
 		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
 
-		defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
-
 		atEpochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
-
 		epochIndex := atEpochHandler.Id
 
 		// Reset CURRENT_LEADER_STATE only if epoch changed
 
-		if CURRENT_PROPOSITION_STATE.EpochIndex != epochIndex {
+		if LAST_LEADER_PROPOSITION.EpochIndex != epochIndex {
 
-			CURRENT_PROPOSITION_STATE = PivotMetadata{
+			LAST_LEADER_PROPOSITION = LastLeaderProposition{
 				EpochIndex:       epochIndex,
 				LeaderIndex:      0,
 				QuorumAgreements: make(map[string]string),
@@ -67,11 +72,11 @@ func NewEpochProposerThread() {
 
 		}
 
-		epochFullID := atEpochHandler.Hash + "#" + strconv.Itoa(atEpochHandler.Id)
+		epochFullId := atEpochHandler.Hash + "#" + strconv.Itoa(atEpochHandler.Id)
 
 		leadersSequence := atEpochHandler.LeadersSequence
 
-		pubKeyOfLeader := leadersSequence[CURRENT_PROPOSITION_STATE.LeaderIndex]
+		pubKeyOfLeader := leadersSequence[LAST_LEADER_PROPOSITION.LeaderIndex]
 
 		iAmInTheQuorum := slices.Contains(atEpochHandler.Quorum, globals.CONFIGURATION.PublicKey)
 
@@ -95,7 +100,7 @@ func NewEpochProposerThread() {
 
 			if localVotingData.Index == -1 {
 
-				for position := CURRENT_PROPOSITION_STATE.LeaderIndex - 1; position >= 0; position-- {
+				for position := LAST_LEADER_PROPOSITION.LeaderIndex - 1; position >= 0; position-- {
 
 					prevLeader := atEpochHandler.LeadersSequence[position]
 
@@ -111,7 +116,7 @@ func NewEpochProposerThread() {
 
 							pubKeyOfLeader = prevLeader
 
-							CURRENT_PROPOSITION_STATE.LeaderIndex = position
+							LAST_LEADER_PROPOSITION.LeaderIndex = position
 
 							localVotingData = prevVotingData
 
@@ -130,15 +135,12 @@ func NewEpochProposerThread() {
 			if _, err := globals.EPOCH_DATA.Get([]byte("AEFP:"+strconv.Itoa(epochIndex)), nil); err != nil {
 
 				firstBlockID := strconv.Itoa(epochIndex) + ":" + pubKeyOfLeader + ":0"
-
 				afpForFirstBlockRaw, _ := globals.EPOCH_DATA.Get([]byte("AFP:"+firstBlockID), nil)
-
 				var afpForFirstBlock structures.AggregatedFinalizationProof
-
 				json.Unmarshal(afpForFirstBlockRaw, &afpForFirstBlock)
 
 				epochFinishProposition = structures.EpochFinishRequest{
-					CurrentLeader:        CURRENT_PROPOSITION_STATE.LeaderIndex,
+					CurrentLeader:        LAST_LEADER_PROPOSITION.LeaderIndex,
 					LastBlockProposition: localVotingData,
 					AfpForFirstBlock:     afpForFirstBlock,
 				}
@@ -160,21 +162,16 @@ func NewEpochProposerThread() {
 				wg.Add(1)
 
 				go func(desc common_functions.QuorumMemberData) {
-
 					defer wg.Done()
 
 					body, _ := json.Marshal(epochFinishProposition)
-
 					ctxReq, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-
 					defer cancel()
 
 					req, _ := http.NewRequestWithContext(ctxReq, "POST", desc.Url+"/epoch_proposition", bytes.NewReader(body))
-
 					req.Header.Set("Content-Type", "application/json")
 
 					client := &http.Client{}
-
 					resp, err := client.Do(req)
 
 					if err != nil {
@@ -203,7 +200,7 @@ func NewEpochProposerThread() {
 							strconv.Itoa(epochFinishProposition.LastBlockProposition.Index) + ":" +
 							epochFinishProposition.LastBlockProposition.Hash + ":" +
 							epochFinishProposition.AfpForFirstBlock.BlockHash + ":" +
-							epochFullID
+							epochFullId
 
 						var resultAsStruct structures.EpochFinishResponseOk
 
@@ -234,20 +231,16 @@ func NewEpochProposerThread() {
 
 							sameHash := resultAsStruct.LastBlockProposition.Hash == resultAsStruct.LastBlockProposition.Afp.BlockHash
 
-							proposedLeaderHasBiggerIndex := resultAsStruct.CurrentLeader > CURRENT_PROPOSITION_STATE.LeaderIndex
+							proposedLeaderHasBiggerIndex := resultAsStruct.CurrentLeader > LAST_LEADER_PROPOSITION.LeaderIndex
 
 							if sameBlockID && sameHash && proposedLeaderHasBiggerIndex {
-
 								upgradeCh <- resultAsStruct
-
 							}
 
 						}
-
 					}
 
 				}(descriptor)
-
 			}
 
 			go func() {
@@ -257,18 +250,16 @@ func NewEpochProposerThread() {
 			}()
 
 			for result := range resultsCh {
-
 				QUORUM_AGREEMENTS[result.PubKey] = result.Sig
-
 			}
 
 			for upgradeProposition := range upgradeCh {
 
-				if upgradeProposition.CurrentLeader > CURRENT_PROPOSITION_STATE.LeaderIndex {
+				if upgradeProposition.CurrentLeader > LAST_LEADER_PROPOSITION.LeaderIndex {
 
-					CURRENT_PROPOSITION_STATE.LeaderIndex = upgradeProposition.CurrentLeader
+					LAST_LEADER_PROPOSITION.LeaderIndex = upgradeProposition.CurrentLeader
 
-					keyAsBytes := []byte(strconv.Itoa(epochIndex) + ":" + leadersSequence[CURRENT_PROPOSITION_STATE.LeaderIndex])
+					keyAsBytes := []byte(strconv.Itoa(epochIndex) + ":" + leadersSequence[LAST_LEADER_PROPOSITION.LeaderIndex])
 
 					valueAsBytes, _ := json.Marshal(upgradeProposition.LastBlockProposition)
 
@@ -294,7 +285,7 @@ func NewEpochProposerThread() {
 
 				// Make final verification before store to make sure it's indeed a valid proof
 
-				if common_functions.VerifyAggregatedEpochFinalizationProof(&aggregatedEpochFinalizationProof, atEpochHandler.Quorum, majority, epochFullID) {
+				if common_functions.VerifyAggregatedEpochFinalizationProof(&aggregatedEpochFinalizationProof, atEpochHandler.Quorum, majority, epochFullId) {
 
 					valueAsBytes, _ := json.Marshal(aggregatedEpochFinalizationProof)
 
@@ -306,14 +297,10 @@ func NewEpochProposerThread() {
 
 		}
 
-	} else {
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+		time.Sleep(1 * time.Second)
 
 	}
-
-	time.AfterFunc(time.Second, func() {
-		NewEpochProposerThread()
-	})
 
 }

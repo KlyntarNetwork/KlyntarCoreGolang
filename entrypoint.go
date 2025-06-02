@@ -84,7 +84,7 @@ func prepareBlockchain() {
 
 		} else {
 
-			fmt.Println("failed to unmarshal GENERATION_THREAD: %w", err)
+			fmt.Printf("failed to unmarshal GENERATION_THREAD: %v\n", err)
 
 			return
 
@@ -119,8 +119,11 @@ func prepareBlockchain() {
 			globals.APPROVEMENT_THREAD_HANDLER.Thread = atHandler
 
 		} else {
+
 			fmt.Printf("failed to unmarshal APPROVEMENT_THREAD: %v\n", err)
+
 			return
+
 		}
 
 	}
@@ -134,7 +137,7 @@ func prepareBlockchain() {
 
 		if err != nil {
 
-			fmt.Println("failed to marshal APPROVEMENT_THREAD: %w", err)
+			fmt.Printf("failed to marshal APPROVEMENT_THREAD: %v\n", err)
 
 			return
 
@@ -142,7 +145,7 @@ func prepareBlockchain() {
 
 		if err := globals.APPROVEMENT_THREAD_METADATA.Put([]byte("AT"), serialized, nil); err != nil {
 
-			fmt.Println("failed to save APPROVEMENT_THREAD: %w", err)
+			fmt.Printf("failed to save APPROVEMENT_THREAD: %v\n", err)
 
 			return
 

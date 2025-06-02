@@ -128,27 +128,39 @@ func NewQuorumWaiter(maxQuorumSize int) *QuorumWaiter {
 }
 
 func (qw *QuorumWaiter) sendMessages(targets []string, msg []byte, wsConnMap map[string]*websocket.Conn) {
+
 	for _, id := range targets {
+
 		conn, ok := wsConnMap[id]
+
 		if !ok {
 			continue
 		}
 
 		go func(id string, c *websocket.Conn) {
+
 			if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
 				return
 			}
 
 			_ = c.SetReadDeadline(time.Now().Add(time.Second))
 			_, raw, err := c.ReadMessage()
+
 			if err == nil {
+
 				select {
+
 				case qw.responseCh <- quorumResponse{id: id, msg: raw}:
 				case <-qw.done:
+
 				}
+
 			}
+
 		}(id, conn)
+
 	}
+
 }
 
 func (qw *QuorumWaiter) SendAndWait(

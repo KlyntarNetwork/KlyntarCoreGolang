@@ -41,11 +41,15 @@ func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *str
 	blockAsBytes, err := globals.BLOCKS.Get([]byte(blockID), nil)
 
 	if err == nil {
+
 		var blockParsed *block.Block
+
 		err = json.Unmarshal(blockAsBytes, &blockParsed)
+
 		if err == nil {
 			return blockParsed
 		}
+
 	}
 
 	// Find from other nodes

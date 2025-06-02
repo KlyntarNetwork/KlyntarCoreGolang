@@ -50,7 +50,15 @@ func LeaderRotationThread() {
 
 				// Store the updated AT
 
-				jsonedHandler, _ := json.Marshal(threadHandler)
+				jsonedHandler, errMarshal := json.Marshal(threadHandler)
+
+				if errMarshal != nil {
+
+					fmt.Printf("Failed to marshal AT state: %v", errMarshal)
+
+					panic("Impossible to marshal approvement thread state")
+
+				}
 
 				if err := globals.APPROVEMENT_THREAD_METADATA.Put([]byte("AT"), jsonedHandler, nil); err != nil {
 

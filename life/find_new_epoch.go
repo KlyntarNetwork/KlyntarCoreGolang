@@ -81,283 +81,223 @@ func fetchAefp(ctx context.Context, url string, quorum []string, majority int, e
 
 func EpochRotationThread() {
 
-	globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
+	for {
 
-	if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
+		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RLock()
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+		if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
 
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Lock()
 
-		defer globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
+			epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
 
-		epochHandler := globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler
+			epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
-		epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
+			if !utils.SignalAboutEpochRotationExists(epochHandler.Id) {
 
-		if !utils.SignalAboutEpochRotationExists(epochHandler.Id) {
+				// If epoch is not fresh - send the signal to persistent db that we finish it - not to create AFPs, ALRPs anymore
+				keyValue := []byte("EPOCH_FINISH:" + strconv.Itoa(epochHandler.Id))
 
-			// If epoch is not fresh - send the signal to persistent db that we finish it - not to create AFPs, ALRPs anymor
-
-			keyValue := []byte("EPOCH_FINISH:" + strconv.Itoa(epochHandler.Id))
-
-			globals.FINALIZATION_VOTING_STATS.Put(keyValue, []byte("TRUE"), nil)
-
-		}
-
-		if utils.SignalAboutEpochRotationExists(epochHandler.Id) {
-
-			majority := common_functions.GetQuorumMajority(&epochHandler)
-
-			quorumMembers := common_functions.GetQuorumUrlsAndPubkeys(&epochHandler)
-
-			haveEverything := AEFP_AND_FIRST_BLOCK_DATA.Aefp != nil && AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash != ""
-
-			if !haveEverything {
-
-				// 1. Find AEFPs
-
-				if AEFP_AND_FIRST_BLOCK_DATA.Aefp == nil {
-
-					// Try to find locally first
-
-					keyValue := []byte("AEFP:" + strconv.Itoa(epochHandler.Id))
-
-					var aefp *structures.AggregatedEpochFinalizationProof
-
-					aefpRaw, err := globals.EPOCH_DATA.Get(keyValue, nil)
-
-					errParse := json.Unmarshal(aefpRaw, aefp)
-
-					if err == nil && errParse == nil {
-
-						AEFP_AND_FIRST_BLOCK_DATA.Aefp = aefp
-
-					} else {
-
-						// Ask quorum for AEFP
-
-						resultCh := make(chan *structures.AggregatedEpochFinalizationProof, 1)
-
-						ctx, cancel := context.WithCancel(context.Background())
-
-						defer cancel() // safety net
-
-						for _, quorumMember := range quorumMembers {
-
-							go fetchAefp(ctx, quorumMember.Url, epochHandler.Quorum, majority, epochFullID, resultCh)
-
-						}
-
-						select {
-
-						case value := <-resultCh:
-
-							AEFP_AND_FIRST_BLOCK_DATA.Aefp = value
-							cancel()
-
-						case <-time.After(10 * time.Second):
-
-							cancel()
-
-						}
-
-					}
-
-				}
-
-				// 2. Find first block in epoch
-
-				if AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash == "" {
-
-					firstBlockData := common_functions.GetFirstBlockInEpoch(&epochHandler)
-
-					if firstBlockData != nil {
-
-						AEFP_AND_FIRST_BLOCK_DATA.FirstBlockCreator = firstBlockData.FirstBlockCreator
-
-						AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash = firstBlockData.FirstBlockHash
-
-					}
-
-				}
+				globals.FINALIZATION_VOTING_STATS.Put(keyValue, []byte("TRUE"), nil)
 
 			}
 
-			if AEFP_AND_FIRST_BLOCK_DATA.Aefp != nil && AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash != "" {
+			if utils.SignalAboutEpochRotationExists(epochHandler.Id) {
 
-				// 1. Fetch first block
+				majority := common_functions.GetQuorumMajority(&epochHandler)
 
-				firstBlock := common_functions.GetBlock(epochHandler.Id, AEFP_AND_FIRST_BLOCK_DATA.FirstBlockCreator, 0, &epochHandler)
+				quorumMembers := common_functions.GetQuorumUrlsAndPubkeys(&epochHandler)
 
-				// 2. Compare hashes
+				haveEverything := AEFP_AND_FIRST_BLOCK_DATA.Aefp != nil && AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash != ""
 
-				if firstBlock != nil && firstBlock.GetHash() == AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash {
+				if !haveEverything {
 
-					// 3. Verify that quorum agreed batch of delayed transactions
+					// 1. Find AEFPs
 
-					latestBatchIndex := int64(0)
+					if AEFP_AND_FIRST_BLOCK_DATA.Aefp == nil {
 
-					latestBatchIndexRaw, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("LATEST_BATCH_INDEX"), nil)
+						// Try to find locally first
 
-					if err == nil {
+						keyValue := []byte("AEFP:" + strconv.Itoa(epochHandler.Id))
 
-						latestBatchIndex = int64(binary.BigEndian.Uint64(latestBatchIndexRaw))
+						aefpRaw, err := globals.EPOCH_DATA.Get(keyValue, nil)
 
-					}
+						var aefp *structures.AggregatedEpochFinalizationProof
 
-					var delayedTransactionsToExecute []map[string]string
+						errParse := json.Unmarshal(aefpRaw, aefp)
 
-					jsonedDelayedTxs, _ := json.Marshal(firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions)
+						if err == nil && errParse == nil {
 
-					dataThatShouldBeSigned := "SIG_DELAYED_OPERATIONS:" + strconv.Itoa(epochHandler.Id) + ":" + string(jsonedDelayedTxs)
+							AEFP_AND_FIRST_BLOCK_DATA.Aefp = aefp
 
-					okSignatures := 0
-					unique := make(map[string]bool)
-					quorumMap := make(map[string]bool)
+						} else {
 
-					for _, pk := range epochHandler.Quorum {
-						quorumMap[strings.ToLower(pk)] = true
-					}
+							// Ask quorum for AEFP
 
-					for signerPubKey, signa := range firstBlock.ExtraData.DelayedTransactionsBatch.Proofs {
+							resultCh := make(chan *structures.AggregatedEpochFinalizationProof, 1)
+							ctx, cancel := context.WithCancel(context.Background())
 
-						isOK := ed25519.VerifySignature(dataThatShouldBeSigned, signerPubKey, signa)
-
-						loweredPubKey := strings.ToLower(signerPubKey)
-
-						if isOK && quorumMap[signerPubKey] && !unique[loweredPubKey] {
-
-							unique[loweredPubKey] = true
-							okSignatures++
-
-						}
-
-					}
-
-					if okSignatures >= majority {
-						// 5. Finally - check if this batch has bigger index than already executed
-						// 6. Only in case it's indeed new batch - execute it
-						if int64(epochHandler.Id) > latestBatchIndex {
-
-							latestBatchIndex = int64(epochHandler.Id)
-							delayedTransactionsToExecute = firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions
-
-						}
-
-					}
-
-					keyBytes := []byte("EPOCH_HANDLER:" + strconv.Itoa(epochHandler.Id))
-
-					valBytes, _ := json.Marshal(epochHandler)
-
-					globals.EPOCH_DATA.Put(keyBytes, valBytes, nil)
-
-					var daoVotingContractCalls []map[string]string
-					var allTheRestContractCalls []map[string]string
-
-					atomicBatch := new(leveldb.Batch)
-
-					for _, delayedTransaction := range delayedTransactionsToExecute {
-
-						if delayedTxType, ok := delayedTransaction["type"]; ok {
-
-							if delayedTxType == "votingAccept" {
-								daoVotingContractCalls = append(daoVotingContractCalls, delayedTransaction)
-							} else {
-								allTheRestContractCalls = append(allTheRestContractCalls, delayedTransaction)
+							for _, quorumMember := range quorumMembers {
+								go fetchAefp(ctx, quorumMember.Url, epochHandler.Quorum, majority, epochFullID, resultCh)
 							}
 
+							select {
+
+							case value := <-resultCh:
+								AEFP_AND_FIRST_BLOCK_DATA.Aefp = value
+								cancel()
+							case <-time.After(10 * time.Second):
+								cancel()
+							}
 						}
-
 					}
 
-					delayedTransactionsOrderByPriority := append(daoVotingContractCalls, allTheRestContractCalls...)
-
-					// Execute delayed transactions
-					for _, delayedTransaction := range delayedTransactionsOrderByPriority {
-
-						ExecuteDelayedTransaction(delayedTransaction)
-
+					// 2. Find first block in epoch
+					if AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash == "" {
+						firstBlockData := common_functions.GetFirstBlockInEpoch(&epochHandler)
+						if firstBlockData != nil {
+							AEFP_AND_FIRST_BLOCK_DATA.FirstBlockCreator = firstBlockData.FirstBlockCreator
+							AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash = firstBlockData.FirstBlockHash
+						}
 					}
-
-					for key, value := range globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache {
-
-						valBytes, _ := json.Marshal(value)
-
-						atomicBatch.Put([]byte(key), valBytes)
-
-					}
-
-					utils.LogWithTime("Dealyed txs were executed for epoch on AT: "+epochFullID, utils.GREEN_COLOR)
-
-					//_______________________ Update the values for new epoch _______________________
-
-					// Now, after the execution we can change the epoch id and get the new hash + prepare new temporary object
-
-					nextEpochId := epochHandler.Id + 1
-
-					nextEpochHash := utils.Blake3(AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash)
-
-					nextEpochQuorumSize := globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.QuorumSize
-
-					nextEpochHandler := structures.EpochHandler{
-						Id:                 nextEpochId,
-						Hash:               nextEpochHash,
-						PoolsRegistry:      epochHandler.PoolsRegistry,
-						ShardsRegistry:     epochHandler.ShardsRegistry,
-						Quorum:             common_functions.GetCurrentEpochQuorum(&epochHandler, nextEpochQuorumSize, nextEpochHash),
-						LeadersSequence:    []string{},
-						StartTimestamp:     epochHandler.StartTimestamp + uint64(globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.EpochTime),
-						CurrentLeaderIndex: 0,
-					}
-
-					common_functions.SetLeadersSequence(&nextEpochHandler, nextEpochHash)
-
-					atomicBatch.Put([]byte("LATEST_BATCH_INDEX:"), []byte(strconv.Itoa(int(latestBatchIndex))))
-
-					globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler = nextEpochHandler
-
-					jsonedAT, _ := json.Marshal(globals.APPROVEMENT_THREAD_HANDLER.Thread)
-
-					atomicBatch.Put([]byte("AT"), jsonedAT)
-
-					// Clean cache
-
-					clear(globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache)
-
-					// Clean in-memory helpful object
-
-					AEFP_AND_FIRST_BLOCK_DATA = FirstBlockDataWithAefp{}
-
-					globals.APPROVEMENT_THREAD_METADATA.Write(atomicBatch, nil)
-
-					utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)
-
-					//_______________________Check the version required for the next epoch________________________
-
-					if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
-
-						utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
-
-						utils.GracefulShutdown()
-
-					}
-
 				}
 
+				if AEFP_AND_FIRST_BLOCK_DATA.Aefp != nil && AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash != "" {
+
+					// 1. Fetch first block
+					firstBlock := common_functions.GetBlock(epochHandler.Id, AEFP_AND_FIRST_BLOCK_DATA.FirstBlockCreator, 0, &epochHandler)
+
+					// 2. Compare hashes
+
+					if firstBlock != nil && firstBlock.GetHash() == AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash {
+						// 3. Verify that quorum agreed batch of delayed transactions
+						latestBatchIndex := int64(0)
+						latestBatchIndexRaw, err := globals.APPROVEMENT_THREAD_METADATA.Get([]byte("LATEST_BATCH_INDEX"), nil)
+						if err == nil {
+							latestBatchIndex = int64(binary.BigEndian.Uint64(latestBatchIndexRaw))
+						}
+
+						var delayedTransactionsToExecute []map[string]string
+						jsonedDelayedTxs, _ := json.Marshal(firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions)
+
+						dataThatShouldBeSigned := "SIG_DELAYED_OPERATIONS:" + strconv.Itoa(epochHandler.Id) + ":" + string(jsonedDelayedTxs)
+
+						okSignatures := 0
+						unique := make(map[string]bool)
+						quorumMap := make(map[string]bool)
+						for _, pk := range epochHandler.Quorum {
+							quorumMap[strings.ToLower(pk)] = true
+						}
+
+						for signerPubKey, signa := range firstBlock.ExtraData.DelayedTransactionsBatch.Proofs {
+							isOK := ed25519.VerifySignature(dataThatShouldBeSigned, signerPubKey, signa)
+							loweredPubKey := strings.ToLower(signerPubKey)
+							if isOK && quorumMap[signerPubKey] && !unique[loweredPubKey] {
+								unique[loweredPubKey] = true
+								okSignatures++
+							}
+						}
+
+						// 5. Finally - check if this batch has bigger index than already executed
+						// 6. Only in case it's indeed new batch - execute it
+
+						if okSignatures >= majority && int64(epochHandler.Id) > latestBatchIndex {
+							latestBatchIndex = int64(epochHandler.Id)
+							delayedTransactionsToExecute = firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions
+						}
+
+						keyBytes := []byte("EPOCH_HANDLER:" + strconv.Itoa(epochHandler.Id))
+						valBytes, _ := json.Marshal(epochHandler)
+						globals.EPOCH_DATA.Put(keyBytes, valBytes, nil)
+
+						var daoVotingContractCalls []map[string]string
+						var allTheRestContractCalls []map[string]string
+
+						atomicBatch := new(leveldb.Batch)
+
+						for _, delayedTransaction := range delayedTransactionsToExecute {
+							if delayedTxType, ok := delayedTransaction["type"]; ok {
+								if delayedTxType == "votingAccept" {
+									daoVotingContractCalls = append(daoVotingContractCalls, delayedTransaction)
+								} else {
+									allTheRestContractCalls = append(allTheRestContractCalls, delayedTransaction)
+								}
+							}
+						}
+
+						delayedTransactionsOrderByPriority := append(daoVotingContractCalls, allTheRestContractCalls...)
+
+						// Execute delayed transactions
+						for _, delayedTransaction := range delayedTransactionsOrderByPriority {
+							ExecuteDelayedTransaction(delayedTransaction)
+						}
+
+						for key, value := range globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache {
+							valBytes, _ := json.Marshal(value)
+							atomicBatch.Put([]byte(key), valBytes)
+						}
+
+						utils.LogWithTime("Dealyed txs were executed for epoch on AT: "+epochFullID, utils.GREEN_COLOR)
+
+						//_______________________ Update the values for new epoch _______________________
+
+						// Now, after the execution we can change the epoch id and get the new hash + prepare new temporary object
+
+						nextEpochId := epochHandler.Id + 1
+						nextEpochHash := utils.Blake3(AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash)
+						nextEpochQuorumSize := globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.QuorumSize
+
+						nextEpochHandler := structures.EpochHandler{
+							Id:                 nextEpochId,
+							Hash:               nextEpochHash,
+							PoolsRegistry:      epochHandler.PoolsRegistry,
+							ShardsRegistry:     epochHandler.ShardsRegistry,
+							Quorum:             common_functions.GetCurrentEpochQuorum(&epochHandler, nextEpochQuorumSize, nextEpochHash),
+							LeadersSequence:    []string{},
+							StartTimestamp:     epochHandler.StartTimestamp + uint64(globals.APPROVEMENT_THREAD_HANDLER.Thread.NetworkParameters.EpochTime),
+							CurrentLeaderIndex: 0,
+						}
+
+						common_functions.SetLeadersSequence(&nextEpochHandler, nextEpochHash)
+
+						atomicBatch.Put([]byte("LATEST_BATCH_INDEX:"), []byte(strconv.Itoa(int(latestBatchIndex))))
+						globals.APPROVEMENT_THREAD_HANDLER.Thread.EpochHandler = nextEpochHandler
+
+						jsonedAT, _ := json.Marshal(globals.APPROVEMENT_THREAD_HANDLER.Thread)
+						atomicBatch.Put([]byte("AT"), jsonedAT)
+
+						// Clean cache
+
+						clear(globals.APPROVEMENT_THREAD_HANDLER.Thread.Cache)
+
+						// Clean in-memory helpful object
+						AEFP_AND_FIRST_BLOCK_DATA = FirstBlockDataWithAefp{}
+
+						globals.APPROVEMENT_THREAD_METADATA.Write(atomicBatch, nil)
+
+						utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)
+
+						//_______________________Check the version required for the next epoch________________________
+
+						if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_HANDLER.Thread) {
+							utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
+							utils.GracefulShutdown()
+						}
+					}
+				}
 			}
+
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.Unlock()
+
+		} else {
+
+			globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
 
 		}
 
-	} else {
-
-		globals.APPROVEMENT_THREAD_HANDLER.RWMutex.RUnlock()
+		time.Sleep(1 * time.Second)
 
 	}
-
-	time.AfterFunc(time.Second, func() {
-		EpochRotationThread()
-	})
 
 }

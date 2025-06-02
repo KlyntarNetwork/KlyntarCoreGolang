@@ -164,6 +164,8 @@ func GetFinalizationProof(data any, connection *gws.Conn) {
 
 								_, err := globals.EPOCH_DATA.Get(keyBytes, nil)
 
+								// We need to store first block assumption only in case we don't have it yet
+
 								if err != nil {
 
 									assumption := common_functions.FirstBlockAssumption{
