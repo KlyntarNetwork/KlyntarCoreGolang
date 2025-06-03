@@ -14,13 +14,11 @@ func timeIsOutForCurrentLeader(approvementThread *structures.ApprovementThreadMe
 
 	// Function to check if time frame for current leader is done and we have to move to next pool in sequence
 
-	epochHandler := approvementThread.EpochHandler
-
 	leaderShipTimeframe := approvementThread.NetworkParameters.LeadershipTimeframe
 
-	currentIndex := int64(epochHandler.CurrentLeaderIndex)
+	currentIndex := int64(approvementThread.EpochHandler.CurrentLeaderIndex)
 
-	return utils.GetUTCTimestampInMilliSeconds() >= int64(epochHandler.StartTimestamp)+(currentIndex+1)*leaderShipTimeframe
+	return utils.GetUTCTimestampInMilliSeconds() >= int64(approvementThread.EpochHandler.StartTimestamp)+(currentIndex+1)*leaderShipTimeframe
 
 }
 

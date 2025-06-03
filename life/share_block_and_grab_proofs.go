@@ -226,11 +226,11 @@ func BlocksSharingAndProofsGrabingThread() {
 
 		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
-		epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+		epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
 		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-		currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
+		currentLeaderPubKey := epochHandlerRef.LeadersSequence[epochHandlerRef.CurrentLeaderIndex]
 
 		if currentLeaderPubKey != globals.CONFIGURATION.PublicKey {
 
@@ -242,7 +242,7 @@ func BlocksSharingAndProofsGrabingThread() {
 
 		PROOFS_GRABBER_MUTEX.RLock()
 
-		if PROOFS_GRABBER.EpochId != epochHandler.Id {
+		if PROOFS_GRABBER.EpochId != epochHandlerRef.Id {
 
 			PROOFS_GRABBER_MUTEX.RUnlock()
 
@@ -250,7 +250,7 @@ func BlocksSharingAndProofsGrabingThread() {
 
 			// Try to get stored proofs grabber from db
 
-			dbKey := []byte(strconv.Itoa(epochHandler.Id) + ":PROOFS_GRABBER")
+			dbKey := []byte(strconv.Itoa(epochHandlerRef.Id) + ":PROOFS_GRABBER")
 
 			if rawGrabber, err := globals.FINALIZATION_VOTING_STATS.Get(dbKey, nil); err == nil {
 
@@ -262,7 +262,7 @@ func BlocksSharingAndProofsGrabingThread() {
 
 				PROOFS_GRABBER = ProofsGrabber{
 
-					EpochId: epochHandler.Id,
+					EpochId: epochHandlerRef.Id,
 
 					AcceptedIndex: -1,
 
@@ -283,11 +283,11 @@ func BlocksSharingAndProofsGrabingThread() {
 
 			// Also, open connections with quorum here. Create QuorumWaiter etc.
 
-			utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS)
+			utils.OpenWebsocketConnectionsWithQuorum(epochHandlerRef.Quorum, WEBSOCKET_CONNECTIONS)
 
 			// Create new QuorumWaiter
 
-			QUORUM_WAITER_FOR_FINALIZATION_PROOFS = utils.NewQuorumWaiter(len(epochHandler.Quorum))
+			QUORUM_WAITER_FOR_FINALIZATION_PROOFS = utils.NewQuorumWaiter(len(epochHandlerRef.Quorum))
 
 		} else {
 
@@ -295,7 +295,7 @@ func BlocksSharingAndProofsGrabingThread() {
 
 		}
 
-		runFinalizationProofsGrabbing(&epochHandler)
+		runFinalizationProofsGrabbing(epochHandlerRef)
 
 	}
 

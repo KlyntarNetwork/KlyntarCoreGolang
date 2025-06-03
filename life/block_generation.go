@@ -319,9 +319,9 @@ func getAggregatedLeaderRotationProof(majority, epochIndex int, leaderPubkey str
 
 func getBatchOfApprovedDelayedTxsByQuorum(indexOfLeader int) structures.DelayedTransactionsBatch {
 
-	epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+	epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
-	prevEpochIndex := epochHandler.Id - 2
+	prevEpochIndex := epochHandlerRef.Id - 2
 
 	if indexOfLeader != 0 {
 
@@ -345,13 +345,13 @@ func generateBlock() {
 
 	defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-	epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+	epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
-	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
+	epochFullID := epochHandlerRef.Hash + "#" + strconv.Itoa(epochHandlerRef.Id)
 
-	epochIndex := epochHandler.Id
+	epochIndex := epochHandlerRef.Id
 
-	currentLeaderPubKey := epochHandler.LeadersSequence[epochHandler.CurrentLeaderIndex]
+	currentLeaderPubKey := epochHandlerRef.LeadersSequence[epochHandlerRef.CurrentLeaderIndex]
 
 	PROOFS_GRABBER_MUTEX.RLock()
 
@@ -371,7 +371,7 @@ func generateBlock() {
 
 			if epochIndex != 0 {
 
-				aefpForPreviousEpoch = getAggregatedEpochFinalizationProof(&epochHandler)
+				aefpForPreviousEpoch = getAggregatedEpochFinalizationProof(epochHandlerRef)
 
 				if aefpForPreviousEpoch == nil {
 
@@ -393,7 +393,7 @@ func generateBlock() {
 
 			// Open websocket connections with the quorum of new epoch
 
-			utils.OpenWebsocketConnectionsWithQuorum(epochHandler.Quorum, WEBSOCKET_CONNECTIONS_FOR_ALRP)
+			utils.OpenWebsocketConnectionsWithQuorum(epochHandlerRef.Quorum, WEBSOCKET_CONNECTIONS_FOR_ALRP)
 
 		}
 
@@ -415,23 +415,23 @@ func generateBlock() {
 
 			}
 
-			majority := common_functions.GetQuorumMajority(&epochHandler)
+			majority := common_functions.GetQuorumMajority(epochHandlerRef)
 
 			// Build the template to insert to the extraData of block. Structure is {pool0:ALRP,...,poolN:ALRP}
 
-			myIndexInLeadersSequence := slices.Index(epochHandler.LeadersSequence, globals.CONFIGURATION.PublicKey)
+			myIndexInLeadersSequence := slices.Index(epochHandlerRef.LeadersSequence, globals.CONFIGURATION.PublicKey)
 
 			if myIndexInLeadersSequence > 0 {
 
 				// Get all previous pools - from zero to <my_position>
 
-				pubKeysOfAllThePreviousPools := slices.Clone(epochHandler.LeadersSequence[:myIndexInLeadersSequence])
+				pubKeysOfAllThePreviousPools := slices.Clone(epochHandlerRef.LeadersSequence[:myIndexInLeadersSequence])
 
 				slices.Reverse(pubKeysOfAllThePreviousPools)
 
-				previousToMeLeaderPubKey := epochHandler.LeadersSequence[myIndexInLeadersSequence-1]
+				previousToMeLeaderPubKey := epochHandlerRef.LeadersSequence[myIndexInLeadersSequence-1]
 
-				extraData.DelayedTransactionsBatch = getBatchOfApprovedDelayedTxsByQuorum(epochHandler.CurrentLeaderIndex)
+				extraData.DelayedTransactionsBatch = getBatchOfApprovedDelayedTxsByQuorum(epochHandlerRef.CurrentLeaderIndex)
 
 				//_____________________ Fill the extraData.aggregatedLeadersRotationProofs _____________________
 
@@ -503,12 +503,12 @@ func generateBlock() {
 
 					collector := RotationProofCollector{
 						wsConnMap: WEBSOCKET_CONNECTIONS_FOR_ALRP,
-						quorum:    epochHandler.Quorum,
+						quorum:    epochHandlerRef.Quorum,
 						majority:  majority,
 						timeout:   5 * time.Second,
 					}
 
-					resultsOfAlrpRequests := collector.AlrpForLeadersCollector(context.Background(), pubkeysOfLeadersToGetAlrps, &epochHandler)
+					resultsOfAlrpRequests := collector.AlrpForLeadersCollector(context.Background(), pubkeysOfLeadersToGetAlrps, epochHandlerRef)
 
 					// Parse results here and modify the content inside ALRP_METADATA
 
@@ -564,11 +564,11 @@ func generateBlock() {
 
 												blockIdInAfp := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + strconv.Itoa(lrpUpgrade.SkipData.Index)
 
-												proposedHeightIsValid := lrpUpgrade.SkipData.Hash == lrpUpgrade.AfpForFirstBlock.BlockHash && blockIdInAfp == lrpUpgrade.AfpForFirstBlock.BlockId && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.SkipData.Afp, &epochHandler)
+												proposedHeightIsValid := lrpUpgrade.SkipData.Hash == lrpUpgrade.AfpForFirstBlock.BlockHash && blockIdInAfp == lrpUpgrade.AfpForFirstBlock.BlockId && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.SkipData.Afp, epochHandlerRef)
 
 												firstBlockID := strconv.Itoa(epochIndex) + ":" + lrpUpgrade.ForPoolPubkey + ":0"
 
-												proposedFirstBlockIsValid := firstBlockID == lrpUpgrade.AfpForFirstBlock.BlockId && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.AfpForFirstBlock, &epochHandler)
+												proposedFirstBlockIsValid := firstBlockID == lrpUpgrade.AfpForFirstBlock.BlockId && common_functions.VerifyAggregatedFinalizationProof(&lrpUpgrade.AfpForFirstBlock, epochHandlerRef)
 
 												if proposedFirstBlockIsValid && proposedHeightIsValid {
 

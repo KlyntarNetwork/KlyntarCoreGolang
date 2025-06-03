@@ -76,7 +76,7 @@ func SetLeadersSequence(epochHandler *structures.EpochHandler, epochSeed string)
 
 	// Iterate over the poolsRegistry and pseudo-randomly choose leaders
 
-	for i := 0; i < len(epochHandler.PoolsRegistry); i++ {
+	for i := range len(epochHandler.PoolsRegistry) {
 
 		cumulativeSum := big.NewInt(0)
 

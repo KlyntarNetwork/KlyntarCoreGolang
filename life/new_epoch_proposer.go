@@ -51,10 +51,12 @@ func NewEpochProposerThread() {
 		}
 
 		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
+
 		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
 
-		atEpochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
-		epochIndex := atEpochHandler.Id
+		epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+
+		epochIndex := epochHandlerRef.Id
 
 		// Reset CURRENT_LEADER_STATE only if epoch changed
 
@@ -68,17 +70,17 @@ func NewEpochProposerThread() {
 
 		}
 
-		epochFullId := atEpochHandler.Hash + "#" + strconv.Itoa(atEpochHandler.Id)
+		epochFullId := epochHandlerRef.Hash + "#" + strconv.Itoa(epochHandlerRef.Id)
 
-		leadersSequence := atEpochHandler.LeadersSequence
+		leadersSequence := epochHandlerRef.LeadersSequence
 
 		pubKeyOfLeader := leadersSequence[LAST_LEADER_PROPOSITION.LeaderIndex]
 
-		iAmInTheQuorum := slices.Contains(atEpochHandler.Quorum, globals.CONFIGURATION.PublicKey)
+		iAmInTheQuorum := slices.Contains(epochHandlerRef.Quorum, globals.CONFIGURATION.PublicKey)
 
 		if iAmInTheQuorum {
 
-			majority := common_functions.GetQuorumMajority(&atEpochHandler)
+			majority := common_functions.GetQuorumMajority(epochHandlerRef)
 
 			var localVotingData structures.PoolVotingStat
 
@@ -98,7 +100,7 @@ func NewEpochProposerThread() {
 
 				for position := LAST_LEADER_PROPOSITION.LeaderIndex - 1; position >= 0; position-- {
 
-					prevLeader := atEpochHandler.LeadersSequence[position]
+					prevLeader := epochHandlerRef.LeadersSequence[position]
 
 					prevVotingDataRaw, err := globals.FINALIZATION_VOTING_STATS.Get([]byte(strconv.Itoa(epochIndex)+":"+prevLeader), nil)
 
@@ -142,7 +144,7 @@ func NewEpochProposerThread() {
 				}
 			}
 
-			quorumMembers := common_functions.GetQuorumUrlsAndPubkeys(&atEpochHandler)
+			quorumMembers := common_functions.GetQuorumUrlsAndPubkeys(epochHandlerRef)
 
 			resultsCh := make(chan Agreement, len(quorumMembers))
 			upgradeCh := make(chan structures.EpochFinishResponseUpgrade, len(quorumMembers))
@@ -217,7 +219,7 @@ func NewEpochProposerThread() {
 
 						json.Unmarshal(responseBytes, &resultAsStruct)
 
-						if common_functions.VerifyAggregatedFinalizationProof(&resultAsStruct.LastBlockProposition.Afp, &atEpochHandler) {
+						if common_functions.VerifyAggregatedFinalizationProof(&resultAsStruct.LastBlockProposition.Afp, epochHandlerRef) {
 
 							blockID := strconv.Itoa(epochIndex) + ":" +
 								leadersSequence[resultAsStruct.CurrentLeader] + ":" +
@@ -281,7 +283,7 @@ func NewEpochProposerThread() {
 
 				// Make final verification before store to make sure it's indeed a valid proof
 
-				if common_functions.VerifyAggregatedEpochFinalizationProof(&aggregatedEpochFinalizationProof, atEpochHandler.Quorum, majority, epochFullId) {
+				if common_functions.VerifyAggregatedEpochFinalizationProof(&aggregatedEpochFinalizationProof, epochHandlerRef.Quorum, majority, epochFullId) {
 
 					valueAsBytes, _ := json.Marshal(aggregatedEpochFinalizationProof)
 

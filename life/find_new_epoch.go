@@ -90,24 +90,24 @@ func EpochRotationThread() {
 			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
 
-			epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+			epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
-			epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
+			epochFullID := epochHandlerRef.Hash + "#" + strconv.Itoa(epochHandlerRef.Id)
 
-			if !utils.SignalAboutEpochRotationExists(epochHandler.Id) {
+			if !utils.SignalAboutEpochRotationExists(epochHandlerRef.Id) {
 
 				// If epoch is not fresh - send the signal to persistent db that we finish it - not to create AFPs, ALRPs anymore
-				keyValue := []byte("EPOCH_FINISH:" + strconv.Itoa(epochHandler.Id))
+				keyValue := []byte("EPOCH_FINISH:" + strconv.Itoa(epochHandlerRef.Id))
 
 				globals.FINALIZATION_VOTING_STATS.Put(keyValue, []byte("TRUE"), nil)
 
 			}
 
-			if utils.SignalAboutEpochRotationExists(epochHandler.Id) {
+			if utils.SignalAboutEpochRotationExists(epochHandlerRef.Id) {
 
-				majority := common_functions.GetQuorumMajority(&epochHandler)
+				majority := common_functions.GetQuorumMajority(epochHandlerRef)
 
-				quorumMembers := common_functions.GetQuorumUrlsAndPubkeys(&epochHandler)
+				quorumMembers := common_functions.GetQuorumUrlsAndPubkeys(epochHandlerRef)
 
 				haveEverything := AEFP_AND_FIRST_BLOCK_DATA.Aefp != nil && AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash != ""
 
@@ -119,7 +119,7 @@ func EpochRotationThread() {
 
 						// Try to find locally first
 
-						keyValue := []byte("AEFP:" + strconv.Itoa(epochHandler.Id))
+						keyValue := []byte("AEFP:" + strconv.Itoa(epochHandlerRef.Id))
 
 						aefpRaw, err := globals.EPOCH_DATA.Get(keyValue, nil)
 
@@ -139,7 +139,7 @@ func EpochRotationThread() {
 							ctx, cancel := context.WithCancel(context.Background())
 
 							for _, quorumMember := range quorumMembers {
-								go fetchAefp(ctx, quorumMember.Url, epochHandler.Quorum, majority, epochFullID, resultCh)
+								go fetchAefp(ctx, quorumMember.Url, epochHandlerRef.Quorum, majority, epochFullID, resultCh)
 							}
 
 							select {
@@ -155,7 +155,7 @@ func EpochRotationThread() {
 
 					// 2. Find first block in epoch
 					if AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash == "" {
-						firstBlockData := common_functions.GetFirstBlockInEpoch(&epochHandler)
+						firstBlockData := common_functions.GetFirstBlockInEpoch(epochHandlerRef)
 						if firstBlockData != nil {
 							AEFP_AND_FIRST_BLOCK_DATA.FirstBlockCreator = firstBlockData.FirstBlockCreator
 							AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash = firstBlockData.FirstBlockHash
@@ -166,7 +166,7 @@ func EpochRotationThread() {
 				if AEFP_AND_FIRST_BLOCK_DATA.Aefp != nil && AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash != "" {
 
 					// 1. Fetch first block
-					firstBlock := common_functions.GetBlock(epochHandler.Id, AEFP_AND_FIRST_BLOCK_DATA.FirstBlockCreator, 0, &epochHandler)
+					firstBlock := common_functions.GetBlock(epochHandlerRef.Id, AEFP_AND_FIRST_BLOCK_DATA.FirstBlockCreator, 0, epochHandlerRef)
 
 					// 2. Compare hashes
 
@@ -181,12 +181,12 @@ func EpochRotationThread() {
 						var delayedTransactionsToExecute []map[string]string
 						jsonedDelayedTxs, _ := json.Marshal(firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions)
 
-						dataThatShouldBeSigned := "SIG_DELAYED_OPERATIONS:" + strconv.Itoa(epochHandler.Id) + ":" + string(jsonedDelayedTxs)
+						dataThatShouldBeSigned := "SIG_DELAYED_OPERATIONS:" + strconv.Itoa(epochHandlerRef.Id) + ":" + string(jsonedDelayedTxs)
 
 						okSignatures := 0
 						unique := make(map[string]bool)
 						quorumMap := make(map[string]bool)
-						for _, pk := range epochHandler.Quorum {
+						for _, pk := range epochHandlerRef.Quorum {
 							quorumMap[strings.ToLower(pk)] = true
 						}
 
@@ -202,13 +202,13 @@ func EpochRotationThread() {
 						// 5. Finally - check if this batch has bigger index than already executed
 						// 6. Only in case it's indeed new batch - execute it
 
-						if okSignatures >= majority && int64(epochHandler.Id) > latestBatchIndex {
-							latestBatchIndex = int64(epochHandler.Id)
+						if okSignatures >= majority && int64(epochHandlerRef.Id) > latestBatchIndex {
+							latestBatchIndex = int64(epochHandlerRef.Id)
 							delayedTransactionsToExecute = firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions
 						}
 
-						keyBytes := []byte("EPOCH_HANDLER:" + strconv.Itoa(epochHandler.Id))
-						valBytes, _ := json.Marshal(epochHandler)
+						keyBytes := []byte("EPOCH_HANDLER:" + strconv.Itoa(epochHandlerRef.Id))
+						valBytes, _ := json.Marshal(epochHandlerRef)
 						globals.EPOCH_DATA.Put(keyBytes, valBytes, nil)
 
 						var daoVotingContractCalls []map[string]string
@@ -244,18 +244,18 @@ func EpochRotationThread() {
 
 						// Now, after the execution we can change the epoch id and get the new hash + prepare new temporary object
 
-						nextEpochId := epochHandler.Id + 1
+						nextEpochId := epochHandlerRef.Id + 1
 						nextEpochHash := utils.Blake3(AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash)
 						nextEpochQuorumSize := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.QuorumSize
 
 						nextEpochHandler := structures.EpochHandler{
 							Id:                 nextEpochId,
 							Hash:               nextEpochHash,
-							PoolsRegistry:      epochHandler.PoolsRegistry,
-							ShardsRegistry:     epochHandler.ShardsRegistry,
-							Quorum:             common_functions.GetCurrentEpochQuorum(&epochHandler, nextEpochQuorumSize, nextEpochHash),
+							PoolsRegistry:      epochHandlerRef.PoolsRegistry,
+							ShardsRegistry:     epochHandlerRef.ShardsRegistry,
+							Quorum:             common_functions.GetCurrentEpochQuorum(epochHandlerRef, nextEpochQuorumSize, nextEpochHash),
 							LeadersSequence:    []string{},
-							StartTimestamp:     epochHandler.StartTimestamp + uint64(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.EpochTime),
+							StartTimestamp:     epochHandlerRef.StartTimestamp + uint64(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.EpochTime),
 							CurrentLeaderIndex: 0,
 						}
 
