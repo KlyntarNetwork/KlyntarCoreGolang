@@ -13,11 +13,8 @@
     
         },
     
-        "FASTIFY_OPTIONS":{"origin":"*"},
-    
         "STORE_BLOCKS_IN_LOCAL_DATABASE":true,
 
-        "OPTIONAL_SEQUENCER":"9GQ46rqY238rk2neSwgidap9ww5zbAN4dyqyC7j5ZnBK",
         "POINT_OF_DISTRIBUTION_WS":"ws://localhost:9999",
         "POINT_OF_DISTRIBUTION_HTTP":"http://localhost:7332",
         
