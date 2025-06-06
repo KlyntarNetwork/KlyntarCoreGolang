@@ -30,17 +30,49 @@ func (h *Handler) OnMessage(connection *gws.Conn, message *gws.Message) {
 	defer message.Close()
 
 	var incoming IncomingMsg
+
 	if err := json.Unmarshal(message.Bytes(), &incoming); err != nil {
+
 		connection.WriteMessage(gws.OpcodeText, []byte(`{"error":"invalid_json"}`))
+
 		return
+
+	}
+
+	if pretty, err := json.MarshalIndent(incoming, "", "  "); err == nil {
+
+		fmt.Println("DEBUG: Received incoming =>\n", string(pretty))
+
+	} else {
+
+		fmt.Printf("Failed to marshal: %v\n", err)
+
 	}
 
 	switch incoming.Route {
 
 	case "get_finalization_proof":
-		GetFinalizationProof(incoming, connection)
+
+		var req WsFinalizationProofRequest
+
+		if err := json.Unmarshal(message.Bytes(), &req); err != nil {
+			connection.WriteMessage(gws.OpcodeText, []byte(`{"error":"invalid_finalization_proof_request"}`))
+			return
+		}
+
+		GetFinalizationProof(req, connection)
+
 	case "get_leader_rotation_proof":
-		GetLeaderRotationProof(incoming, connection)
+
+		var req WsLeaderRotationProofRequest
+
+		if err := json.Unmarshal(message.Bytes(), &req); err != nil {
+			connection.WriteMessage(gws.OpcodeText, []byte(`{"error":"invalid_leader_rotation_proof_request"}`))
+			return
+		}
+
+		GetLeaderRotationProof(req, connection)
+
 	default:
 		connection.WriteMessage(gws.OpcodeText, []byte(`{"error":"unknown_type"}`))
 
