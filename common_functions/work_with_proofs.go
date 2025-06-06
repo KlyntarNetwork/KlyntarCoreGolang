@@ -157,12 +157,15 @@ func VerifyAggregatedFinalizationProof(
 ) bool {
 
 	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
+
 	dataThatShouldBeSigned := proof.PrevBlockHash + proof.BlockId + proof.BlockHash + epochFullID
 
 	majority := GetQuorumMajority(epochHandler)
 
 	okSignatures := 0
+
 	seen := make(map[string]bool)
+
 	quorumMap := make(map[string]bool)
 
 	for _, pk := range epochHandler.Quorum {
@@ -172,7 +175,9 @@ func VerifyAggregatedFinalizationProof(
 	for pubKey, signature := range proof.Proofs {
 
 		if ed25519.VerifySignature(dataThatShouldBeSigned, pubKey, signature) {
+
 			loweredPubKey := strings.ToLower(pubKey)
+
 			if quorumMap[loweredPubKey] && !seen[loweredPubKey] {
 				seen[loweredPubKey] = true
 				okSignatures++
@@ -301,7 +306,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 
 		close(responses)
 
-		minimalIndexOfLeader := 100_000_000
+		minimalIndexOfLeader := 1_000_000_000
 
 		var afpForSecondBlock *structures.AggregatedFinalizationProof
 

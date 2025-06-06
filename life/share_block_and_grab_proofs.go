@@ -105,14 +105,6 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 
 			responses, ok := QUORUM_WAITER_FOR_FINALIZATION_PROOFS.SendAndWait(ctx, messageJsoned, epochHandler.Quorum, WEBSOCKET_CONNECTIONS, majority)
 
-			fmt.Println("DEBUG: Size of is => ", len(responses))
-
-			if pretty, err := json.MarshalIndent(message, "", "  "); err == nil {
-				fmt.Println("Try sending block =>\n", string(pretty))
-			} else {
-				fmt.Printf("Failed to marshal BLOCK_TO_SHARE for debug: %v\n", err)
-			}
-
 			if !ok {
 				return
 			}
@@ -170,6 +162,16 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 
 		globals.EPOCH_DATA.Put(keyBytes, valueBytes, nil)
 
+		if pretty, err := json.MarshalIndent(aggregatedFinalizationProof, "", "  "); err == nil {
+
+			fmt.Println(string(pretty))
+
+		} else {
+
+			fmt.Printf("Failed to marshal AFP: %v\n", err)
+
+		}
+
 		// Repeat procedure for the next block and store the progress
 
 		proofGrabberKeyBytes := []byte(strconv.Itoa(epochHandler.Id) + ":PROOFS_GRABBER")
@@ -190,13 +192,13 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 
 				msg := fmt.Sprintf(
 					"%sApproved height for epoch %s%d %sis %s%d %s(%.3f%% agreements)",
-					utils.WHITE_COLOR,
+					utils.RED_COLOR,
 					utils.CYAN_COLOR,
 					epochHandler.Id,
 					utils.RED_COLOR,
-					utils.GREEN_COLOR,
+					utils.CYAN_COLOR,
 					PROOFS_GRABBER.AcceptedIndex-1,
-					utils.YELLOW_COLOR,
+					utils.GREEN_COLOR,
 					float64(len(FINALIZATION_PROOFS_CACHE))/float64(len(epochHandler.Quorum))*100,
 				)
 
@@ -204,9 +206,7 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 
 				// Delete finalization proofs that we don't need more
 
-				for k := range FINALIZATION_PROOFS_CACHE {
-					delete(FINALIZATION_PROOFS_CACHE, k)
-				}
+				FINALIZATION_PROOFS_CACHE = make(map[string]string)
 
 			} else {
 				return
