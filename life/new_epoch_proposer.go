@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"slices"
@@ -49,10 +50,6 @@ func NewEpochProposerThread() {
 
 			continue
 		}
-
-		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
-
-		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
 
 		epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
@@ -190,10 +187,12 @@ func NewEpochProposerThread() {
 						return
 					}
 
+					fmt.Println("DEBUG: Received STATUS => ", responseStatus.Status)
+
 					switch responseStatus.Status {
 
 					case "OK":
-
+						fmt.Println("DEBUG: Received OK")
 						dataToSign := strconv.Itoa(epochFinishProposition.CurrentLeader) + ":" +
 							strconv.Itoa(epochFinishProposition.LastBlockProposition.Index) + ":" +
 							epochFinishProposition.LastBlockProposition.Hash + ":" +
@@ -214,7 +213,7 @@ func NewEpochProposerThread() {
 						}
 
 					case "UPGRADE":
-
+						fmt.Println("DEBUG: Received UPGRADE")
 						var resultAsStruct structures.EpochFinishResponseUpgrade
 
 						json.Unmarshal(responseBytes, &resultAsStruct)
@@ -246,6 +245,7 @@ func NewEpochProposerThread() {
 				close(resultsCh)
 				close(upgradeCh)
 			}()
+			fmt.Println("DEBUG: After grabbing results")
 
 			for result := range resultsCh {
 				QUORUM_AGREEMENTS[result.PubKey] = result.Sig
@@ -271,6 +271,8 @@ func NewEpochProposerThread() {
 
 			}
 
+			fmt.Println("DEBUG: Quorum agreements size is => ", len(QUORUM_AGREEMENTS))
+
 			if len(QUORUM_AGREEMENTS) >= majority {
 
 				aggregatedEpochFinalizationProof := structures.AggregatedEpochFinalizationProof{
@@ -295,7 +297,7 @@ func NewEpochProposerThread() {
 
 		}
 
-		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Unlock()
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
 		time.Sleep(1 * time.Second)
 

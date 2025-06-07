@@ -89,10 +89,6 @@ func EpochRotationThread() {
 
 		if !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
 
-			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
-
-			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
-
 			epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
 			epochFullID := epochHandlerRef.Hash + "#" + strconv.Itoa(epochHandlerRef.Id)
@@ -226,6 +222,10 @@ func EpochRotationThread() {
 						// 5. Finally - check if this batch has bigger index than already executed
 						// 6. Only in case it's indeed new batch - execute it
 
+						globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
+
+						globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
+
 						if okSignatures >= majority && int64(epochHandlerRef.Id) > latestBatchIndex {
 
 							latestBatchIndex = int64(epochHandlerRef.Id)
@@ -324,6 +324,8 @@ func EpochRotationThread() {
 
 						utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)
 
+						globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Unlock()
+
 						//_______________________Check the version required for the next epoch________________________
 
 						if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
@@ -336,8 +338,6 @@ func EpochRotationThread() {
 					}
 				}
 			}
-
-			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Unlock()
 
 		} else {
 

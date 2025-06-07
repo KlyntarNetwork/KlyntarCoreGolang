@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/common_functions"
@@ -93,6 +94,16 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 	if err := json.Unmarshal(ctx.PostBody(), &proposition); err != nil {
 		sendJson(ctx, ErrMsg{Err: "Wrong format"})
 		return
+	}
+
+	if pretty, err := json.MarshalIndent(proposition, "", "  "); err == nil {
+
+		fmt.Println("DEBUG: Received proposition =>\n", string(pretty))
+
+	} else {
+
+		fmt.Printf("Failed to marshal: %v\n", err)
+
 	}
 
 	globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()

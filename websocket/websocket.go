@@ -39,16 +39,6 @@ func (h *Handler) OnMessage(connection *gws.Conn, message *gws.Message) {
 
 	}
 
-	if pretty, err := json.MarshalIndent(incoming, "", "  "); err == nil {
-
-		fmt.Println("DEBUG: Received incoming =>\n", string(pretty))
-
-	} else {
-
-		fmt.Printf("Failed to marshal: %v\n", err)
-
-	}
-
 	switch incoming.Route {
 
 	case "get_finalization_proof":

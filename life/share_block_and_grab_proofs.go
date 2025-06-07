@@ -162,16 +162,6 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochHandler) {
 
 		globals.EPOCH_DATA.Put(keyBytes, valueBytes, nil)
 
-		if pretty, err := json.MarshalIndent(aggregatedFinalizationProof, "", "  "); err == nil {
-
-			fmt.Println(string(pretty))
-
-		} else {
-
-			fmt.Printf("Failed to marshal AFP: %v\n", err)
-
-		}
-
 		// Repeat procedure for the next block and store the progress
 
 		proofGrabberKeyBytes := []byte(strconv.Itoa(epochHandler.Id) + ":PROOFS_GRABBER")
