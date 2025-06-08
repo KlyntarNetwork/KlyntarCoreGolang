@@ -34,8 +34,6 @@ var LAST_LEADER_PROPOSITION = LastLeaderProposition{
 	QuorumAgreements: make(map[string]string),
 }
 
-var QUORUM_AGREEMENTS = make(map[string]string)
-
 func NewEpochProposerThread() {
 
 	for {
@@ -150,7 +148,7 @@ func NewEpochProposerThread() {
 
 			for _, descriptor := range quorumMembers {
 
-				if _, ok := QUORUM_AGREEMENTS[descriptor.PubKey]; ok {
+				if _, ok := LAST_LEADER_PROPOSITION.QuorumAgreements[descriptor.PubKey]; ok {
 					continue
 				}
 
@@ -193,7 +191,7 @@ func NewEpochProposerThread() {
 
 					case "OK":
 						fmt.Println("DEBUG: Received OK")
-						dataToSign := strconv.Itoa(epochFinishProposition.CurrentLeader) + ":" +
+						dataToSign := "EPOCH_DONE:" + strconv.Itoa(epochFinishProposition.CurrentLeader) + ":" +
 							strconv.Itoa(epochFinishProposition.LastBlockProposition.Index) + ":" +
 							epochFinishProposition.LastBlockProposition.Hash + ":" +
 							epochFinishProposition.AfpForFirstBlock.BlockHash + ":" +
@@ -204,7 +202,7 @@ func NewEpochProposerThread() {
 						json.Unmarshal(responseBytes, &resultAsStruct)
 
 						if ed25519.VerifySignature(dataToSign, desc.PubKey, resultAsStruct.Sig) {
-
+							fmt.Println("DEBUG: Signature verified!")
 							resultsCh <- Agreement{
 								PubKey: desc.PubKey,
 								Sig:    resultAsStruct.Sig,
@@ -248,7 +246,7 @@ func NewEpochProposerThread() {
 			fmt.Println("DEBUG: After grabbing results")
 
 			for result := range resultsCh {
-				QUORUM_AGREEMENTS[result.PubKey] = result.Sig
+				LAST_LEADER_PROPOSITION.QuorumAgreements[result.PubKey] = result.Sig
 			}
 
 			for upgradeProposition := range upgradeCh {
@@ -257,30 +255,24 @@ func NewEpochProposerThread() {
 
 					LAST_LEADER_PROPOSITION.LeaderIndex = upgradeProposition.CurrentLeader
 
-					keyAsBytes := []byte(strconv.Itoa(epochIndex) + ":" + leadersSequence[LAST_LEADER_PROPOSITION.LeaderIndex])
-
-					valueAsBytes, _ := json.Marshal(upgradeProposition.LastBlockProposition)
-
-					globals.FINALIZATION_VOTING_STATS.Put(keyAsBytes, valueAsBytes, nil)
-
 					// In this case - clear the quorum agreements to try grab proofs for leader with bigger index
 
-					clear(QUORUM_AGREEMENTS)
+					LAST_LEADER_PROPOSITION.QuorumAgreements = make(map[string]string)
 
 				}
 
 			}
 
-			fmt.Println("DEBUG: Quorum agreements size is => ", len(QUORUM_AGREEMENTS))
+			fmt.Println("DEBUG: Quorum agreements size is => ", len(LAST_LEADER_PROPOSITION.QuorumAgreements))
 
-			if len(QUORUM_AGREEMENTS) >= majority {
+			if len(LAST_LEADER_PROPOSITION.QuorumAgreements) >= majority {
 
 				aggregatedEpochFinalizationProof := structures.AggregatedEpochFinalizationProof{
 					LastLeader:                   uint(epochFinishProposition.CurrentLeader),
 					LastIndex:                    uint(epochFinishProposition.LastBlockProposition.Index),
 					LastHash:                     epochFinishProposition.LastBlockProposition.Hash,
 					HashOfFirstBlockByLastLeader: epochFinishProposition.AfpForFirstBlock.BlockHash,
-					Proofs:                       QUORUM_AGREEMENTS,
+					Proofs:                       LAST_LEADER_PROPOSITION.QuorumAgreements,
 				}
 
 				// Make final verification before store to make sure it's indeed a valid proof
