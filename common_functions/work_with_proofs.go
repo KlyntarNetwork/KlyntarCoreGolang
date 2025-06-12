@@ -188,77 +188,101 @@ func VerifyAggregatedFinalizationProof(
 	return okSignatures >= majority
 }
 
-func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandler *structures.EpochHandler) *structures.AggregatedFinalizationProof {
+func VerifyAggregatedLeaderRotationProof(
+	pubKeyOfSomePreviousLeader string,
+	proof *structures.AggregatedLeaderRotationProof,
+	epochHandler *structures.EpochHandler,
+) bool {
 
-	localAfpAsBytes, err := globals.EPOCH_DATA.Get([]byte("AFP:"+blockID), nil)
+	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
 
-	if err == nil {
+	dataThatShouldBeSigned := "LEADER_ROTATION_PROOF:" + pubKeyOfSomePreviousLeader + ":" +
+		proof.FirstBlockHash + ":" +
+		strconv.Itoa(proof.SkipIndex) + ":" +
+		proof.SkipHash + ":" +
+		epochFullID
 
-		var localAfpParsed *structures.AggregatedFinalizationProof
+	majority := GetQuorumMajority(epochHandler)
 
-		err = json.Unmarshal(localAfpAsBytes, &localAfpParsed)
+	okSignatures := 0
+	seen := make(map[string]bool)
+	quorumMap := make(map[string]bool)
 
-		if err != nil {
-			return nil
+	for _, pk := range epochHandler.Quorum {
+		quorumMap[strings.ToLower(pk)] = true
+	}
+
+	for pubKey, signature := range proof.Proofs {
+
+		if ed25519.VerifySignature(dataThatShouldBeSigned, pubKey, signature) {
+
+			loweredPubKey := strings.ToLower(pubKey)
+
+			if quorumMap[loweredPubKey] && !seen[loweredPubKey] {
+				seen[loweredPubKey] = true
+				okSignatures++
+			}
+
 		}
 
-		return localAfpParsed
-
 	}
 
-	quorum := GetQuorumUrlsAndPubkeys(epochHandler)
+	return okSignatures >= majority
 
-	resultChan := make(chan *structures.AggregatedFinalizationProof, len(quorum))
+}
 
-	var wg sync.WaitGroup
+func CheckAlrpChainValidity(firstBlockInThisEpochByPool *block.Block, epochHandler *structures.EpochHandler, position int) bool {
 
-	for _, node := range quorum {
-		wg.Add(1)
-		go func(endpoint string) {
-			defer wg.Done()
+	aggregatedLeadersRotationProofsRef := firstBlockInThisEpochByPool.ExtraData.AggregatedLeadersRotationProofs
 
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-			defer cancel()
+	arrayIndexer := 0
 
-			req, err := http.NewRequestWithContext(ctx, "GET", endpoint+"/aggregated_finalization_proof/"+blockID, nil)
-			if err != nil {
-				return
+	arrayForIteration := slices.Clone(epochHandler.LeadersSequence[:position])
+
+	slices.Reverse(arrayForIteration) // we need reversed version
+
+	bumpedWithPoolWhoCreatedAtLeastOneBlock := false
+
+	for _, poolPubKey := range arrayForIteration {
+
+		if alrpForThisPool, ok := aggregatedLeadersRotationProofsRef[poolPubKey]; ok {
+
+			signaIsOk := VerifyAggregatedLeaderRotationProof(poolPubKey, alrpForThisPool, epochHandler)
+
+			if signaIsOk {
+
+				arrayIndexer++
+
+				if alrpForThisPool.SkipIndex >= 0 {
+
+					bumpedWithPoolWhoCreatedAtLeastOneBlock = true
+
+					break
+
+				}
+
+			} else {
+
+				return false
+
 			}
 
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				return
-			}
-			defer resp.Body.Close()
+		} else {
 
-			if resp.StatusCode != http.StatusOK {
-				return
-			}
+			return false
 
-			var afp structures.AggregatedFinalizationProof
-			if err := json.NewDecoder(resp.Body).Decode(&afp); err != nil {
-				return
-			}
-
-			if VerifyAggregatedFinalizationProof(&afp, epochHandler) {
-				resultChan <- &afp
-			}
-		}(node.Url)
-	}
-
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
-
-	// Return first valid AFP
-	for res := range resultChan {
-		if res != nil {
-			return res
 		}
+
 	}
 
-	return nil
+	if arrayIndexer == position || bumpedWithPoolWhoCreatedAtLeastOneBlock {
+
+		return true
+
+	}
+
+	return false
+
 }
 
 func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResult {
@@ -443,99 +467,75 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 
 }
 
-func VerifyAggregatedLeaderRotationProof(
-	pubKeyOfSomePreviousLeader string,
-	proof *structures.AggregatedLeaderRotationProof,
-	epochHandler *structures.EpochHandler,
-) bool {
+func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandler *structures.EpochHandler) *structures.AggregatedFinalizationProof {
 
-	epochFullID := epochHandler.Hash + "#" + strconv.Itoa(epochHandler.Id)
+	localAfpAsBytes, err := globals.EPOCH_DATA.Get([]byte("AFP:"+blockID), nil)
 
-	dataThatShouldBeSigned := "LEADER_ROTATION_PROOF:" + pubKeyOfSomePreviousLeader + ":" +
-		proof.FirstBlockHash + ":" +
-		strconv.Itoa(proof.SkipIndex) + ":" +
-		proof.SkipHash + ":" +
-		epochFullID
+	if err == nil {
 
-	majority := GetQuorumMajority(epochHandler)
+		var localAfpParsed *structures.AggregatedFinalizationProof
 
-	okSignatures := 0
-	seen := make(map[string]bool)
-	quorumMap := make(map[string]bool)
+		err = json.Unmarshal(localAfpAsBytes, &localAfpParsed)
 
-	for _, pk := range epochHandler.Quorum {
-		quorumMap[strings.ToLower(pk)] = true
-	}
-
-	for pubKey, signature := range proof.Proofs {
-
-		if ed25519.VerifySignature(dataThatShouldBeSigned, pubKey, signature) {
-
-			loweredPubKey := strings.ToLower(pubKey)
-
-			if quorumMap[loweredPubKey] && !seen[loweredPubKey] {
-				seen[loweredPubKey] = true
-				okSignatures++
-			}
-
+		if err != nil {
+			return nil
 		}
 
+		return localAfpParsed
+
 	}
 
-	return okSignatures >= majority
+	quorum := GetQuorumUrlsAndPubkeys(epochHandler)
 
-}
+	resultChan := make(chan *structures.AggregatedFinalizationProof, len(quorum))
 
-func CheckAlrpChainValidity(firstBlockInThisEpochByPool *block.Block, epochHandler *structures.EpochHandler, position int) bool {
+	var wg sync.WaitGroup
 
-	aggregatedLeadersRotationProofsRef := firstBlockInThisEpochByPool.ExtraData.AggregatedLeadersRotationProofs
+	for _, node := range quorum {
+		wg.Add(1)
+		go func(endpoint string) {
+			defer wg.Done()
 
-	arrayIndexer := 0
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
 
-	arrayForIteration := slices.Clone(epochHandler.LeadersSequence[:position])
-
-	slices.Reverse(arrayForIteration) // we need reversed version
-
-	bumpedWithPoolWhoCreatedAtLeastOneBlock := false
-
-	for _, poolPubKey := range arrayForIteration {
-
-		if alrpForThisPool, ok := aggregatedLeadersRotationProofsRef[poolPubKey]; ok {
-
-			signaIsOk := VerifyAggregatedLeaderRotationProof(poolPubKey, alrpForThisPool, epochHandler)
-
-			if signaIsOk {
-
-				arrayIndexer++
-
-				if alrpForThisPool.SkipIndex >= 0 {
-
-					bumpedWithPoolWhoCreatedAtLeastOneBlock = true
-
-					break
-
-				}
-
-			} else {
-
-				return false
-
+			req, err := http.NewRequestWithContext(ctx, "GET", endpoint+"/aggregated_finalization_proof/"+blockID, nil)
+			if err != nil {
+				return
 			}
 
-		} else {
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return
+			}
+			defer resp.Body.Close()
 
-			return false
+			if resp.StatusCode != http.StatusOK {
+				return
+			}
 
+			var afp structures.AggregatedFinalizationProof
+			if err := json.NewDecoder(resp.Body).Decode(&afp); err != nil {
+				return
+			}
+
+			if VerifyAggregatedFinalizationProof(&afp, epochHandler) {
+				resultChan <- &afp
+			}
+		}(node.Url)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	// Return first valid AFP
+	for res := range resultChan {
+		if res != nil {
+			return res
 		}
-
 	}
 
-	if arrayIndexer == position || bumpedWithPoolWhoCreatedAtLeastOneBlock {
-
-		return true
-
-	}
-
-	return false
-
+	return nil
 }
