@@ -19,16 +19,14 @@ import (
 
 // ANSI escape codes for text colors
 const (
-	RESET_COLOR       = "\033[0m"
-	RED_COLOR         = "\033[31;1m"
-	DEEP_GREEN_COLOR  = "\u001b[38;5;23m"
-	DEEP_ORANGE_COLOR = "\u001b[38;5;202m"
-	GREEN_COLOR       = "\033[32;1m"
-	YELLOW_COLOR      = "\033[33m"
-	BLUE_COLOR        = "\033[34;1m"
-	MAGENTA_COLOR     = "\033[38;5;99m"
-	CYAN_COLOR        = "\033[36;1m"
-	WHITE_COLOR       = "\033[37;1m"
+	RESET_COLOR      = "\033[0m"
+	RED_COLOR        = "\033[31;1m"
+	DEEP_GREEN_COLOR = "\u001b[38;5;23m"
+	GREEN_COLOR      = "\033[32;1m"
+	YELLOW_COLOR     = "\033[33m"
+	MAGENTA_COLOR    = "\033[38;5;99m"
+	CYAN_COLOR       = "\033[36;1m"
+	WHITE_COLOR      = "\033[37;1m"
 )
 
 var shutdownOnce sync.Once

@@ -20,11 +20,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"os/user"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -40,11 +38,9 @@ func main() {
 
 	klyntarBannerPrint()
 
-	prepareRequiredPaths()
-
 	//_____________________________________________________CONFIG_PROCESS____________________________________________________
 
-	configsRawJson, readError := os.ReadFile(globals.CONFIGS_PATH + "/configs.json")
+	configsRawJson, readError := os.ReadFile(globals.CHAINDATA_PATH + "/configs.json")
 
 	if readError != nil {
 
@@ -60,7 +56,7 @@ func main() {
 
 	//_____________________________________________________READ GENESIS______________________________________________________
 
-	genesisRawJson, readError := os.ReadFile(globals.GENESIS_PATH + "/genesis.json")
+	genesisRawJson, readError := os.ReadFile(globals.CHAINDATA_PATH + "/genesis.json")
 
 	if readError != nil {
 
@@ -71,20 +67,6 @@ func main() {
 	if err := json.Unmarshal(genesisRawJson, &globals.GENESIS); err != nil {
 
 		panic("Error with genesis parsing: " + err.Error())
-
-	}
-
-	//_________________________________________PREPARE DIRECTORIES FOR CHAINDATA_____________________________________________
-
-	// Check if exists
-	if _, err := os.Stat(globals.CHAINDATA_PATH); os.IsNotExist(err) {
-
-		// If no - create
-		if err := os.MkdirAll(globals.CHAINDATA_PATH, os.ModePerm); err != nil {
-
-			panic("Error with creating directory for chaindata: " + err.Error())
-
-		}
 
 	}
 
@@ -126,33 +108,6 @@ func klyntarBannerPrint() {
 	finalArt += "\x1b[0m\n"
 
 	fmt.Println(finalArt)
-
-}
-
-// Function to resolve the paths to 3 main directories - CHAINDATA, GENESIS, CONFIGS
-func prepareRequiredPaths() {
-
-	baseDir := os.Getenv("SYMBIOTE_DIR")
-
-	if baseDir == "" {
-
-		log.Fatal("SYMBIOTE_DIR environment variable is not set")
-
-	}
-
-	baseDir = strings.TrimRight(baseDir, "/")
-
-	if !filepath.IsAbs(baseDir) {
-
-		log.Fatalf("SYMBIOTE_DIR must be an absolute path, got: %s", baseDir)
-
-	}
-
-	globals.CHAINDATA_PATH = baseDir + "/CHAINDATA"
-
-	globals.GENESIS_PATH = baseDir + "/GENESIS"
-
-	globals.CONFIGS_PATH = baseDir + "/CONFIGS"
 
 }
 
