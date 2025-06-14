@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -122,13 +123,13 @@ func EpochRotationThread() {
 
 						aefpRaw, err := globals.EPOCH_DATA.Get(keyValue, nil)
 
-						var aefp *structures.AggregatedEpochFinalizationProof
+						var aefp structures.AggregatedEpochFinalizationProof
 
-						errParse := json.Unmarshal(aefpRaw, aefp)
+						errParse := json.Unmarshal(aefpRaw, &aefp)
 
 						if err == nil && errParse == nil {
 
-							AEFP_AND_FIRST_BLOCK_DATA.Aefp = aefp
+							AEFP_AND_FIRST_BLOCK_DATA.Aefp = &aefp
 
 						} else {
 
@@ -166,6 +167,18 @@ func EpochRotationThread() {
 						}
 
 					}
+
+				}
+
+				fmt.Println("DEBUG: HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+
+				if pretty, err := json.MarshalIndent(AEFP_AND_FIRST_BLOCK_DATA, "", "  "); err == nil {
+
+					fmt.Println("DEBUG: Received proposition =>\n", string(pretty))
+
+				} else {
+
+					fmt.Printf("Failed to marshal: %v\n", err)
 
 				}
 
