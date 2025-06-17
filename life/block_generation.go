@@ -39,7 +39,7 @@ func BlocksGenerationThread() {
 
 		generateBlock()
 
-		time.Sleep(time.Duration(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.BlockTime) * time.Millisecond)
+		time.Sleep(1 * time.Second)
 
 	}
 
@@ -192,7 +192,7 @@ func getAggregatedEpochFinalizationProof(epochHandler *structures.EpochHandler) 
 		go func(endpoint string) {
 			defer wg.Done()
 
-			reqCtx, reqCancel := context.WithTimeout(ctx, 2*time.Second)
+			reqCtx, reqCancel := context.WithTimeout(ctx, time.Second)
 			defer reqCancel()
 
 			finalURL := endpoint + "/aggregated_epoch_finalization_proof/" + strconv.Itoa(previousEpochIndex)

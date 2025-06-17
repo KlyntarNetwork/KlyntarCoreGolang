@@ -167,7 +167,7 @@ func NewEpochProposerThread() {
 					defer wg.Done()
 
 					body, _ := json.Marshal(epochFinishPropositionRequest)
-					ctxReq, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+					ctxReq, cancel := context.WithTimeout(context.Background(), time.Second)
 					defer cancel()
 
 					req, _ := http.NewRequestWithContext(ctxReq, "POST", desc.Url+"/epoch_proposition", bytes.NewReader(body))
@@ -251,8 +251,6 @@ func NewEpochProposerThread() {
 
 			close(resultsCh)
 			close(upgradeCh)
-
-			fmt.Println("DEBUG: After grabbing results")
 
 			for result := range resultsCh {
 				LAST_LEADER_PROPOSITION.QuorumAgreements[result.PubKey] = result.Sig

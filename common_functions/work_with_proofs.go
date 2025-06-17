@@ -75,7 +75,7 @@ func GetBlock(epochIndex int, blockCreator string, index uint, epochHandler *str
 
 			defer wg.Done()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
 			url := endpoint + "/block/" + blockID
@@ -303,7 +303,7 @@ func GetFirstBlockInEpoch(epochHandler *structures.EpochHandler) *FirstBlockResu
 			go func(nodeUrl string) {
 				defer wg.Done()
 
-				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 				defer cancel()
 
 				req, err := http.NewRequestWithContext(ctx, "GET", nodeUrl+"/first_block_assumption/"+strconv.Itoa(epochHandler.Id), nil)
@@ -496,7 +496,7 @@ func GetVerifiedAggregatedFinalizationProofByBlockId(blockID string, epochHandle
 		go func(endpoint string) {
 			defer wg.Done()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
 			req, err := http.NewRequestWithContext(ctx, "GET", endpoint+"/aggregated_finalization_proof/"+blockID, nil)

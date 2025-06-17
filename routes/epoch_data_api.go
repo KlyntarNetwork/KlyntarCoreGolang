@@ -110,7 +110,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 	defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-	epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+	epochHandler := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
 	epochIndex := epochHandler.Id
 
@@ -142,7 +142,7 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 
 		if proposition.AfpForFirstBlock.BlockId == blockID && proposition.LastBlockProposition.Index >= 0 {
 
-			if common_functions.VerifyAggregatedFinalizationProof(&proposition.AfpForFirstBlock, &epochHandler) {
+			if common_functions.VerifyAggregatedFinalizationProof(&proposition.AfpForFirstBlock, epochHandler) {
 
 				hashOfFirstBlock = proposition.AfpForFirstBlock.BlockHash
 
@@ -203,8 +203,6 @@ func EpochProposition(ctx *fasthttp.RequestCtx) {
 	} else {
 
 		sendJson(ctx, ErrMsg{Err: "Too early"})
-
-		return
 
 	}
 

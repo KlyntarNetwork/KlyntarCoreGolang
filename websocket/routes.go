@@ -24,7 +24,7 @@ func GetFinalizationProof(parsedRequest WsFinalizationProofRequest, connection *
 
 	defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-	epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+	epochHandler := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
 	epochIndex := epochHandler.Id
 
@@ -132,7 +132,7 @@ func GetFinalizationProof(parsedRequest WsFinalizationProofRequest, connection *
 
 					alrpChainIsOk := common_functions.CheckAlrpChainValidity(
 
-						&parsedRequest.Block, &epochHandler, positionOfBlockCreatorInLeadersSequence,
+						&parsedRequest.Block, epochHandler, positionOfBlockCreatorInLeadersSequence,
 					)
 
 					if !aefpIsOk || !alrpChainIsOk {
@@ -151,7 +151,7 @@ func GetFinalizationProof(parsedRequest WsFinalizationProofRequest, connection *
 
 					// Check if AFP inside related to previous block AFP
 
-					if previousBlockId == parsedRequest.PreviousBlockAfp.BlockId && common_functions.VerifyAggregatedFinalizationProof(&parsedRequest.PreviousBlockAfp, &epochHandler) {
+					if previousBlockId == parsedRequest.PreviousBlockAfp.BlockId && common_functions.VerifyAggregatedFinalizationProof(&parsedRequest.PreviousBlockAfp, epochHandler) {
 
 						// In case it's request for the third block, we'll receive AFP for the second block which includes .prevBlockHash field
 						// This will be the assumption of hash of the first block in epoch
@@ -273,7 +273,7 @@ func GetLeaderRotationProof(parsedRequest WsLeaderRotationProofRequest, connecti
 
 	defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-	epochHandler := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+	epochHandler := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
 	epochIndex := epochHandler.Id
 
@@ -351,7 +351,7 @@ func GetLeaderRotationProof(parsedRequest WsLeaderRotationProofRequest, connecti
 
 			if propSkipData.Index > -1 && propSkipData.Hash == propSkipData.Afp.BlockHash && propSkipData.Index == indexOfBlockInAfp {
 
-				afpIsOk = common_functions.VerifyAggregatedFinalizationProof(&propSkipData.Afp, &epochHandler)
+				afpIsOk = common_functions.VerifyAggregatedFinalizationProof(&propSkipData.Afp, epochHandler)
 
 			} else {
 
@@ -378,7 +378,7 @@ func GetLeaderRotationProof(parsedRequest WsLeaderRotationProofRequest, connecti
 
 					blockIdsTheSame := parsedRequest.AfpForFirstBlock.BlockId == blockIdOfFirstBlock
 
-					if blockIdsTheSame && common_functions.VerifyAggregatedFinalizationProof(&parsedRequest.AfpForFirstBlock, &epochHandler) {
+					if blockIdsTheSame && common_functions.VerifyAggregatedFinalizationProof(&parsedRequest.AfpForFirstBlock, epochHandler) {
 
 						firstBlockHash := parsedRequest.AfpForFirstBlock.BlockHash
 
