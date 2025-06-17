@@ -299,7 +299,9 @@ func GetCurrentLeader() CurrentLeaderData {
 
 	defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-	currentLeaderPubKey := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler.LeadersSequence[globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler.CurrentLeaderIndex]
+	currentLeaderIndex := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler.CurrentLeaderIndex
+
+	currentLeaderPubKey := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler.LeadersSequence[currentLeaderIndex]
 
 	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
 

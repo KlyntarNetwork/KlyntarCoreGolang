@@ -218,11 +218,11 @@ func BlocksSharingAndProofsGrabingThread() {
 
 		epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
-		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
-
 		currentLeaderPubKey := epochHandlerRef.LeadersSequence[epochHandlerRef.CurrentLeaderIndex]
 
-		if currentLeaderPubKey != globals.CONFIGURATION.PublicKey {
+		if currentLeaderPubKey != globals.CONFIGURATION.PublicKey || !utils.EpochStillFresh(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
+
+			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
 			time.Sleep(1 * time.Second)
 
@@ -286,6 +286,8 @@ func BlocksSharingAndProofsGrabingThread() {
 		}
 
 		runFinalizationProofsGrabbing(epochHandlerRef)
+
+		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
 	}
 

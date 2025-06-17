@@ -123,7 +123,7 @@ func NewEpochProposerThread() {
 
 			}
 
-			var epochFinishProposition structures.EpochFinishRequest
+			var epochFinishPropositionRequest structures.EpochFinishRequest
 
 			if _, err := globals.EPOCH_DATA.Get([]byte("AEFP:"+strconv.Itoa(epochIndex)), nil); err != nil {
 
@@ -132,11 +132,20 @@ func NewEpochProposerThread() {
 				var afpForFirstBlock structures.AggregatedFinalizationProof
 				json.Unmarshal(afpForFirstBlockRaw, &afpForFirstBlock)
 
-				epochFinishProposition = structures.EpochFinishRequest{
+				epochFinishPropositionRequest = structures.EpochFinishRequest{
 					CurrentLeader:        LAST_LEADER_PROPOSITION.LeaderIndex,
 					LastBlockProposition: localVotingData,
 					AfpForFirstBlock:     afpForFirstBlock,
 				}
+
+			} else {
+
+				globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
+
+				time.Sleep(1 * time.Second)
+
+				continue
+
 			}
 
 			quorumMembers := common_functions.GetQuorumUrlsAndPubkeys(epochHandlerRef)
@@ -157,7 +166,7 @@ func NewEpochProposerThread() {
 				go func(desc structures.QuorumMemberData) {
 					defer wg.Done()
 
-					body, _ := json.Marshal(epochFinishProposition)
+					body, _ := json.Marshal(epochFinishPropositionRequest)
 					ctxReq, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 					defer cancel()
 
@@ -191,10 +200,10 @@ func NewEpochProposerThread() {
 
 					case "OK":
 						fmt.Println("DEBUG: Received OK")
-						dataToSign := "EPOCH_DONE:" + strconv.Itoa(epochFinishProposition.CurrentLeader) + ":" +
-							strconv.Itoa(epochFinishProposition.LastBlockProposition.Index) + ":" +
-							epochFinishProposition.LastBlockProposition.Hash + ":" +
-							epochFinishProposition.AfpForFirstBlock.BlockHash + ":" +
+						dataToSign := "EPOCH_DONE:" + strconv.Itoa(epochFinishPropositionRequest.CurrentLeader) + ":" +
+							strconv.Itoa(epochFinishPropositionRequest.LastBlockProposition.Index) + ":" +
+							epochFinishPropositionRequest.LastBlockProposition.Hash + ":" +
+							epochFinishPropositionRequest.AfpForFirstBlock.BlockHash + ":" +
 							epochFullId
 
 						var resultAsStruct structures.EpochFinishResponseOk
@@ -238,11 +247,11 @@ func NewEpochProposerThread() {
 				}(descriptor)
 			}
 
-			go func() {
-				wg.Wait()
-				close(resultsCh)
-				close(upgradeCh)
-			}()
+			wg.Wait()
+
+			close(resultsCh)
+			close(upgradeCh)
+
 			fmt.Println("DEBUG: After grabbing results")
 
 			for result := range resultsCh {
@@ -268,10 +277,10 @@ func NewEpochProposerThread() {
 			if len(LAST_LEADER_PROPOSITION.QuorumAgreements) >= majority {
 
 				aggregatedEpochFinalizationProof := structures.AggregatedEpochFinalizationProof{
-					LastLeader:                   uint(epochFinishProposition.CurrentLeader),
-					LastIndex:                    uint(epochFinishProposition.LastBlockProposition.Index),
-					LastHash:                     epochFinishProposition.LastBlockProposition.Hash,
-					HashOfFirstBlockByLastLeader: epochFinishProposition.AfpForFirstBlock.BlockHash,
+					LastLeader:                   uint(epochFinishPropositionRequest.CurrentLeader),
+					LastIndex:                    uint(epochFinishPropositionRequest.LastBlockProposition.Index),
+					LastHash:                     epochFinishPropositionRequest.LastBlockProposition.Hash,
+					HashOfFirstBlockByLastLeader: epochFinishPropositionRequest.AfpForFirstBlock.BlockHash,
 					Proofs:                       LAST_LEADER_PROPOSITION.QuorumAgreements,
 				}
 

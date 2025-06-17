@@ -237,119 +237,126 @@ func EpochRotationThread() {
 
 						globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-						globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
+						if globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.TryLock() {
 
-						if okSignatures >= majority && int64(epochHandlerRef.Id) > latestBatchIndex {
+							if okSignatures >= majority && int64(epochHandlerRef.Id) > latestBatchIndex {
 
-							latestBatchIndex = int64(epochHandlerRef.Id)
+								latestBatchIndex = int64(epochHandlerRef.Id)
 
-							delayedTransactionsToExecute = firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions
+								delayedTransactionsToExecute = firstBlock.ExtraData.DelayedTransactionsBatch.DelayedTransactions
 
-						}
+							}
 
-						keyBytes := []byte("EPOCH_HANDLER:" + strconv.Itoa(epochHandlerRef.Id))
+							fmt.Println("DEBUG: THEN HERE")
 
-						valBytes, _ := json.Marshal(epochHandlerRef)
+							keyBytes := []byte("EPOCH_HANDLER:" + strconv.Itoa(epochHandlerRef.Id))
 
-						globals.EPOCH_DATA.Put(keyBytes, valBytes, nil)
+							valBytes, _ := json.Marshal(epochHandlerRef)
 
-						var daoVotingContractCalls, allTheRestContractCalls []map[string]string
+							globals.EPOCH_DATA.Put(keyBytes, valBytes, nil)
 
-						atomicBatch := new(leveldb.Batch)
+							var daoVotingContractCalls, allTheRestContractCalls []map[string]string
 
-						for _, delayedTransaction := range delayedTransactionsToExecute {
+							atomicBatch := new(leveldb.Batch)
 
-							if delayedTxType, ok := delayedTransaction["type"]; ok {
+							for _, delayedTransaction := range delayedTransactionsToExecute {
 
-								if delayedTxType == "votingAccept" {
+								if delayedTxType, ok := delayedTransaction["type"]; ok {
 
-									daoVotingContractCalls = append(daoVotingContractCalls, delayedTransaction)
+									if delayedTxType == "votingAccept" {
 
-								} else {
+										daoVotingContractCalls = append(daoVotingContractCalls, delayedTransaction)
 
-									allTheRestContractCalls = append(allTheRestContractCalls, delayedTransaction)
+									} else {
+
+										allTheRestContractCalls = append(allTheRestContractCalls, delayedTransaction)
+
+									}
 
 								}
 
 							}
 
+							delayedTransactionsOrderByPriority := append(daoVotingContractCalls, allTheRestContractCalls...)
+
+							// Execute delayed transactions
+							for _, delayedTransaction := range delayedTransactionsOrderByPriority {
+
+								ExecuteDelayedTransaction(delayedTransaction)
+
+							}
+
+							for key, value := range globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.Cache {
+
+								valBytes, _ := json.Marshal(value)
+
+								atomicBatch.Put([]byte(key), valBytes)
+
+							}
+
+							utils.LogWithTime("Dealyed txs were executed for epoch on AT: "+epochFullID, utils.GREEN_COLOR)
+
+							//_______________________ Update the values for new epoch _______________________
+
+							// Now, after the execution we can change the epoch id and get the new hash + prepare new temporary object
+
+							nextEpochId := epochHandlerRef.Id + 1
+
+							nextEpochHash := utils.Blake3(AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash)
+
+							nextEpochQuorumSize := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.QuorumSize
+
+							nextEpochHandler := structures.EpochHandler{
+								Id:                 nextEpochId,
+								Hash:               nextEpochHash,
+								PoolsRegistry:      epochHandlerRef.PoolsRegistry,
+								ShardsRegistry:     epochHandlerRef.ShardsRegistry,
+								Quorum:             common_functions.GetCurrentEpochQuorum(epochHandlerRef, nextEpochQuorumSize, nextEpochHash),
+								LeadersSequence:    []string{},
+								StartTimestamp:     epochHandlerRef.StartTimestamp + uint64(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.EpochTime),
+								CurrentLeaderIndex: 0,
+							}
+
+							common_functions.SetLeadersSequence(&nextEpochHandler, nextEpochHash)
+
+							atomicBatch.Put([]byte("LATEST_BATCH_INDEX:"), []byte(strconv.Itoa(int(latestBatchIndex))))
+
+							globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler = nextEpochHandler
+
+							jsonedHandler, _ := json.Marshal(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler)
+
+							atomicBatch.Put([]byte("AT"), jsonedHandler)
+
+							// Clean cache
+
+							clear(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.Cache)
+
+							// Clean in-memory helpful object
+
+							AEFP_AND_FIRST_BLOCK_DATA = FirstBlockDataWithAefp{}
+
+							globals.APPROVEMENT_THREAD_METADATA.Write(atomicBatch, nil)
+
+							utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)
+
+							globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Unlock()
+
+							//_______________________Check the version required for the next epoch________________________
+
+							if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
+
+								utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
+
+								utils.GracefulShutdown()
+
+							}
+
 						}
 
-						delayedTransactionsOrderByPriority := append(daoVotingContractCalls, allTheRestContractCalls...)
-
-						// Execute delayed transactions
-						for _, delayedTransaction := range delayedTransactionsOrderByPriority {
-
-							ExecuteDelayedTransaction(delayedTransaction)
-
-						}
-
-						for key, value := range globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.Cache {
-
-							valBytes, _ := json.Marshal(value)
-
-							atomicBatch.Put([]byte(key), valBytes)
-
-						}
-
-						utils.LogWithTime("Dealyed txs were executed for epoch on AT: "+epochFullID, utils.GREEN_COLOR)
-
-						//_______________________ Update the values for new epoch _______________________
-
-						// Now, after the execution we can change the epoch id and get the new hash + prepare new temporary object
-
-						nextEpochId := epochHandlerRef.Id + 1
-
-						nextEpochHash := utils.Blake3(AEFP_AND_FIRST_BLOCK_DATA.FirstBlockHash)
-
-						nextEpochQuorumSize := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.QuorumSize
-
-						nextEpochHandler := structures.EpochHandler{
-							Id:                 nextEpochId,
-							Hash:               nextEpochHash,
-							PoolsRegistry:      epochHandlerRef.PoolsRegistry,
-							ShardsRegistry:     epochHandlerRef.ShardsRegistry,
-							Quorum:             common_functions.GetCurrentEpochQuorum(epochHandlerRef, nextEpochQuorumSize, nextEpochHash),
-							LeadersSequence:    []string{},
-							StartTimestamp:     epochHandlerRef.StartTimestamp + uint64(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.EpochTime),
-							CurrentLeaderIndex: 0,
-						}
-
-						common_functions.SetLeadersSequence(&nextEpochHandler, nextEpochHash)
-
-						atomicBatch.Put([]byte("LATEST_BATCH_INDEX:"), []byte(strconv.Itoa(int(latestBatchIndex))))
-
-						globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler = nextEpochHandler
-
-						jsonedHandler, _ := json.Marshal(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler)
-
-						atomicBatch.Put([]byte("AT"), jsonedHandler)
-
-						// Clean cache
-
-						clear(globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.Cache)
-
-						// Clean in-memory helpful object
-
-						AEFP_AND_FIRST_BLOCK_DATA = FirstBlockDataWithAefp{}
-
-						globals.APPROVEMENT_THREAD_METADATA.Write(atomicBatch, nil)
-
-						utils.LogWithTime("Epoch on approvement thread was updated => "+nextEpochHash+"#"+strconv.Itoa(nextEpochId), utils.GREEN_COLOR)
-
-						globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Unlock()
-
-						//_______________________Check the version required for the next epoch________________________
-
-						if utils.IsMyCoreVersionOld(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
-
-							utils.LogWithTime("New version detected on APPROVEMENT_THREAD. Please, upgrade your node software", utils.YELLOW_COLOR)
-
-							utils.GracefulShutdown()
-
-						}
 					}
+
 				}
+
 			}
 
 		} else {

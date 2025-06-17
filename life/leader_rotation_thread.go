@@ -28,27 +28,27 @@ func LeaderRotationThread() {
 
 		globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
-		epochHandler := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
+		epochHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler
 
-		haveNextCandidate := epochHandler.CurrentLeaderIndex+1 < len(epochHandler.LeadersSequence)
+		haveNextCandidate := epochHandlerRef.CurrentLeaderIndex+1 < len(epochHandlerRef.LeadersSequence)
 
 		if haveNextCandidate && timeIsOutForCurrentLeader(&globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler) {
 
-			storedEpochIndex := epochHandler.Id
+			storedEpochIndex := epochHandlerRef.Id
 
 			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
 			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Lock()
 
-			threadHandler := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler
+			threadMetadataHandlerRef := &globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler
 
-			if storedEpochIndex == threadHandler.EpochHandler.Id {
+			if storedEpochIndex == threadMetadataHandlerRef.EpochHandler.Id {
 
-				threadHandler.EpochHandler.CurrentLeaderIndex++
+				threadMetadataHandlerRef.EpochHandler.CurrentLeaderIndex++
 
 				// Store the updated AT
 
-				jsonedHandler, errMarshal := json.Marshal(threadHandler)
+				jsonedHandler, errMarshal := json.Marshal(threadMetadataHandlerRef)
 
 				if errMarshal != nil {
 
@@ -71,7 +71,9 @@ func LeaderRotationThread() {
 			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.Unlock()
 
 		} else {
+
 			globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
+
 		}
 
 		time.Sleep(200 * time.Millisecond)
