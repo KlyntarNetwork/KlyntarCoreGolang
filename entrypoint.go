@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 	"strconv"
 
@@ -21,10 +19,6 @@ import (
 func RunBlockchain() {
 
 	prepareBlockchain()
-
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
 
 	//_________________________ RUN SEVERAL THREADS _________________________
 
