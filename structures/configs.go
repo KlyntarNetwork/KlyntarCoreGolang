@@ -5,17 +5,17 @@ type NodeLevelConfig struct {
 	PrivateKey                                          string                    `json:"PRIVATE_KEY"`
 	MyKlyInfrastructure                                 MyKlyInfrastructureConfig `json:"MY_KLY_INFRASTRUCTURE"`
 	StoreBlocksInLocalDatabase                          bool                      `json:"STORE_BLOCKS_IN_LOCAL_DATABASE"`
-	PointOfDistributionWS                               string                    `json:"POINT_OF_DISTRIBUTION_WS"`
-	PointOfDistributionHTTP                             string                    `json:"POINT_OF_DISTRIBUTION_HTTP"`
+	PointOfDistributionWs                               string                    `json:"POINT_OF_DISTRIBUTION_WS"`
+	PointOfDistributionHttp                             string                    `json:"POINT_OF_DISTRIBUTION_HTTP"`
 	ExtraDataToBlock                                    map[string]string         `json:"EXTRA_DATA_TO_BLOCK"`
-	WaitIfCantFindAeFp                                  int                       `json:"WAIT_IF_CANT_FIND_AEFP"`
+	WaitIfCantFindAefp                                  int                       `json:"WAIT_IF_CANT_FIND_AEFP"`
 	PollingTimeoutToFindAeFpForQuorumThread             int                       `json:"POLLING_TIMEOUT_TO_FIND_AEFP_FOR_QUORUM_THREAD"`
 	TimeoutToFindTempInfoAboutLastBlocksByPreviousPools int                       `json:"TIMEOUT_TO_FIND_TEMP_INFO_ABOUT_LAST_BLOCKS_BY_PREVIOUS_POOLS"`
 	TxMemPoolSize                                       int                       `json:"TXS_MEMPOOL_SIZE"`
 	BootstrapNodes                                      []string                  `json:"BOOTSTRAP_NODES"`
 	MaxConnections                                      int                       `json:"MAX_CONNECTIONS"`
 	MyHostname                                          string                    `json:"MY_HOSTNAME"`
-	RouteTTL                                            RouteTTLConfig            `json:"ROUTE_TTL"`
+	RouteTtl                                            RoutesTtlConfig           `json:"ROUTE_TTL"`
 	RouteTriggers                                       RouteTriggersConfig       `json:"ROUTE_TRIGGERS"`
 	Plugins                                             []string                  `json:"PLUGINS"`
 	Interface                                           string                    `json:"INTERFACE"`
@@ -24,7 +24,7 @@ type NodeLevelConfig struct {
 	WebSocketPort                                       int                       `json:"WEBSOCKET_PORT"`
 	PayloadSize                                         int                       `json:"PAYLOAD_SIZE"`
 	MaxPayloadSize                                      int                       `json:"MAX_PAYLOAD_SIZE"`
-	TLS                                                 TLSConfig                 `json:"TLS"`
+	Tls                                                 TlsConfig                 `json:"TLS"`
 	AnywayPushToMempool                                 bool                      `json:"ANYWAY_PUSH_TO_MEMPOOL"`
 	MempoolSecretKey                                    string                    `json:"MEMPOOL_SECRET_KEY"`
 	MempoolNodes                                        []string                  `json:"MEMPOOL_NODES"`
@@ -35,11 +35,11 @@ type MyKlyInfrastructureConfig struct {
 	Contact   map[string]string `json:"contact"`
 }
 
-type RouteTTLConfig struct {
-	API RouteAPIConfig `json:"API"`
+type RoutesTtlConfig struct {
+	Api RoutesApiConfig `json:"API"`
 }
 
-type RouteAPIConfig struct {
+type RoutesApiConfig struct {
 	FromState              int `json:"FROM_STATE"`
 	Block                  int `json:"BLOCK"`
 	PoolStats              int `json:"POOL_STATS"`
@@ -52,7 +52,7 @@ type RouteAPIConfig struct {
 	DataAboutEpochOnThread int `json:"DATA_ABOUT_EPOCH_ON_THREAD"`
 	GetCurrentShardLeaders int `json:"GET_CURRENT_SHARD_LEADERS"`
 	GetEpochByIndex        int `json:"GET_EPOCH_BY_INDEX"`
-	KlyEVMMetadata         int `json:"KLY_EVM_METADATA"`
+	KlyEvmMetadata         int `json:"KLY_EVM_METADATA"`
 	QuorumUrlsAndPubkeys   int `json:"QUORUM_URLS_AND_PUBKEYS"`
 	VtTotalStats           int `json:"VT_TOTAL_STATS"`
 	VtStatsPerEpoch        int `json:"VT_STATS_PER_EPOCH"`
@@ -60,7 +60,7 @@ type RouteAPIConfig struct {
 
 type RouteTriggersConfig struct {
 	Main RouteMainConfig       `json:"MAIN"`
-	Api  RouteAPITriggerConfig `json:"API"`
+	Api  RouteApiTriggerConfig `json:"API"`
 }
 
 type RouteMainConfig struct {
@@ -71,7 +71,7 @@ type RouteMainConfig struct {
 	NewNodes                                int `json:"NEW_NODES"`
 }
 
-type RouteAPITriggerConfig struct {
+type RouteApiTriggerConfig struct {
 	FromState              int `json:"FROM_STATE"`
 	PoolStats              int `json:"POOL_STATS"`
 	Block                  int `json:"BLOCK"`
@@ -89,7 +89,7 @@ type RouteAPITriggerConfig struct {
 	KlyEvmMetadata         int `json:"KLY_EVM_METADATA"`
 }
 
-type TLSConfig struct {
+type TlsConfig struct {
 	Enabled bool `json:"ENABLED"`
 	Configs struct {
 		KeyFileName  string `json:"key_file_name"`

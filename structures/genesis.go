@@ -64,7 +64,7 @@ type PoolStorage struct {
 	TotalStakedKly BigInt            `json:"totalStakedKly"`
 	TotalStakedUno BigInt            `json:"totalStakedUno"`
 	Stakers        map[string]Staker `json:"stakers"`
-	PoolURL        string            `json:"poolURL"`
+	PoolUrl        string            `json:"poolURL"`
 	WssPoolUrl     string            `json:"wssPoolURL"`
 	Activated      bool              `json:"activated"`
 }

@@ -47,7 +47,7 @@ func CreateStakingPool(delayedTransaction map[string]string) bool {
 					Uno: structures.BigInt{Int: big.NewInt(0)},
 				},
 			},
-			PoolURL:    poolURL,
+			PoolUrl:    poolURL,
 			WssPoolUrl: wssPoolURL,
 		}
 
@@ -77,7 +77,7 @@ func UpdateStakingPool(delayedTransaction map[string]string) bool {
 
 		poolStorage.Activated = activated
 		poolStorage.Percentage = percentage
-		poolStorage.PoolURL = poolURL
+		poolStorage.PoolUrl = poolURL
 		poolStorage.WssPoolUrl = wssPoolURL
 
 		requiredStake := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.NetworkParameters.ValidatorStake
