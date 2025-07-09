@@ -3,7 +3,7 @@ package structures
 type ApprovementThreadMetadataHandler struct {
 	CoreMajorVersion  int                     `json:"coreMajorVersion"`
 	NetworkParameters NetworkParameters       `json:"networkParameters"`
-	EpochHandler      EpochHandler            `json:"epoch"`
+	EpochDataHandler  EpochDataHandler        `json:"epoch"`
 	Cache             map[string]*PoolStorage `json:"-"`
 }
 

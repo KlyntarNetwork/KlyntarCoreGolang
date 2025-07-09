@@ -289,7 +289,7 @@ func IsMyCoreVersionOld(thread *structures.ApprovementThreadMetadataHandler) boo
 
 func EpochStillFresh(thread *structures.ApprovementThreadMetadataHandler) bool {
 
-	return (thread.EpochHandler.StartTimestamp + uint64(thread.NetworkParameters.EpochTime)) > uint64(GetUTCTimestampInMilliSeconds())
+	return (thread.EpochDataHandler.StartTimestamp + uint64(thread.NetworkParameters.EpochTime)) > uint64(GetUTCTimestampInMilliSeconds())
 
 }
 
@@ -299,9 +299,9 @@ func GetCurrentLeader() CurrentLeaderData {
 
 	defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
 
-	currentLeaderIndex := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler.CurrentLeaderIndex
+	currentLeaderIndex := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochDataHandler.CurrentLeaderIndex
 
-	currentLeaderPubKey := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochHandler.LeadersSequence[currentLeaderIndex]
+	currentLeaderPubKey := globals.APPROVEMENT_THREAD_METADATA_HANDLER.Handler.EpochDataHandler.LeadersSequence[currentLeaderIndex]
 
 	if currentLeaderPubKey == globals.CONFIGURATION.PublicKey {
 
