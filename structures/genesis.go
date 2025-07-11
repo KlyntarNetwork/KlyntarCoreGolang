@@ -66,7 +66,6 @@ type PoolStorage struct {
 	Stakers        map[string]Staker `json:"stakers"`
 	PoolUrl        string            `json:"poolURL"`
 	WssPoolUrl     string            `json:"wssPoolURL"`
-	Activated      bool              `json:"activated"`
 }
 
 type Genesis struct {

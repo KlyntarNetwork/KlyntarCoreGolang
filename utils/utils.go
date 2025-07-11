@@ -98,7 +98,7 @@ func OpenWebsocketConnectionsWithQuorum(quorum []string, wsConnMap map[string]*w
 		}
 
 		// Skip inactive validators or those without WebSocket URL
-		if !pool.Activated || pool.WssPoolUrl == "" {
+		if pool.WssPoolUrl == "" {
 			continue
 		}
 
