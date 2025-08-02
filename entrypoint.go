@@ -37,6 +37,9 @@ func RunBlockchain() {
 	//✅5.Start a separate thread to work with voting for blocks in a sync way (for security)
 	go life.LeaderRotationThread()
 
+	//✅ 6.This thread will be responsible to find the first block in each epoch
+	go life.FirstBlockInEpochMonitor()
+
 	//___________________ RUN SERVERS - WEBSOCKET AND HTTP __________________
 
 	go websocket.CreateWebsocketServer()
