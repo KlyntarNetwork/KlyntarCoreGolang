@@ -12,6 +12,7 @@ import (
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+
 	"github.com/gorilla/websocket"
 	"github.com/syndtr/goleveldb/leveldb"
 	"lukechampine.com/blake3"

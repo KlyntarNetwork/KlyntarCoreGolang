@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
+
 	"github.com/syndtr/goleveldb/leveldb"
 )
 

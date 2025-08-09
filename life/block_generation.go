@@ -14,8 +14,9 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
-	ws_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/websocket_pack"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
+
 	"github.com/gorilla/websocket"
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -51,7 +52,7 @@ func alrpRequestTemplate(leaderID string, epochHandler *structures.EpochDataHand
 
 	if alrpMetadataForPool != nil {
 
-		request := ws_structures.WsLeaderRotationProofRequest{
+		request := websocket_pack.WsLeaderRotationProofRequest{
 			Route:               "get_leader_rotation_proof",
 			IndexOfPoolToRotate: slices.Index(epochHandler.LeadersSequence, leaderID),
 			AfpForFirstBlock:    alrpMetadataForPool.AfpForFirstBlock,
@@ -530,7 +531,7 @@ func generateBlock() {
 
 									if response.Status == "OK" {
 
-										var lrpOk ws_structures.WsLeaderRotationProofResponseOk
+										var lrpOk websocket_pack.WsLeaderRotationProofResponseOk
 
 										if errParse := json.Unmarshal(validatorResponse, &lrpOk); errParse == nil {
 
@@ -560,7 +561,7 @@ func generateBlock() {
 
 									} else if response.Status == "UPGRADE" {
 
-										var lrpUpgrade ws_structures.WsLeaderRotationProofResponseUpgrade
+										var lrpUpgrade websocket_pack.WsLeaderRotationProofResponseUpgrade
 
 										if errParse := json.Unmarshal(validatorResponse, &lrpUpgrade); errParse == nil {
 

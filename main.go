@@ -27,9 +27,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
-
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 )
 
 func main() {

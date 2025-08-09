@@ -11,7 +11,8 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/life"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
-	"github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/websocket_pack"
+
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/valyala/fasthttp"
 )
@@ -42,7 +43,7 @@ func RunBlockchain() {
 
 	//___________________ RUN SERVERS - WEBSOCKET AND HTTP __________________
 
-	go websocket.CreateWebsocketServer()
+	go websocket_pack.CreateWebsocketServer()
 
 	serverAddr := globals.CONFIGURATION.Interface + ":" + strconv.Itoa(globals.CONFIGURATION.Port)
 

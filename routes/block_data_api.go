@@ -6,6 +6,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
+
 	"github.com/valyala/fasthttp"
 )
 

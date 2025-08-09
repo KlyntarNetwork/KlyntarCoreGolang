@@ -17,6 +17,7 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/system_contracts"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
+
 	"github.com/syndtr/goleveldb/leveldb"
 )
 

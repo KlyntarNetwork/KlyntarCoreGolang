@@ -14,10 +14,10 @@ import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
+	"github.com/KlyntarNetwork/KlyntarCoreGolang/websocket_pack"
 	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
-	"github.com/gorilla/websocket"
 
-	ws_structures "github.com/KlyntarNetwork/KlyntarCoreGolang/websocket"
+	"github.com/gorilla/websocket"
 )
 
 var PROOFS_GRABBER_MUTEX = sync.RWMutex{}
@@ -90,7 +90,7 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochDataHandler) {
 
 		// Build message - then parse to JSON
 
-		message := ws_structures.WsFinalizationProofRequest{
+		message := websocket_pack.WsFinalizationProofRequest{
 			Route:            "get_finalization_proof",
 			Block:            *BLOCK_TO_SHARE,
 			PreviousBlockAfp: PROOFS_GRABBER.AfpForPrevious,
@@ -111,7 +111,7 @@ func runFinalizationProofsGrabbing(epochHandler *structures.EpochDataHandler) {
 
 			for _, raw := range responses {
 
-				var parsedFinalizationProof ws_structures.WsFinalizationProofResponse
+				var parsedFinalizationProof websocket_pack.WsFinalizationProofResponse
 
 				if err := json.Unmarshal(raw, &parsedFinalizationProof); err == nil {
 

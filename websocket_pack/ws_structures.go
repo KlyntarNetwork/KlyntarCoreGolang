@@ -1,4 +1,4 @@
-package websocket
+package websocket_pack
 
 import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/block"

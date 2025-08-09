@@ -1,4 +1,4 @@
-package websocket
+package websocket_pack
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/globals"
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/utils"
+
 	"github.com/lxzan/gws"
 )
 

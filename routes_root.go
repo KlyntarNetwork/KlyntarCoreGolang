@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/routes"
+
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
 )
