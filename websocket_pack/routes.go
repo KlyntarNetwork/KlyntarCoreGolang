@@ -21,6 +21,10 @@ var BLOCK_CREATOR_REQUEST_MUTEX = sync.Mutex{}
 
 func GetFinalizationProof(parsedRequest WsFinalizationProofRequest, connection *gws.Conn) {
 
+	if !globals.FLOOD_PREVENTION_FLAG_FOR_ROUTES.Load() {
+		return
+	}
+
 	globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 
 	defer globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RUnlock()
@@ -269,6 +273,10 @@ func GetFinalizationProof(parsedRequest WsFinalizationProofRequest, connection *
 }
 
 func GetLeaderRotationProof(parsedRequest WsLeaderRotationProofRequest, connection *gws.Conn) {
+
+	if !globals.FLOOD_PREVENTION_FLAG_FOR_ROUTES.Load() {
+		return
+	}
 
 	globals.APPROVEMENT_THREAD_METADATA_HANDLER.RWMutex.RLock()
 

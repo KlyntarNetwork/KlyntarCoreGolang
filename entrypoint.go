@@ -43,6 +43,10 @@ func RunBlockchain() {
 
 	//___________________ RUN SERVERS - WEBSOCKET AND HTTP __________________
 
+	// Set the atomic flag to true
+
+	globals.FLOOD_PREVENTION_FLAG_FOR_ROUTES.Store(true)
+
 	go websocket_pack.CreateWebsocketServer()
 
 	serverAddr := globals.CONFIGURATION.Interface + ":" + strconv.Itoa(globals.CONFIGURATION.Port)

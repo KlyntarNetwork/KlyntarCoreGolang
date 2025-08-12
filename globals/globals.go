@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/KlyntarNetwork/KlyntarCoreGolang/structures"
 
@@ -86,3 +87,6 @@ var APPROVEMENT_THREAD_METADATA_HANDLER = struct {
 }
 
 var BLOCKS, EPOCH_DATA, APPROVEMENT_THREAD_METADATA, FINALIZATION_VOTING_STATS *leveldb.DB
+
+// Flag to use in websocket & http routes to prevent flood of .RLock() calls on mutexes
+var FLOOD_PREVENTION_FLAG_FOR_ROUTES atomic.Bool
