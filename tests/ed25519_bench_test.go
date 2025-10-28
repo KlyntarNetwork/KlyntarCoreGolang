@@ -1,79 +1,88 @@
 package tests
 
-// const (
-// 	numSignatures   = 10000
-// 	signaturesPerGo = 1000
-// 	numGoroutines   = numSignatures / signaturesPerGo
-// )
+import (
+	"fmt"
+	"runtime"
+	"sync"
+	"testing"
 
-// var (
-// 	publicKeys []string
-// 	messages   []string
-// 	signatures []string
-// )
+	"github.com/KlyntarNetwork/Web1337Golang/crypto_primitives/ed25519"
+)
 
-// func init() {
+const (
+	numSignatures   = 1000
+	signaturesPerGo = 1000
+	numGoroutines   = numSignatures / signaturesPerGo
+)
 
-// 	fmt.Printf("GOMAXPROCS = %d\n", runtime.GOMAXPROCS(0))
+var (
+	publicKeys []string
+	messages   []string
+	signatures []string
+)
 
-// 	publicKeys = make([]string, numSignatures)
-// 	messages = make([]string, numSignatures)
-// 	signatures = make([]string, numSignatures)
+func init() {
 
-// 	mnemonic := "smoke suggest security index situate almost ethics tone wash crystal debris mosquito pony extra husband elder over relax width occur inspire keen sudden average"
-// 	mnemonicPassword := ""
-// 	bip44Path := []uint32{44, 7331, 0, 0}
+	fmt.Printf("GOMAXPROCS = %d\n", runtime.GOMAXPROCS(0))
 
-// 	var wg sync.WaitGroup
-// 	wg.Add(numGoroutines)
+	publicKeys = make([]string, numSignatures)
+	messages = make([]string, numSignatures)
+	signatures = make([]string, numSignatures)
 
-// 	for g := 0; g < numGoroutines; g++ {
-// 		go func(goroutineIndex int) {
-// 			defer wg.Done()
+	mnemonic := "smoke suggest security index situate almost ethics tone wash crystal debris mosquito pony extra husband elder over relax width occur inspire keen sudden average"
+	mnemonicPassword := ""
+	bip44Path := []uint32{44, 7331, 0, 0}
 
-// 			start := goroutineIndex * signaturesPerGo
-// 			end := start + signaturesPerGo
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
 
-// 			for i := start; i < end; i++ {
-// 				keypair := ed25519.GenerateKeyPair(mnemonic, mnemonicPassword, bip44Path)
+	for g := 0; g < numGoroutines; g++ {
+		go func(goroutineIndex int) {
+			defer wg.Done()
 
-// 				message := "Message number #" + string(rune(i))
-// 				signature := ed25519.GenerateSignature(keypair.Prv, message)
+			start := goroutineIndex * signaturesPerGo
+			end := start + signaturesPerGo
 
-// 				publicKeys[i] = keypair.Pub
-// 				messages[i] = message
-// 				signatures[i] = signature
-// 			}
-// 		}(g)
-// 	}
+			for i := start; i < end; i++ {
+				keypair := ed25519.GenerateKeyPair(mnemonic, mnemonicPassword, bip44Path)
 
-// 	wg.Wait()
-// 	fmt.Println("===============Finished===============")
-// }
+				message := "Message number #" + string(rune(i))
+				signature := ed25519.GenerateSignature(keypair.Prv, message)
 
-// func BenchmarkEd25519VerifyParallel100x1000(b *testing.B) {
-// 	b.ResetTimer()
+				publicKeys[i] = keypair.Pub
+				messages[i] = message
+				signatures[i] = signature
+			}
+		}(g)
+	}
 
-// 	b.RunParallel(func(pb *testing.PB) {
-// 		for pb.Next() {
-// 			var wg sync.WaitGroup
-// 			wg.Add(numGoroutines)
+	wg.Wait()
+	fmt.Println("===============Finished===============")
+}
 
-// 			for g := 0; g < numGoroutines; g++ {
-// 				go func(goroutineIndex int) {
-// 					defer wg.Done()
-// 					start := goroutineIndex * signaturesPerGo
-// 					end := start + signaturesPerGo
+func BenchmarkEd25519VerifyParallel100x1000(b *testing.B) {
+	b.ResetTimer()
 
-// 					for j := start; j < end; j++ {
-// 						if !ed25519.VerifySignature(messages[j], publicKeys[j], signatures[j]) {
-// 							b.Fatalf("Signature verification failed at index %d", j)
-// 						}
-// 					}
-// 				}(g)
-// 			}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var wg sync.WaitGroup
+			wg.Add(numGoroutines)
 
-// 			wg.Wait()
-// 		}
-// 	})
-// }
+			for g := 0; g < numGoroutines; g++ {
+				go func(goroutineIndex int) {
+					defer wg.Done()
+					start := goroutineIndex * signaturesPerGo
+					end := start + signaturesPerGo
+
+					for j := start; j < end; j++ {
+						if !ed25519.VerifySignature(messages[j], publicKeys[j], signatures[j]) {
+							b.Fatalf("Signature verification failed at index %d", j)
+						}
+					}
+				}(g)
+			}
+
+			wg.Wait()
+		}
+	})
+}
